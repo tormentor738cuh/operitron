@@ -480,7 +480,7 @@ function AppShell() {
 }
 
 function LoadingScreen() {
-  return <div className="grid min-h-screen place-items-center bg-[#050817] p-6 text-slate-200"><div className="text-center"><div className="mx-auto flex justify-center"><BrandLogo /></div><p className="mt-8 text-xs font-black uppercase tracking-[0.35em] text-slate-400">AI Real Estate Operating System</p><div className="mx-auto mt-6 h-1.5 w-48 overflow-hidden rounded-full bg-slate-800"><motion.div initial={{ x: "-100%" }} animate={{ x: "100%" }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} className="h-full w-1/2 rounded-full bg-gradient-to-r from-slate-100 to-cyan-400 shadow-[0_0_20px_rgba(56,189,248,.7)]" /></div></div></div>;
+  return <div className="grid min-h-screen place-items-center bg-[#050817] p-6 text-slate-200"><div className="text-center"><BrandLogo size="splash" /><p className="mt-7 text-xs font-black uppercase tracking-[0.24em] text-slate-400">AI Real Estate Operating System</p><div className="mx-auto mt-6 h-1.5 w-48 overflow-hidden rounded-full bg-slate-800"><motion.div initial={{ x: "-100%" }} animate={{ x: "100%" }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} className="h-full w-1/2 rounded-full bg-gradient-to-r from-slate-100 to-cyan-400 shadow-[0_0_20px_rgba(56,189,248,.7)]" /></div></div></div>;
 }
 
 function Sidebar({ t, activePage, go, mobileOpen, setMobileOpen }) {
@@ -548,17 +548,17 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user }) {
 }
 
 function BrandLogo({ onClick, compact = false, size = "default" }) {
-  const logoSize = size === "sidebar" ? "h-16 w-16" : compact ? "h-12 w-12" : "h-14 w-14";
+  const isFull = size === "splash";
+  const logoSize = size === "splash" ? "h-auto w-[min(78vw,28rem)]" : size === "sidebar" ? "h-14 w-14" : compact ? "h-11 w-11 sm:h-12 sm:w-12" : "h-14 w-14";
+  const wrapperClass = isFull ? "inline-flex justify-center rounded-3xl p-1" : "group flex min-w-0 shrink-0 items-center gap-3 rounded-2xl px-1 py-1 text-left transition hover:bg-white/[.04]";
+  const imageClass = isFull ? "h-auto w-full rounded-2xl object-contain shadow-[0_0_45px_rgba(37,99,235,.15)]" : "h-full w-full rounded-2xl object-contain shadow-[0_0_28px_rgba(37,99,235,.18)] transition duration-300 group-hover:shadow-[0_0_40px_rgba(34,211,238,.35)]";
   return (
-    <button onClick={onClick} className="group flex min-w-0 shrink-0 items-center gap-3 rounded-3xl px-2 py-2 text-left transition hover:bg-white/[.04]" aria-label="Operitron home">
-      <span className={`relative grid ${logoSize} shrink-0 place-items-center overflow-hidden rounded-2xl border border-cyan-300/25 bg-slate-900 shadow-[0_0_32px_rgba(34,211,238,.22)] transition group-hover:shadow-[0_0_45px_rgba(34,211,238,.35)]`}>
-        <span className="absolute inset-0 bg-gradient-to-br from-cyan-400/15 via-transparent to-purple-500/20" />
-        <Building2 className="relative z-10 text-cyan-200 drop-shadow-[0_0_12px_rgba(56,189,248,.8)]" size={compact ? 27 : 34} />
-      </span>
-      <span className={`${compact ? "hidden sm:block" : "block"} min-w-0`}>
+    <button type="button" onClick={onClick} className={wrapperClass} aria-label="Operitron home">
+      <img src={isFull ? "/operitron-logo.png" : "/operitron-mark.png"} alt={isFull ? "OPERITRON.COM" : ""} width={isFull ? "768" : "256"} height={isFull ? "512" : "256"} decoding="async" loading="eager" fetchPriority={compact ? "high" : "auto"} className={`${logoSize} ${imageClass}`} />
+      {!isFull && <span className={`${compact ? "hidden sm:block" : "block"} min-w-0`}>
         <span className="block truncate text-xl font-black tracking-wide text-white">OPERITRON.COM</span>
         <span className="block truncate text-[0.62rem] font-bold uppercase tracking-[0.24em] text-cyan-300">AI Real Estate Operating System</span>
-      </span>
+      </span>}
     </button>
   );
 }
@@ -1369,8 +1369,8 @@ function SettingsPage({ t, language, user, setUser, go, back }) {
     setUser(null);
     go("dashboard");
   }
-  if (user) return <GlassPanel><div className="mb-6"><BrandLogo onClick={() => go("dashboard")} /></div><h2 className="text-3xl font-black text-white">{t.accountSettings}</h2><p className="mt-2 text-slate-400">{user.email}</p><div className="mt-6 flex flex-wrap gap-3"><button onClick={() => go("dashboard")} className="primary-button">{ui.dashboard}</button><button onClick={signOut} className="secondary-button"><LogOut size={18} /> {ui.signOut}</button></div></GlassPanel>;
-  return <GlassPanel><div className="mb-6"><BrandLogo onClick={() => go("dashboard")} /></div><div className="flex flex-wrap items-center justify-between gap-4"><div><h2 className="text-3xl font-black text-white">{mode === "register" ? ui.register : ui.login}</h2><p className="mt-2 text-slate-400">{ui.details}</p></div><button onClick={back} className="secondary-button">← {ui.back}</button></div><div className="mt-6 grid gap-3 md:max-w-xl"><div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-slate-950/70 p-1"><button onClick={() => setMode("register")} className={`rounded-xl px-4 py-3 font-black ${mode === "register" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.register}</button><button onClick={() => setMode("login")} className={`rounded-xl px-4 py-3 font-black ${mode === "login" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.login}</button></div>{mode === "register" && <><input value={name} onChange={(e) => setName(e.target.value)} className="field" placeholder={ui.fullName} /><input value={company} onChange={(e) => setCompany(e.target.value)} className="field" placeholder={ui.company} /><input value={phone} onChange={(e) => setPhone(e.target.value)} className="field" placeholder={ui.phone} /></>}<input value={email} onChange={(e) => setEmail(e.target.value)} className="field" placeholder={t.email} /><input value={password} onChange={(e) => setPassword(e.target.value)} className="field" type="password" placeholder={t.password} /><button onClick={() => auth(mode === "register" ? "signup" : "login")} className="primary-button">{mode === "register" ? ui.save : ui.login}</button><p className="text-sm text-slate-400">{status}</p></div></GlassPanel>;
+  if (user) return <GlassPanel><h2 className="text-3xl font-black text-white">{t.accountSettings}</h2><p className="mt-2 text-slate-400">{user.email}</p><div className="mt-6 flex flex-wrap gap-3"><button onClick={() => go("dashboard")} className="primary-button">{ui.dashboard}</button><button onClick={signOut} className="secondary-button"><LogOut size={18} /> {ui.signOut}</button></div></GlassPanel>;
+  return <GlassPanel><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-cyan-300">OPERITRON.COM</p><h2 className="text-3xl font-black text-white">{mode === "register" ? ui.register : ui.login}</h2><p className="mt-2 text-slate-400">{ui.details}</p></div><button onClick={back} className="secondary-button">← {ui.back}</button></div><div className="mt-6 grid gap-3 md:max-w-xl"><div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-slate-950/70 p-1"><button onClick={() => setMode("register")} className={`rounded-xl px-4 py-3 font-black ${mode === "register" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.register}</button><button onClick={() => setMode("login")} className={`rounded-xl px-4 py-3 font-black ${mode === "login" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.login}</button></div>{mode === "register" && <><input value={name} onChange={(e) => setName(e.target.value)} className="field" placeholder={ui.fullName} /><input value={company} onChange={(e) => setCompany(e.target.value)} className="field" placeholder={ui.company} /><input value={phone} onChange={(e) => setPhone(e.target.value)} className="field" placeholder={ui.phone} /></>}<input value={email} onChange={(e) => setEmail(e.target.value)} className="field" placeholder={t.email} /><input value={password} onChange={(e) => setPassword(e.target.value)} className="field" type="password" placeholder={t.password} /><button onClick={() => auth(mode === "register" ? "signup" : "login")} className="primary-button">{mode === "register" ? ui.save : ui.login}</button><p className="text-sm text-slate-400">{status}</p></div></GlassPanel>;
 }
 
 function ProfileMini({ t, go }) {
