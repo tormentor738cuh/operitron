@@ -13,6 +13,8 @@ import {
   ClipboardCheck,
   Cloud,
   DollarSign,
+  Eye,
+  EyeOff,
   FileText,
   FolderOpen,
   Globe2,
@@ -55,6 +57,25 @@ const annualPriceId = import.meta.env.VITE_STRIPE_ANNUAL_PRICE_ID;
 const productionUrl = (import.meta.env.VITE_APP_URL || "https://operitron.com").replace(/\/+$/, "");
 const adminEmails = String(import.meta.env.VITE_ADMIN_EMAILS || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
 const LazyAIAnalyzerPanel = lazy(() => import("./AIAnalyzerPanel.jsx"));
+
+async function readApiJson(response) {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text);
+  } catch (_error) {
+    return { error: "A server error occurred. Please try again or contact support@operitron.com." };
+  }
+}
+
+function subscriptionPlanLabel(plan, language) {
+  const normalized = String(plan || "").trim().toLowerCase();
+  if (normalized === "monthly") return language === "es" ? "Mensual" : "Monthly";
+  if (normalized === "annual") return language === "es" ? "Anual" : "Annual";
+  if (["no subscription", "inactive", ""].includes(normalized)) return language === "es" ? "Sin suscripción" : "No subscription";
+  if (normalized === "subscribed") return language === "es" ? "Suscripción activa" : "Active subscription";
+  return plan;
+}
 
 const publicPages = new Set(["home", "pricing", "settings", "privacy", "terms", "refund", "disclaimer"]);
 const pagePaths = {
@@ -899,7 +920,7 @@ function ByNumbers({ isEs }) {
 
 function LandingFAQ({ isEs }) {
   const faqs = isEs
-    ? [["¿Operitron reemplaza a mi contratista o asesor?", "No. OPERITRON.COM organiza cálculos y flujos de trabajo para apoyar decisiones; siempre valida con profesionales licenciados."], ["¿Puedo usarlo para flips, rentals y BRRR?", "Sí. Incluye underwriting, DSCR, cash-out, construcción, takeoffs y reportes."], ["¿Incluye prueba gratis?", "Sí. La prueba gratis de tres días comienza al iniciar una suscripción Monthly o Annual en el checkout seguro."], ["¿Puedo colaborar con mi equipo?", "Sí. Puedes estructurar colaboradores, elementos vinculados, cotizaciones y reportes por proyecto."]]
+    ? [["¿Operitron reemplaza a mi contratista o asesor?", "No. OPERITRON.COM organiza cálculos y flujos de trabajo para apoyar decisiones; siempre valida con profesionales licenciados."], ["¿Puedo usarlo para flips, rentals y BRRR?", "Sí. Incluye underwriting, DSCR, cash-out, construcción, takeoffs y reportes."], ["¿Incluye prueba gratis?", "Sí. La prueba gratis de tres días comienza al iniciar una suscripción Mensual o Anual en el checkout seguro."], ["¿Puedo colaborar con mi equipo?", "Sí. Puedes estructurar colaboradores, elementos vinculados, cotizaciones y reportes por proyecto."]]
     : [["Does Operitron replace my contractor or advisor?", "No. OPERITRON.COM organizes calculations and workflows for decision support; always validate with licensed professionals."], ["Can I use it for flips, rentals, and BRRR?", "Yes. It includes underwriting, DSCR, cash-out, construction tracking, takeoffs, and reports."], ["Is there a free trial?", "Yes. A three-day trial begins when you start a Monthly or Annual subscription in secure checkout."], ["Can I collaborate with my team?", "Yes. Structure collaborators, linked items, quotes, and reports by project."]];
   return <section><SectionHeader title={isEs ? "Preguntas Frecuentes" : "Frequently Asked Questions"} detail={isEs ? "Respuestas rápidas para inversionistas y constructores." : "Quick answers for investors and builders."} /><div className="space-y-3">{faqs.map(([q, a]) => <details key={q} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><summary className="cursor-pointer font-black text-white">{q}</summary><p className="mt-3 leading-7 text-slate-400">{a}</p></details>)}</div></section>;
 }
@@ -1081,7 +1102,7 @@ function ToolModalFrame({ children, onClose }) {
 
 function SubscriptionGate({ language, go }) {
   const isEs = language === "es";
-  return <section className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 to-purple-500/10 p-7"><DollarSign className="text-cyan-300" size={32} /><h2 className="mt-5 pr-8 text-2xl font-black text-white">{isEs ? "Activa tu prueba de 3 días" : "Activate your 3-day trial"}</h2><p className="mt-3 leading-7 text-slate-300">{isEs ? "Las herramientas profesionales se habilitan con un plan Monthly o Annual activo. Comienza de forma segura con Stripe Checkout." : "Professional tools unlock with an active Monthly or Annual plan. Start securely through Stripe Checkout."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{isEs ? "Ver planes" : "View plans"}</button></section>;
+  return <section className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 to-purple-500/10 p-7"><DollarSign className="text-cyan-300" size={32} /><h2 className="mt-5 pr-8 text-2xl font-black text-white">{isEs ? "Activa tu prueba de 3 días" : "Activate your 3-day trial"}</h2><p className="mt-3 leading-7 text-slate-300">{isEs ? "Las herramientas profesionales se habilitan con un plan Mensual o Anual activo. Comienza de forma segura con Stripe Checkout." : "Professional tools unlock with an active Monthly or Annual plan. Start securely through Stripe Checkout."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{isEs ? "Ver planes" : "View plans"}</button></section>;
 }
 
 function PremiumPaywall({ language, user, go }) {
@@ -1089,7 +1110,7 @@ function PremiumPaywall({ language, user, go }) {
   const perks = isEs
     ? ["Analizador IA y underwriting avanzado", "Calculadoras DSCR, BRRR y cash-out", "Proyectos, reportes, Dropbox y colaboración", "Rastreo de construcción y takeoff de materiales"]
     : ["AI analysis and advanced underwriting", "DSCR, BRRR, and cash-out calculators", "Projects, reports, Dropbox, and collaboration", "Construction tracking and material takeoffs"];
-  return <div className="mx-auto max-w-5xl space-y-7"><section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/12 via-slate-950 to-purple-500/12 p-6 text-center shadow-[0_0_55px_rgba(34,211,238,.12)] sm:p-10"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" /><Sparkles className="relative mx-auto text-cyan-300" size={38} /><p className="relative mt-5 text-xs font-black uppercase tracking-[0.28em] text-cyan-300">OPERITRON.COM</p><h1 className="relative mx-auto mt-3 max-w-3xl text-3xl font-black text-white sm:text-5xl">{isEs ? "Comienza tu prueba gratis de 3 dias" : "Start your 3-day free trial"}</h1><p className="relative mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">{isEs ? "Tu cuenta esta lista. Las herramientas profesionales se activan cuando inicias una suscripcion Monthly o Annual mediante Stripe Checkout." : "Your account is ready. Professional tools activate when you start a Monthly or Annual subscription through secure Stripe Checkout."}</p><p className="relative mt-4 text-sm font-bold text-slate-400">{user?.email}</p><div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row"><button onClick={() => go("pricing")} className="primary-button">{isEs ? "Ver planes e iniciar prueba" : "View plans and start trial"}</button><button onClick={() => go("profile")} className="secondary-button">{isEs ? "Mi cuenta" : "My account"}</button></div></section><div className="grid gap-4 md:grid-cols-2">{perks.map((perk) => <div key={perk} className="rounded-2xl border border-white/10 bg-white/[.045] p-5 text-slate-200"><CheckCircle2 className="mb-3 text-cyan-300" size={20} /><p className="font-bold">{perk}</p></div>)}</div></div>;
+  return <div className="mx-auto max-w-5xl space-y-7"><section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/12 via-slate-950 to-purple-500/12 p-6 text-center shadow-[0_0_55px_rgba(34,211,238,.12)] sm:p-10"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" /><Sparkles className="relative mx-auto text-cyan-300" size={38} /><p className="relative mt-5 text-xs font-black uppercase tracking-[0.28em] text-cyan-300">OPERITRON.COM</p><h1 className="relative mx-auto mt-3 max-w-3xl text-3xl font-black text-white sm:text-5xl">{isEs ? "Comienza tu prueba gratis de 3 días" : "Start your 3-day free trial"}</h1><p className="relative mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">{isEs ? "Tu cuenta está lista. Las herramientas profesionales se activan cuando inicias una suscripción Mensual o Anual mediante Stripe Checkout." : "Your account is ready. Professional tools activate when you start a Monthly or Annual subscription through secure Stripe Checkout."}</p><p className="relative mt-4 text-sm font-bold text-slate-400">{user?.email}</p><div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row"><button onClick={() => go("pricing")} className="primary-button">{isEs ? "Ver planes e iniciar prueba" : "View plans and start trial"}</button><button onClick={() => go("profile")} className="secondary-button">{isEs ? "Mi cuenta" : "My account"}</button></div></section><div className="grid gap-4 md:grid-cols-2">{perks.map((perk) => <div key={perk} className="rounded-2xl border border-white/10 bg-white/[.045] p-5 text-slate-200"><CheckCircle2 className="mb-3 text-cyan-300" size={20} /><p className="font-bold">{perk}</p></div>)}</div></div>;
 }
 
 function ToolBody({ t, language, toolId }) {
@@ -1243,7 +1264,8 @@ function sidingDescription(name) {
   }[name];
 }
 
-function DealUnderwriter() {
+function DealUnderwriter({ language = "en" }) {
+  const isEs = language === "es";
   const [purchase, setPurchase] = useState(190000);
   const [rehab, setRehab] = useState(45000);
   const [arv, setArv] = useState(295000);
@@ -1253,10 +1275,11 @@ function DealUnderwriter() {
   const roi = formulas.roi(profit, total);
   const noi = 2800 * 12 - 8500;
   const debt = formulas.monthlyMortgage(cleanNumber(purchase) * 0.8, 7.25, 30) * 12;
-  return <div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label="Purchase Price" value={purchase} setValue={setPurchase} /><MoneyInput label="Rehab Budget" value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label="Closing / Holding / Selling" value={costs} setValue={setCosts} /></div><ResultBox items={[["Total Cost", formatMoney(total)], ["Profit", formatMoney(profit), profit > 0], ["ROI", `${roi.toFixed(1)}%`, roi > 15], ["70% Max Offer", formatMoney(cleanNumber(arv) * 0.7 - cleanNumber(rehab)), true], ["Cap Rate", `${formulas.capRate(noi, cleanNumber(purchase)).toFixed(2)}%`], ["DSCR", formulas.dscr(noi, debt).toFixed(2), formulas.dscr(noi, debt) >= 1.2], ["Cash-on-Cash", `${formulas.cashOnCash(noi - debt, total * 0.25).toFixed(2)}%`]]} /></div>;
+  return <div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de compra" : "Purchase Price"} value={purchase} setValue={setPurchase} /><MoneyInput label={isEs ? "Presupuesto de rehabilitación" : "Rehab Budget"} value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label={isEs ? "Cierre / Mantenimiento / Venta" : "Closing / Holding / Selling"} value={costs} setValue={setCosts} /></div><ResultBox items={[[isEs ? "Costo total" : "Total Cost", formatMoney(total)], [isEs ? "Ganancia" : "Profit", formatMoney(profit), profit > 0], ["ROI", `${roi.toFixed(1)}%`, roi > 15], [isEs ? "Oferta máxima al 70%" : "70% Max Offer", formatMoney(cleanNumber(arv) * 0.7 - cleanNumber(rehab)), true], [isEs ? "Tasa de capitalización" : "Cap Rate", `${formulas.capRate(noi, cleanNumber(purchase)).toFixed(2)}%`], ["DSCR", formulas.dscr(noi, debt).toFixed(2), formulas.dscr(noi, debt) >= 1.2], [isEs ? "Retorno sobre efectivo" : "Cash-on-Cash", `${formulas.cashOnCash(noi - debt, total * 0.25).toFixed(2)}%`]]} /></div>;
 }
 
-function InvestmentLoanCalculator() {
+function InvestmentLoanCalculator({ language = "en" }) {
+  const isEs = language === "es";
   const [price, setPrice] = useState(300000);
   const [down, setDown] = useState(20);
   const [rate, setRate] = useState(7.25);
@@ -1267,7 +1290,7 @@ function InvestmentLoanCalculator() {
   const payment = formulas.monthlyMortgage(loan, cleanNumber(rate), cleanNumber(years));
   const noi = (cleanNumber(rent) - cleanNumber(expenses)) * 12;
   const dscr = payment ? noi / (payment * 12) : 0;
-  return <div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label="Property Price" value={price} setValue={setPrice} /><NumberInput label="Down Payment %" value={down} setValue={setDown} /><NumberInput label="Interest Rate %" value={rate} setValue={setRate} /><NumberInput label="Loan Years" value={years} setValue={setYears} /><MoneyInput label="Monthly Rent" value={rent} setValue={setRent} /><MoneyInput label="Monthly Expenses" value={expenses} setValue={setExpenses} /></div><ResultBox items={[["Loan Amount", formatMoney(loan)], ["Monthly Payment", formatMoney(payment), true], ["DSCR", dscr.toFixed(2), dscr >= 1.2], ["Monthly Cash Flow", formatMoney(cleanNumber(rent) - cleanNumber(expenses) - payment), cleanNumber(rent) - cleanNumber(expenses) - payment > 0]]} /></div>;
+  return <div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de la propiedad" : "Property Price"} value={price} setValue={setPrice} /><NumberInput label={isEs ? "Pago inicial %" : "Down Payment %"} value={down} setValue={setDown} /><NumberInput label={isEs ? "Tasa de interés %" : "Interest Rate %"} value={rate} setValue={setRate} /><NumberInput label={isEs ? "Años del préstamo" : "Loan Years"} value={years} setValue={setYears} /><MoneyInput label={isEs ? "Renta mensual" : "Monthly Rent"} value={rent} setValue={setRent} /><MoneyInput label={isEs ? "Gastos mensuales" : "Monthly Expenses"} value={expenses} setValue={setExpenses} /></div><ResultBox items={[[isEs ? "Monto del préstamo" : "Loan Amount", formatMoney(loan)], [isEs ? "Pago mensual" : "Monthly Payment", formatMoney(payment), true], ["DSCR", dscr.toFixed(2), dscr >= 1.2], [isEs ? "Flujo de caja mensual" : "Monthly Cash Flow", formatMoney(cleanNumber(rent) - cleanNumber(expenses) - payment), cleanNumber(rent) - cleanNumber(expenses) - payment > 0]]} /></div>;
 }
 
 function PropertySearch({ t }) {
@@ -1531,11 +1554,11 @@ function PricingPlans({ language, user, go }) {
     ? ["Proyectos y deals ilimitados", "Analizador de deals y fix-and-flip", "Calculadoras DSCR, BRRR y cash-out", "Rastreador de construcción", "Takeoff de materiales con IA", "Punch list", "Gestión de subcontratistas y ofertas", "Compartir proyectos y colaborar", "Asistente IA en cada herramienta"]
     : ["Unlimited projects & deals", "Deal & Fix-and-Flip underwriter", "DSCR, BRRR & Cash-Out calculators", "Construction tracker", "AI material takeoff", "Punch list", "Subcontractor & bid management", "Project sharing & collaboration", "AI assistant on every tool"];
   const annualFeatures = isEs
-    ? ["Todo lo incluido en Monthly", "Soporte prioritario", "Acceso anticipado a funciones nuevas", "Historial de datos extendido"]
+    ? ["Todo lo incluido en Mensual", "Soporte prioritario", "Acceso anticipado a funciones nuevas", "Historial de datos extendido"]
     : ["Everything in Monthly", "Priority support", "Early access to new features", "Extended data history"];
   const plans = [
-    { id: "monthly", priceId: monthlyPriceId, name: "Monthly", price: "$29.99", cadence: isEs ? "/mes" : "/month", note: isEs ? "Prueba gratis de 3 días" : "3-day free trial", detail: isEs ? "Acceso flexible mes a mes." : "Flexible month-to-month access.", features: monthlyFeatures },
-    { id: "annual", priceId: annualPriceId, name: "Annual", price: "$249.99", cadence: isEs ? "/año" : "/year", note: isEs ? "Ahorra más de 30% · Prueba gratis de 3 días" : "Save over 30% · 3-day free trial", detail: isEs ? "El mejor valor para operadores activos." : "Best value for active operators.", features: annualFeatures, featured: true },
+    { id: "monthly", priceId: monthlyPriceId, name: isEs ? "Mensual" : "Monthly", price: "$29.99", cadence: isEs ? "/mes" : "/month", note: isEs ? "Prueba gratis de 3 días" : "3-day free trial", detail: isEs ? "Acceso flexible mes a mes." : "Flexible month-to-month access.", features: monthlyFeatures },
+    { id: "annual", priceId: annualPriceId, name: isEs ? "Anual" : "Annual", price: "$249.99", cadence: isEs ? "/año" : "/year", note: isEs ? "Ahorra más de 30% · Prueba gratis de 3 días" : "Save over 30% · 3-day free trial", detail: isEs ? "El mejor valor para operadores activos." : "Best value for active operators.", features: annualFeatures, featured: true },
   ];
   async function beginCheckout(plan) {
     if (!user) {
@@ -1555,16 +1578,21 @@ function PricingPlans({ language, user, go }) {
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
         body: JSON.stringify({ priceId: plan.priceId, plan: plan.id }),
       });
-      const result = await response.json();
+      const result = await readApiJson(response);
       if (!response.ok) throw new Error(result.error || "Checkout could not start.");
       window.location.assign(result.url);
     } catch (error) {
-      setBillingStatus(isEs ? "No se pudo iniciar el pago. Intenta de nuevo." : "Checkout could not start. Please try again.");
+      const genericServerError = error.message === "A server error occurred. Please try again or contact support@operitron.com.";
+      setBillingStatus(genericServerError && isEs ? "Ocurrió un error del servidor. Intenta de nuevo o escribe a support@operitron.com." : (error.message || (isEs ? "No se pudo iniciar el pago. Intenta de nuevo." : "Checkout could not start. Please try again.")));
     } finally {
       setBillingLoading("");
     }
   }
   return <div className="space-y-8"><section className="mx-auto max-w-3xl text-center"><p className="text-sm font-black uppercase tracking-widest text-cyan-300">{isEs ? "Precios simples" : "Simple Pricing"}</p><h2 className="mt-3 text-4xl font-black text-white md:text-5xl">{isEs ? "Elige cómo quieres crecer con Operitron" : "Choose how you want to grow with Operitron"}</h2><p className="mt-4 text-lg leading-8 text-slate-400">{isEs ? "Dos planes claros para analizar deals, gestionar construcción y colaborar con tu equipo." : "Two clean plans for analyzing deals, managing construction, and collaborating with your team."}</p></section><div className="grid gap-6 lg:grid-cols-2">{plans.map((plan) => <motion.div key={plan.name} whileHover={{ y: -6 }} className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-2xl backdrop-blur-xl ${plan.featured ? "border-cyan-300/50 bg-gradient-to-br from-cyan-400/15 via-purple-500/10 to-white/[.055] shadow-cyan-500/10" : "border-white/10 bg-white/[.055] shadow-black/20"}`}>{plan.featured && <div className="absolute right-5 top-5 rounded-full border border-cyan-300/30 bg-cyan-300 px-4 py-1 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">{isEs ? "Mejor Valor" : "Best Value"}</div>}<div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/20 blur-3xl" /><div className="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" /><div className="relative z-10"><p className="text-2xl font-black text-white">{plan.name}</p><p className="mt-2 min-h-12 max-w-md text-slate-400">{plan.detail}</p><div className="mt-6 flex items-end gap-2"><span className={`text-5xl font-black ${plan.featured ? "text-cyan-200" : "text-amber-300"}`}>{plan.price}</span><span className="pb-2 font-bold text-slate-500">{plan.cadence}</span></div><p className="mt-3 font-bold text-emerald-300">{plan.note}</p><button disabled={billingLoading === plan.id} onClick={() => beginCheckout(plan)} className={`mt-7 w-full rounded-2xl py-4 font-black transition disabled:cursor-wait disabled:opacity-70 ${plan.featured ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.28)] hover:bg-cyan-200" : "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.22)] hover:bg-amber-300"}`}>{billingLoading === plan.id ? (isEs ? "Cargando..." : "Loading...") : (isEs ? "Comenzar" : "Get Started")}</button><ul className="mt-7 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-3 text-slate-300"><CheckCircle2 className={plan.featured ? "text-cyan-300" : "text-emerald-400"} size={19} /><span>{feature}</span></li>)}</ul></div></motion.div>)}</div>{billingStatus && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-center text-sm text-cyan-100">{billingStatus}</p>}</div>;
+}
+
+function PasswordField({ value, onChange, placeholder, autoComplete, visible, onToggle, language }) {
+  return <div className="relative"><input value={value} onChange={onChange} className="field pr-14" autoComplete={autoComplete} type={visible ? "text" : "password"} placeholder={placeholder} /><button type="button" onClick={onToggle} aria-label={visible ? (language === "es" ? "Ocultar contraseña" : "Hide password") : (language === "es" ? "Mostrar contraseña" : "Show password")} className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-cyan-200">{visible ? <EyeOff size={19} /> : <Eye size={19} />}</button></div>;
 }
 
 function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordRecovery, setPasswordRecovery }) {
@@ -1577,6 +1605,8 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
   const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const ui = isEs
@@ -1657,12 +1687,12 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
           {mode === "register" && <><input value={name} onChange={(e) => setName(e.target.value)} className="field" autoComplete="name" placeholder={ui.fullName} /><input value={company} onChange={(e) => setCompany(e.target.value)} className="field" autoComplete="organization" placeholder={ui.company} /><input value={phone} onChange={(e) => setPhone(e.target.value)} className="field" autoComplete="tel" placeholder={ui.phone} /></>}
           {mode !== "recover" && <input value={email} onChange={(e) => setEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.email} />}
           {mode === "register" && <input value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.confirmEmail} />}
-          <input value={password} onChange={(e) => setPassword(e.target.value)} className="field" autoComplete={mode === "login" ? "current-password" : "new-password"} type="password" placeholder={mode === "recover" ? t.newPassword : t.password} />
-          {mode === "recover" && <input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="field" autoComplete="new-password" type="password" placeholder={t.confirmPassword} />}
+          <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "login" ? "current-password" : "new-password"} placeholder={mode === "recover" ? t.newPassword : t.password} visible={showPassword} onToggle={() => setShowPassword((current) => !current)} language={language} />
+          {mode === "recover" && <PasswordField value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" placeholder={t.confirmPassword} visible={showConfirmPassword} onToggle={() => setShowConfirmPassword((current) => !current)} language={language} />}
           {mode === "recover"
             ? <button disabled={submitting} onClick={updatePassword} className="primary-button disabled:cursor-wait disabled:opacity-70">{t.updatePassword}</button>
             : <button disabled={submitting} onClick={() => auth(mode === "register" ? "signup" : "login")} className="primary-button disabled:cursor-wait disabled:opacity-70">{submitting ? (mode === "register" ? t.creatingAccount : t.signingIn) : (mode === "register" ? ui.save : ui.login)}</button>}
-          {mode === "login" && <button disabled={submitting} onClick={resetPassword} className="text-left text-sm font-bold text-cyan-300 hover:text-cyan-200">{t.forgotPassword} {t.resetPassword}</button>}
+          {mode === "login" && <div className="mt-1 rounded-2xl border border-white/10 bg-slate-950/40 p-3"><p className="text-sm font-bold text-slate-300">{t.forgotPassword}</p><button disabled={submitting} onClick={resetPassword} className="mt-2 text-left text-sm font-black text-cyan-300 hover:text-cyan-200">{t.resetPassword} →</button></div>}
           {status && <p role="status" className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm leading-6 text-cyan-100">{status}</p>}
           <p className="pt-2 text-sm text-slate-400">{isEs ? "¿Necesitas ayuda?" : "Need help?"} <a className="font-bold text-cyan-300 hover:text-cyan-200" href="mailto:support@operitron.com">support@operitron.com</a></p>
         </div>
@@ -1688,10 +1718,10 @@ function ProfileMini({ t, user, go }) {
 function ProfilePage({ t, language, user, back }) {
   const [name, setName] = useState(user?.user_metadata?.full_name || "");
   const [email] = useState(user?.email || "");
-  const [plan, setPlan] = useState(language === "es" ? "Sin suscripcion" : "No subscription");
+  const [plan, setPlan] = useState("No subscription");
   const [company, setCompany] = useState(user?.user_metadata?.company || "");
   const [phone, setPhone] = useState(user?.user_metadata?.phone || "");
-  const ui = language === "es" ? { company: "Compañía", phone: "Teléfono", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "La prueba inicia al suscribirte", save: "Guardar Perfil", billing: "Administrar facturación", billingError: "Primero inicia una suscripcion." } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved.", trialEnds: "Trial starts after checkout", save: "Save Profile", billing: "Manage billing", billingError: "Start a subscription first." };
+  const ui = language === "es" ? { company: "Compañía", phone: "Teléfono", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "La prueba inicia al suscribirte", save: "Guardar perfil", billing: "Administrar facturación", billingError: "Primero inicia una suscripción.", serverError: "Ocurrió un error del servidor. Intenta de nuevo o escribe a support@operitron.com." } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved.", trialEnds: "Trial starts after checkout", save: "Save Profile", billing: "Manage billing", billingError: "Start a subscription first.", serverError: "A server error occurred. Please try again or contact support@operitron.com." };
   const [status, setStatus] = useState(ui.ready);
   useEffect(() => {
     if (!supabase || !user) return;
@@ -1700,7 +1730,7 @@ function ProfilePage({ t, language, user, back }) {
       setName(data.full_name || name);
       setCompany(data.company || company);
       setPhone(data.phone || phone);
-      setPlan(data.subscription_plan || plan);
+      setPlan(data.subscription_plan || "No subscription");
     });
   }, [user]);
   async function saveProfile() {
@@ -1714,14 +1744,15 @@ function ProfilePage({ t, language, user, back }) {
     try {
       const { data } = await supabase.auth.getSession();
       const response = await fetch(portalEndpoint, { method: "POST", headers: { Authorization: `Bearer ${data.session.access_token}` } });
-      const result = await response.json();
+      const result = await readApiJson(response);
       if (!response.ok) throw new Error(result.error || ui.billingError);
       window.location.assign(result.url);
     } catch (error) {
-      setStatus(error.message === "Start a subscription first." ? ui.billingError : (error.message || ui.billingError));
+      setStatus(error.message === "Start a subscription first." ? ui.billingError : (error.message === "A server error occurred. Please try again or contact support@operitron.com." ? ui.serverError : (error.message || ui.billingError)));
     }
   }
-  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} /><div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={plan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={plan} green /><MiniMetric label={t.trial} value={ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button><button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button><p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
+  const displayPlan = subscriptionPlanLabel(plan, language);
+  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} /><div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={displayPlan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={displayPlan} green /><MiniMetric label={t.trial} value={ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button><button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button><p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
 }
 
 function LegalPage({ type, language }) {
