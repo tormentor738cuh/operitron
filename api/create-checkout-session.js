@@ -9,6 +9,12 @@ function getSupabase() {
   });
 }
 
+function getAdminSupabase() {
+  return createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+}
+
 export default async function handler(request, response) {
   if (request.method !== "POST") return response.status(405).json({ error: "Method not allowed." });
 
@@ -28,10 +34,22 @@ export default async function handler(request, response) {
   }
 
   try {
+    const adminClient = getAdminSupabase();
+    const { data: profile } = await adminClient.from("profiles").select("stripe_customer_id").eq("id", data.user.id).maybeSingle();
+    let customerId = profile?.stripe_customer_id;
+    if (!customerId) {
+      const matchingCustomers = await stripe.customers.list({ email: data.user.email, limit: 1 });
+      const customer = matchingCustomers.data[0] || await stripe.customers.create({
+        email: data.user.email,
+        metadata: { user_id: data.user.id },
+      });
+      customerId = customer.id;
+      await adminClient.from("profiles").update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq("id", data.user.id);
+    }
     const appUrl = process.env.APP_URL || "https://operitron.com";
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      customer_email: data.user.email,
+      customer: customerId,
       client_reference_id: data.user.id,
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,

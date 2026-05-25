@@ -17,7 +17,7 @@ async function readBody(request) {
 async function syncSubscription(subscription) {
   const userId = subscription.metadata?.user_id;
   if (!userId) return;
-  await adminClient.from("profiles").update({
+  const details = {
     stripe_customer_id: String(subscription.customer),
     subscription_id: subscription.id,
     subscription_status: subscription.status,
@@ -25,7 +25,18 @@ async function syncSubscription(subscription) {
     trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
     current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
     updated_at: new Date().toISOString(),
-  }).eq("id", userId);
+  };
+  await adminClient.from("profiles").update(details).eq("id", userId);
+  await adminClient.from("subscriptions").upsert({
+    user_id: userId,
+    stripe_customer_id: String(subscription.customer),
+    stripe_subscription_id: subscription.id,
+    plan: subscription.metadata?.plan || "Subscribed",
+    status: subscription.status,
+    trial_ends_at: details.trial_ends_at,
+    current_period_end: details.current_period_end,
+    updated_at: details.updated_at,
+  }, { onConflict: "stripe_subscription_id" });
 }
 
 export default async function handler(request, response) {
@@ -37,6 +48,16 @@ export default async function handler(request, response) {
     return response.status(400).json({ error: "Invalid webhook signature." });
   }
 
+  if (event.type === "checkout.session.completed") {
+    const session = event.data.object;
+    const userId = session.metadata?.user_id || session.client_reference_id;
+    if (userId && session.customer) {
+      await adminClient.from("profiles").update({
+        stripe_customer_id: String(session.customer),
+        updated_at: new Date().toISOString(),
+      }).eq("id", userId);
+    }
+  }
   if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"].includes(event.type)) {
     await syncSubscription(event.data.object);
   }

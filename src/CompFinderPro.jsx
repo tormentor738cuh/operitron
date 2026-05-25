@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
 import {
@@ -44,20 +44,28 @@ import {
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
+const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, {
+  auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
+}) : null;
 const rentcastApiKey = import.meta.env.VITE_RENTCAST_API_KEY;
 const checkoutEndpoint = import.meta.env.VITE_STRIPE_CHECKOUT_ENDPOINT || "/api/create-checkout-session";
 const portalEndpoint = import.meta.env.VITE_STRIPE_PORTAL_ENDPOINT || "/api/create-billing-portal";
 const monthlyPriceId = import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID;
 const annualPriceId = import.meta.env.VITE_STRIPE_ANNUAL_PRICE_ID;
+const productionUrl = (import.meta.env.VITE_APP_URL || "https://operitron.com").replace(/\/+$/, "");
+const adminEmails = String(import.meta.env.VITE_ADMIN_EMAILS || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+const LazyAIAnalyzerPanel = lazy(() => import("./AIAnalyzerPanel.jsx"));
 
-const publicPages = new Set(["home", "pricing", "settings", "learning", "knowledge", "tutorials", "tours", "privacy", "terms", "refund", "disclaimer"]);
+const publicPages = new Set(["home", "pricing", "settings", "privacy", "terms", "refund", "disclaimer"]);
 const pagePaths = {
   home: "/",
   dashboard: "/dashboard",
   pricing: "/pricing",
   settings: "/login",
   profile: "/profile",
+  projectTools: "/project-tools",
+  propertySearch: "/property-search",
+  dropbox: "/dropbox",
   learning: "/learning-center",
   knowledge: "/knowledge-base",
   tutorials: "/tutorials",
@@ -464,9 +472,11 @@ function AppShell() {
   const [history, setHistory] = useState([]);
   const [user, setUser] = useState(null);
   const [subscription, setSubscription] = useState(null);
+  const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [passwordRecovery, setPasswordRecovery] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const t = enhancedCopy[language];
 
   useEffect(() => {
@@ -513,19 +523,37 @@ function AppShell() {
   }, [activePage, authLoading, user]);
 
   useEffect(() => {
-    if (!supabase || !user) return;
+    if (!supabase || !user) {
+      setSubscription(null);
+      setSubscriptionLoading(false);
+      return;
+    }
     let active = true;
-    supabase.from("projects").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
-      if (active && !error) setProjects(data || []);
-    });
-    supabase.from("profiles").select("subscription_status, subscription_plan, trial_ends_at, current_period_end").eq("id", user.id).maybeSingle().then(({ data }) => {
-      if (active) setSubscription(data || { subscription_status: "inactive", subscription_plan: "Free Trial" });
+    setSubscriptionLoading(true);
+    supabase.from("profiles").select("subscription_status, subscription_plan, trial_ends_at, current_period_end, is_admin").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (active) {
+        setSubscription(data || { subscription_status: "inactive", subscription_plan: "No subscription" });
+        setSubscriptionLoading(false);
+      }
     });
     return () => {
       active = false;
     };
   }, [user]);
+  const isAdmin = Boolean(subscription?.is_admin || (user?.email && adminEmails.includes(user.email.toLowerCase())));
   const hasPremium = ["active", "trialing"].includes(subscription?.subscription_status);
+  const hasProductAccess = hasPremium || isAdmin;
+
+  useEffect(() => {
+    if (!supabase || !user || !hasProductAccess) return;
+    let active = true;
+    supabase.from("projects").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
+      if (active && !error) setProjects(data || []);
+    });
+    return () => {
+      active = false;
+    };
+  }, [user, hasProductAccess]);
 
   const go = (page, replace = false) => {
     setHistory((old) => [...old, activePage]);
@@ -550,6 +578,7 @@ function AppShell() {
     if (supabase) await supabase.auth.signOut();
     setUser(null);
     setSubscription(null);
+    setSubscriptionLoading(false);
     setPasswordRecovery(false);
     setProjects(initialProjects);
     go("home", true);
@@ -563,25 +592,25 @@ function AppShell() {
   }
 
   const page = useMemo(() => {
-    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery };
-    if (activePage === "home") return user ? <Dashboard {...props} onAddProject={saveProject} /> : <PublicHome t={t} go={go} />;
+    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery, isAdmin, hasProductAccess };
+    if (activePage === "home") return user ? (hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />) : <PublicHome t={t} go={go} />;
     if (activePage === "dashboard" && !user) return <SettingsPage {...props} />;
-    if (activePage === "dashboard") return <Dashboard {...props} onAddProject={saveProject} />;
-    if (activePage === "projectTools") return hasPremium ? <ProjectTools {...props} /> : <SubscriptionGate language={language} go={go} />;
-    if (activePage === "propertySearch") return hasPremium ? <PropertySearch t={t} /> : <SubscriptionGate language={language} go={go} />;
-    if (activePage === "learning") return <LearningCenter t={t} language={language} go={go} />;
-    if (activePage === "knowledge") return <KnowledgeBase t={t} language={language} />;
-    if (activePage === "tutorials") return <Tutorials t={t} language={language} />;
-    if (activePage === "tours") return <Tours t={t} language={language} />;
-    if (activePage === "dropbox") return <DropboxPage t={t} />;
+    if (activePage === "dashboard") return hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
+    if (activePage === "projectTools") return hasProductAccess ? <ProjectTools {...props} /> : <PremiumPaywall language={language} user={user} go={go} />;
+    if (activePage === "propertySearch") return hasProductAccess ? <PropertySearch t={t} /> : <PremiumPaywall language={language} user={user} go={go} />;
+    if (activePage === "learning") return hasProductAccess ? <LearningCenter t={t} language={language} go={go} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
+    if (activePage === "knowledge") return hasProductAccess ? <KnowledgeBase t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
+    if (activePage === "tutorials") return hasProductAccess ? <Tutorials t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
+    if (activePage === "tours") return hasProductAccess ? <Tours t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
+    if (activePage === "dropbox") return hasProductAccess ? <DropboxPage t={t} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "pricing") return <PricingPlans language={language} user={user} go={go} />;
     if (activePage === "settings") return <SettingsPage {...props} />;
     if (activePage === "profile") return <ProfilePage t={t} language={language} user={user} back={back} />;
     if (["privacy", "terms", "refund", "disclaimer"].includes(activePage)) return <LegalPage type={activePage} language={language} />;
     return <Dashboard {...props} />;
-  }, [activePage, language, projects, user, subscription, passwordRecovery]);
+  }, [activePage, language, projects, user, subscription, passwordRecovery, hasProductAccess, isAdmin]);
 
-  if (loading || authLoading) return <LoadingScreen />;
+  if (loading || authLoading || (user && subscriptionLoading && !isAdmin)) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#050817] text-slate-200">
@@ -590,11 +619,11 @@ function AppShell() {
         <div className="absolute right-[-120px] top-20 h-[460px] w-[460px] rounded-full bg-amber-400/18 blur-3xl" />
         <div className="absolute bottom-[-160px] left-[34%] h-[520px] w-[520px] rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
-      {user && <Sidebar t={t} user={user} activePage={activePage} go={go} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}
-      {user && mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/70 lg:hidden" />}
-      <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} />
-      <main className={`relative z-10 p-4 pb-28 sm:p-5 sm:pb-28 lg:p-8 lg:pb-8 ${user ? "lg:ml-72" : "mx-auto max-w-7xl"}`}>
-        {user && history.length > 0 && activePage !== "dashboard" && <button onClick={back} className="mb-5 inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 hover:border-amber-400/50 hover:text-white">
+      {user && hasProductAccess && <Sidebar t={t} user={user} activePage={activePage} go={go} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} isAdmin={isAdmin} />}
+      {user && hasProductAccess && mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/70 lg:hidden" />}
+      <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} hasProductAccess={hasProductAccess} collapsed={sidebarCollapsed} />
+      <main className={`relative z-10 p-4 pb-28 sm:p-5 sm:pb-28 lg:p-8 lg:pb-8 ${user && hasProductAccess ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-72") : "mx-auto max-w-7xl"}`}>
+        {user && hasProductAccess && history.length > 0 && activePage !== "dashboard" && <button onClick={back} className="mb-5 inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 hover:border-amber-400/50 hover:text-white">
           ← {t.back}
         </button>}
         <motion.div key={activePage} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
@@ -602,8 +631,8 @@ function AppShell() {
         </motion.div>
       </main>
       {!user && activePage !== "home" && <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 sm:px-5 lg:px-8 lg:pb-8"><PublicFooter isEs={language === "es"} go={go} /></div>}
-      <MobileNavigation t={t} language={language} activePage={activePage} go={go} user={user} />
-      {activeTool && (hasPremium ? <ToolModal t={t} language={language} toolId={activeTool} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
+      <MobileNavigation t={t} language={language} activePage={activePage} go={go} user={user} hasProductAccess={hasProductAccess} />
+      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
     </div>
   );
 }
@@ -612,7 +641,7 @@ function LoadingScreen() {
   return <div className="grid min-h-screen place-items-center bg-[#050817] p-6 text-slate-200"><div className="text-center"><BrandLogo size="splash" /><p className="mt-7 text-xs font-black uppercase tracking-[0.24em] text-slate-400">AI Real Estate Operating System</p><div className="mx-auto mt-6 h-1.5 w-48 overflow-hidden rounded-full bg-slate-800"><motion.div initial={{ x: "-100%" }} animate={{ x: "100%" }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} className="h-full w-1/2 rounded-full bg-gradient-to-r from-slate-100 to-cyan-400 shadow-[0_0_20px_rgba(56,189,248,.7)]" /></div></div></div>;
 }
 
-function Sidebar({ t, user, activePage, go, mobileOpen, setMobileOpen }) {
+function Sidebar({ t, user, activePage, go, mobileOpen, setMobileOpen, collapsed, setCollapsed, isAdmin }) {
   const items = [
     ["dashboard", Home, t.dashboard],
     ["projectTools", Hammer, t.projectTools],
@@ -624,44 +653,46 @@ function Sidebar({ t, user, activePage, go, mobileOpen, setMobileOpen }) {
     ["dropbox", Cloud, t.dropbox],
     ["pricing", DollarSign, t.pricing],
     ["settings", Settings, t.settings],
-    ["privacy", FileText, t.privacy],
-    ["terms", ClipboardCheck, t.terms],
-    ["refund", DollarSign, t.refund],
-    ["disclaimer", Sparkles, t.disclaimer],
   ];
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-slate-950/90 p-5 backdrop-blur-xl transition-transform lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
-      <BrandLogo onClick={() => go("dashboard")} size="sidebar" />
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-slate-950/90 p-5 backdrop-blur-xl transition-all duration-300 lg:translate-x-0 ${collapsed ? "lg:w-20 lg:p-3" : "lg:w-72"} ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+      <div className="flex items-center justify-between gap-2">
+        <div className={collapsed ? "lg:hidden" : ""}><BrandLogo onClick={() => go("dashboard")} size="sidebar" /></div>
+        {collapsed && <button type="button" onClick={() => go("dashboard")} aria-label="OPERITRON.COM" className="hidden h-12 w-12 place-items-center rounded-2xl border border-cyan-300/20 bg-slate-900/70 transition hover:border-cyan-300/60 hover:shadow-[0_0_22px_rgba(34,211,238,.24)] lg:grid"><img loading="eager" decoding="async" src="/operitron-mark.png" className="h-10 w-10 rounded-xl object-cover" alt="" /></button>}
+        <button type="button" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="hidden h-10 w-10 place-items-center rounded-xl border border-white/10 text-slate-300 transition hover:border-cyan-300/40 hover:text-white lg:grid">
+          <ChevronRight size={18} className={`transition-transform ${collapsed ? "" : "rotate-180"}`} />
+        </button>
+      </div>
 
-      <ProfileMini t={t} user={user} go={go} />
+      <div className={collapsed ? "lg:hidden" : ""}><ProfileMini t={t} user={user} go={go} /></div>
 
       <nav className="mt-6 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {items.map(([id, Icon, label]) => (
-          <button key={id} onClick={() => { go(id); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left font-bold transition-all ${activePage === id ? "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.28)]" : "text-slate-400 hover:bg-white/5 hover:text-white hover:shadow-[0_0_30px_rgba(251,191,36,.10)]"}`}>
-            <Icon size={20} />
-            {label}
-            <ChevronRight className="ml-auto opacity-0 transition group-hover:opacity-100" size={16} />
+          <button key={id} title={collapsed ? label : undefined} onClick={() => { go(id); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left font-bold transition-all ${collapsed ? "lg:justify-center lg:px-0" : ""} ${activePage === id ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.25)]" : "text-slate-400 hover:bg-white/5 hover:text-white hover:shadow-[0_0_30px_rgba(34,211,238,.10)]"}`}>
+            <Icon className="shrink-0" size={20} />
+            <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
+            {!collapsed && <ChevronRight className="ml-auto opacity-0 transition group-hover:opacity-100" size={16} />}
           </button>
         ))}
       </nav>
 
-      <div className="mt-5 shrink-0 rounded-3xl border border-amber-400/20 bg-gradient-to-br from-amber-400/10 to-cyan-400/5 p-4 shadow-[0_0_40px_rgba(251,191,36,.12)]">
-        <div className="mb-2 flex items-center gap-2 text-amber-300"><Sparkles size={18} /><p className="font-black">{t.earlyAccess}</p></div>
+      <div className={`mt-5 shrink-0 rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 to-purple-400/5 p-4 shadow-[0_0_40px_rgba(34,211,238,.12)] ${collapsed ? "lg:hidden" : ""}`}>
+        <div className="mb-2 flex items-center gap-2 text-cyan-300"><Sparkles size={18} /><p className="font-black">{isAdmin ? "Builder Access" : t.earlyAccess}</p></div>
         <p className="text-sm leading-6 text-slate-400">{t.earlyAccessText}</p>
       </div>
     </aside>
   );
 }
 
-function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut }) {
+function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, hasProductAccess, collapsed }) {
   const [accountOpen, setAccountOpen] = useState(false);
   return (
-    <header className={`sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 px-3 py-3 backdrop-blur-xl sm:px-5 ${user ? "lg:ml-72" : ""}`}>
+    <header className={`sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 px-3 py-3 backdrop-blur-xl transition-[margin] duration-300 sm:px-5 ${user && hasProductAccess ? (collapsed ? "lg:ml-20" : "lg:ml-72") : ""}`}>
       <div className={`mx-auto flex items-center justify-between gap-2 sm:gap-4 ${user ? "" : "max-w-7xl"}`}>
         <div className="flex min-w-0 items-center gap-3">
-          {user && <button onClick={() => setMobileOpen(true)} className="rounded-xl border border-white/10 p-2 text-white lg:hidden"><Menu /></button>}
-          <BrandLogo onClick={() => go(user ? "dashboard" : "home")} compact />
+          {user && hasProductAccess && <button onClick={() => setMobileOpen(true)} className="rounded-xl border border-white/10 p-2 text-white lg:hidden"><Menu /></button>}
+          <BrandLogo onClick={() => go(user && hasProductAccess ? "dashboard" : "home")} compact />
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "Español" : "English"} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">
@@ -671,9 +702,14 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut }) 
             <button onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} className="flex items-center gap-2 rounded-xl border border-white/10 p-2 text-slate-300 hover:border-cyan-300/50 hover:text-white sm:px-3"><UserCircle /><span className="hidden max-w-40 truncate text-sm font-bold xl:block">{user.email}</span></button>
             {accountOpen && <div className="absolute right-0 top-[calc(100%+0.65rem)] z-50 w-64 rounded-2xl border border-white/10 bg-slate-950 p-2 shadow-2xl shadow-black/50">
               <p className="truncate px-3 py-2 text-xs font-bold text-slate-500">{user.email}</p>
-              <button onClick={() => { setAccountOpen(false); go("dashboard"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.dashboard}</button>
+              {hasProductAccess && <button onClick={() => { setAccountOpen(false); go("dashboard"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.dashboard}</button>}
               <button onClick={() => { setAccountOpen(false); go("profile"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.profile}</button>
               <button onClick={() => { setAccountOpen(false); go("pricing"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.pricing}</button>
+              <div className="my-2 border-t border-white/10" />
+              <button onClick={() => { setAccountOpen(false); go("privacy"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.privacy}</button>
+              <button onClick={() => { setAccountOpen(false); go("terms"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.terms}</button>
+              <button onClick={() => { setAccountOpen(false); go("refund"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.refund}</button>
+              <button onClick={() => { setAccountOpen(false); go("disclaimer"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.disclaimer}</button>
               <button onClick={() => { setAccountOpen(false); signOut(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-red-300 hover:bg-red-400/10"><LogOut size={16} />{language === "es" ? "Cerrar sesión" : "Sign out"}</button>
             </div>}
           </div> : <button onClick={() => go("settings")} className="whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">{t.login}</button>}
@@ -684,13 +720,13 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut }) 
   );
 }
 
-function MobileNavigation({ t, language, activePage, go, user }) {
+function MobileNavigation({ t, language, activePage, go, user, hasProductAccess }) {
   const isEs = language === "es";
-  const items = user
+  const items = user && hasProductAccess
     ? [["dashboard", Home, isEs ? "Inicio" : "Home"], ["projectTools", Hammer, isEs ? "Obra" : "Tools"], ["propertySearch", Search, isEs ? "Buscar" : "Search"], ["profile", UserCircle, isEs ? "Perfil" : "Profile"]]
-    : [["home", Home, isEs ? "Inicio" : "Home"], ["learning", BookOpen, isEs ? "Guías" : "Learn"], ["pricing", DollarSign, isEs ? "Planes" : "Plans"], ["settings", UserCircle, isEs ? "Cuenta" : "Account"]];
+    : [["home", Home, isEs ? "Inicio" : "Home"], ["pricing", DollarSign, isEs ? "Planes" : "Plans"], ["settings", UserCircle, isEs ? "Cuenta" : "Account"], ["disclaimer", FileText, isEs ? "Legal" : "Legal"]];
   return <nav aria-label={isEs ? "Navegación móvil" : "Mobile navigation"} className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 gap-1 rounded-[1.45rem] border border-white/10 bg-slate-950/95 p-1.5 shadow-[0_18px_50px_rgba(0,0,0,.5)] backdrop-blur-xl lg:hidden">{items.map(([page, Icon, label]) => {
-    const active = activePage === page || (!user && page === "home" && activePage === "dashboard");
+    const active = activePage === page || (!(user && hasProductAccess) && page === "home" && activePage === "dashboard");
     return <button key={page} type="button" onClick={() => go(page)} className={`flex min-h-[3.6rem] flex-col items-center justify-center gap-1 rounded-[1.05rem] px-1 py-2 text-[0.68rem] font-bold transition ${active ? "bg-cyan-300/15 text-cyan-200" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}><Icon size={19} /><span className="truncate">{label}</span></button>;
   })}</nav>;
 }
@@ -863,8 +899,8 @@ function ByNumbers({ isEs }) {
 
 function LandingFAQ({ isEs }) {
   const faqs = isEs
-    ? [["¿Operitron reemplaza a mi contratista o asesor?", "No. OPERITRON.COM organiza cálculos y flujos de trabajo para apoyar decisiones; siempre valida con profesionales licenciados."], ["¿Puedo usarlo para flips, rentals y BRRR?", "Sí. Incluye underwriting, DSCR, cash-out, construcción, takeoffs y reportes."], ["¿Incluye prueba gratis?", "Sí. Mantén el lenguaje de prueba gratis de 3 días en los planes Monthly y Annual."], ["¿Puedo colaborar con mi equipo?", "Sí. Puedes estructurar colaboradores, elementos vinculados, cotizaciones y reportes por proyecto."]]
-    : [["Does Operitron replace my contractor or advisor?", "No. OPERITRON.COM organizes calculations and workflows for decision support; always validate with licensed professionals."], ["Can I use it for flips, rentals, and BRRR?", "Yes. It includes underwriting, DSCR, cash-out, construction tracking, takeoffs, and reports."], ["Is there a free trial?", "Yes. Both Monthly and Annual plans keep the 3-day free trial language."], ["Can I collaborate with my team?", "Yes. Structure collaborators, linked items, quotes, and reports by project."]];
+    ? [["¿Operitron reemplaza a mi contratista o asesor?", "No. OPERITRON.COM organiza cálculos y flujos de trabajo para apoyar decisiones; siempre valida con profesionales licenciados."], ["¿Puedo usarlo para flips, rentals y BRRR?", "Sí. Incluye underwriting, DSCR, cash-out, construcción, takeoffs y reportes."], ["¿Incluye prueba gratis?", "Sí. La prueba gratis de tres días comienza al iniciar una suscripción Monthly o Annual en el checkout seguro."], ["¿Puedo colaborar con mi equipo?", "Sí. Puedes estructurar colaboradores, elementos vinculados, cotizaciones y reportes por proyecto."]]
+    : [["Does Operitron replace my contractor or advisor?", "No. OPERITRON.COM organizes calculations and workflows for decision support; always validate with licensed professionals."], ["Can I use it for flips, rentals, and BRRR?", "Yes. It includes underwriting, DSCR, cash-out, construction tracking, takeoffs, and reports."], ["Is there a free trial?", "Yes. A three-day trial begins when you start a Monthly or Annual subscription in secure checkout."], ["Can I collaborate with my team?", "Yes. Structure collaborators, linked items, quotes, and reports by project."]];
   return <section><SectionHeader title={isEs ? "Preguntas Frecuentes" : "Frequently Asked Questions"} detail={isEs ? "Respuestas rápidas para inversionistas y constructores." : "Quick answers for investors and builders."} /><div className="space-y-3">{faqs.map(([q, a]) => <details key={q} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><summary className="cursor-pointer font-black text-white">{q}</summary><p className="mt-3 leading-7 text-slate-400">{a}</p></details>)}</div></section>;
 }
 
@@ -1046,6 +1082,14 @@ function ToolModalFrame({ children, onClose }) {
 function SubscriptionGate({ language, go }) {
   const isEs = language === "es";
   return <section className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 to-purple-500/10 p-7"><DollarSign className="text-cyan-300" size={32} /><h2 className="mt-5 pr-8 text-2xl font-black text-white">{isEs ? "Activa tu prueba de 3 días" : "Activate your 3-day trial"}</h2><p className="mt-3 leading-7 text-slate-300">{isEs ? "Las herramientas profesionales se habilitan con un plan Monthly o Annual activo. Comienza de forma segura con Stripe Checkout." : "Professional tools unlock with an active Monthly or Annual plan. Start securely through Stripe Checkout."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{isEs ? "Ver planes" : "View plans"}</button></section>;
+}
+
+function PremiumPaywall({ language, user, go }) {
+  const isEs = language === "es";
+  const perks = isEs
+    ? ["Analizador IA y underwriting avanzado", "Calculadoras DSCR, BRRR y cash-out", "Proyectos, reportes, Dropbox y colaboración", "Rastreo de construcción y takeoff de materiales"]
+    : ["AI analysis and advanced underwriting", "DSCR, BRRR, and cash-out calculators", "Projects, reports, Dropbox, and collaboration", "Construction tracking and material takeoffs"];
+  return <div className="mx-auto max-w-5xl space-y-7"><section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/12 via-slate-950 to-purple-500/12 p-6 text-center shadow-[0_0_55px_rgba(34,211,238,.12)] sm:p-10"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" /><Sparkles className="relative mx-auto text-cyan-300" size={38} /><p className="relative mt-5 text-xs font-black uppercase tracking-[0.28em] text-cyan-300">OPERITRON.COM</p><h1 className="relative mx-auto mt-3 max-w-3xl text-3xl font-black text-white sm:text-5xl">{isEs ? "Comienza tu prueba gratis de 3 dias" : "Start your 3-day free trial"}</h1><p className="relative mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">{isEs ? "Tu cuenta esta lista. Las herramientas profesionales se activan cuando inicias una suscripcion Monthly o Annual mediante Stripe Checkout." : "Your account is ready. Professional tools activate when you start a Monthly or Annual subscription through secure Stripe Checkout."}</p><p className="relative mt-4 text-sm font-bold text-slate-400">{user?.email}</p><div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row"><button onClick={() => go("pricing")} className="primary-button">{isEs ? "Ver planes e iniciar prueba" : "View plans and start trial"}</button><button onClick={() => go("profile")} className="secondary-button">{isEs ? "Mi cuenta" : "My account"}</button></div></section><div className="grid gap-4 md:grid-cols-2">{perks.map((perk) => <div key={perk} className="rounded-2xl border border-white/10 bg-white/[.045] p-5 text-slate-200"><CheckCircle2 className="mb-3 text-cyan-300" size={20} /><p className="font-bold">{perk}</p></div>)}</div></div>;
 }
 
 function ToolBody({ t, language, toolId }) {
@@ -1536,8 +1580,8 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const ui = isEs
-    ? { register: "Registrarse", login: "Iniciar sesión", details: "Crea tu cuenta de Operitron para acceder al panel, herramientas y proyectos.", recoveryDetails: "Crea una nueva contraseña segura para tu cuenta.", fullName: "Nombre completo", company: "Empresa", phone: "Teléfono", dashboard: "Volver al panel", signOut: "Cerrar sesión", back: "Volver", save: "Crear cuenta", secure: "Tu cuenta se protege mediante autenticación segura y verificación por correo." }
-    : { register: "Register", login: "Login", details: "Create your Operitron account to access the dashboard, tools, and projects.", recoveryDetails: "Create a new secure password for your account.", fullName: "Full name", company: "Company", phone: "Phone", dashboard: "Go to Dashboard", signOut: "Sign Out", back: "Back", save: "Create Account", secure: "Your account is protected with secure authentication and email verification." };
+    ? { register: "Registrarse", login: "Iniciar sesión", details: "Crea tu cuenta de Operitron. Las herramientas se activan al iniciar una suscripción o prueba mediante Stripe.", recoveryDetails: "Crea una nueva contraseña segura para tu cuenta.", fullName: "Nombre completo", company: "Empresa", phone: "Teléfono", dashboard: "Volver al panel", signOut: "Cerrar sesión", back: "Volver", save: "Crear cuenta", secure: "Tu cuenta se protege mediante autenticación segura y verificación por correo." }
+    : { register: "Register", login: "Login", details: "Create your Operitron account. Tools activate after starting a subscription or trial through Stripe.", recoveryDetails: "Create a new secure password for your account.", fullName: "Full name", company: "Company", phone: "Phone", dashboard: "Go to Dashboard", signOut: "Sign Out", back: "Back", save: "Create Account", secure: "Your account is protected with secure authentication and email verification." };
 
   useEffect(() => {
     if (passwordRecovery) setMode("recover");
@@ -1555,7 +1599,7 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
           password,
           options: {
             data: { full_name: name.trim(), company: company.trim(), phone: phone.trim() },
-            emailRedirectTo: `${window.location.origin}/login`,
+            emailRedirectTo: `${productionUrl}/dashboard`,
           },
         })
         : await supabase.auth.signInWithPassword({ email: email.trim(), password });
@@ -1575,7 +1619,7 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
     if (!supabase) return setStatus(t.authUnavailable);
     if (!email.trim()) return setStatus(isEs ? "Ingresa tu correo electrónico primero." : "Enter your email address first.");
     setSubmitting(true);
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/login` });
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${productionUrl}/dashboard` });
     setStatus(error ? error.message : t.resetSent);
     setSubmitting(false);
   }
@@ -1644,10 +1688,10 @@ function ProfileMini({ t, user, go }) {
 function ProfilePage({ t, language, user, back }) {
   const [name, setName] = useState(user?.user_metadata?.full_name || "");
   const [email] = useState(user?.email || "");
-  const [plan, setPlan] = useState("Free Trial");
+  const [plan, setPlan] = useState(language === "es" ? "Sin suscripcion" : "No subscription");
   const [company, setCompany] = useState(user?.user_metadata?.company || "");
   const [phone, setPhone] = useState(user?.user_metadata?.phone || "");
-  const ui = language === "es" ? { company: "Compañía", phone: "Teléfono", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "Prueba de 3 días al suscribirte", save: "Guardar Perfil", billing: "Administrar facturación", billingError: "No se pudo abrir la facturación." } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved.", trialEnds: "3-day trial on subscription", save: "Save Profile", billing: "Manage billing", billingError: "Billing portal could not open." };
+  const ui = language === "es" ? { company: "Compañía", phone: "Teléfono", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "La prueba inicia al suscribirte", save: "Guardar Perfil", billing: "Administrar facturación", billingError: "Primero inicia una suscripcion." } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved.", trialEnds: "Trial starts after checkout", save: "Save Profile", billing: "Manage billing", billingError: "Start a subscription first." };
   const [status, setStatus] = useState(ui.ready);
   useEffect(() => {
     if (!supabase || !user) return;
@@ -1671,10 +1715,10 @@ function ProfilePage({ t, language, user, back }) {
       const { data } = await supabase.auth.getSession();
       const response = await fetch(portalEndpoint, { method: "POST", headers: { Authorization: `Bearer ${data.session.access_token}` } });
       const result = await response.json();
-      if (!response.ok) throw new Error(result.error);
+      if (!response.ok) throw new Error(result.error || ui.billingError);
       window.location.assign(result.url);
-    } catch (_error) {
-      setStatus(ui.billingError);
+    } catch (error) {
+      setStatus(error.message === "Start a subscription first." ? ui.billingError : (error.message || ui.billingError));
     }
   }
   return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} /><div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={plan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={plan} green /><MiniMetric label={t.trial} value={ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button><button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button><p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
@@ -1714,8 +1758,13 @@ function LegalPage({ type, language }) {
 }
 
 function AIAssistant({ t = enhancedCopy.en, large }) {
-  const [answer, setAnswer] = useState(t.aiPreview);
-  return <div className={`rounded-3xl border border-purple-400/20 bg-gradient-to-br from-purple-500/10 to-amber-500/5 p-5 shadow-[0_0_35px_rgba(168,85,247,.12)] ${large ? "min-h-72" : ""}`}><div className="mb-3 flex items-center gap-2 text-purple-300"><Bot /><p className="font-black">{t.aiAssistant}</p></div><textarea className="min-h-24 w-full rounded-2xl border border-white/10 bg-slate-950/80 p-4 text-sm text-white outline-none focus:border-purple-400" defaultValue={t.aiPrompt} /><button onClick={() => setAnswer(t.aiPreviewNext)} className="mt-3 rounded-2xl bg-purple-400 px-5 py-3 font-black text-slate-950 hover:bg-purple-300">{t.analyzeWithAi}</button><p className="mt-4 rounded-2xl bg-slate-950/60 p-4 text-sm leading-6 text-slate-300">{answer}</p></div>;
+  const language = t === enhancedCopy.es ? "es" : "en";
+  async function getAccessToken() {
+    if (!supabase) return "";
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || "";
+  }
+  return <Suspense fallback={<div className="grid min-h-52 place-items-center rounded-3xl border border-cyan-300/20 bg-cyan-300/[.05] text-cyan-200"><Sparkles className="animate-pulse" /> Loading AI Analyzer...</div>}><LazyAIAnalyzerPanel language={language} large={large} getAccessToken={getAccessToken} /></Suspense>;
 }
 
 function SectionHeader({ title, detail }) {
