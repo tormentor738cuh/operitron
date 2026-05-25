@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    { "source": "/privacy-policy", "destination": "/" },
+    { "source": "/terms-of-service", "destination": "/" },
+    { "source": "/refund-policy", "destination": "/" },
+    { "source": "/disclaimer", "destination": "/" },
+    { "source": "/login", "destination": "/" },
+    { "source": "/dashboard", "destination": "/" },
+    { "source": "/profile", "destination": "/" },
+    { "source": "/pricing", "destination": "/" },
+    { "source": "/learning-center", "destination": "/" },
+    { "source": "/knowledge-base", "destination": "/" },
+    { "source": "/tutorials", "destination": "/" },
+    { "source": "/tours", "destination": "/" }
+  ]
+}

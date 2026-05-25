@@ -46,6 +46,29 @@ const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey) : null;
 const rentcastApiKey = import.meta.env.VITE_RENTCAST_API_KEY;
+const checkoutEndpoint = import.meta.env.VITE_STRIPE_CHECKOUT_ENDPOINT || "/api/create-checkout-session";
+const portalEndpoint = import.meta.env.VITE_STRIPE_PORTAL_ENDPOINT || "/api/create-billing-portal";
+const monthlyPriceId = import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || import.meta.env.VITE_STRIPE_STARTER_PRICE_ID;
+const annualPriceId = import.meta.env.VITE_STRIPE_ANNUAL_PRICE_ID;
+
+const publicPages = new Set(["home", "pricing", "settings", "learning", "knowledge", "tutorials", "tours", "privacy", "terms", "refund", "disclaimer"]);
+const pagePaths = {
+  home: "/",
+  dashboard: "/dashboard",
+  pricing: "/pricing",
+  settings: "/login",
+  profile: "/profile",
+  learning: "/learning-center",
+  knowledge: "/knowledge-base",
+  tutorials: "/tutorials",
+  tours: "/tours",
+  privacy: "/privacy-policy",
+  terms: "/terms-of-service",
+  refund: "/refund-policy",
+  disclaimer: "/disclaimer",
+};
+const pathPages = Object.fromEntries(Object.entries(pagePaths).map(([page, path]) => [path, page]));
+const getPageFromPath = () => pathPages[window.location.pathname.replace(/\/+$/, "") || "/"] || "home";
 
 const formatMoney = (value) =>
   Number(value || 0).toLocaleString("en-US", {
@@ -138,6 +161,7 @@ const enhancedCopy = {
     brand: "OPERITRON.COM",
     privacy: "Privacy Policy",
     terms: "Terms",
+    refund: "Refund Policy",
     disclaimer: "Disclaimer",
     earlyAccess: "Early Access",
     earlyAccessText: "3-day free trial for investors, builders, and operators.",
@@ -165,11 +189,18 @@ const enhancedCopy = {
     login: "Login",
     signUp: "Sign up",
     password: "Password",
-    supabaseReady: "Supabase is configured.",
-    accountKeyNeeded: "Account access is ready for configuration. Add Supabase keys for live account access.",
-    profileStarted: "Profile session started. Add Supabase keys for persistent accounts.",
     checkEmail: "Check your email to confirm your account.",
     loggedIn: "Logged in.",
+    confirmEmail: "Confirm email address",
+    forgotPassword: "Forgot password?",
+    resetPassword: "Send reset link",
+    resetSent: "Password reset instructions have been sent to your email.",
+    emailMismatch: "Email addresses do not match.",
+    authUnavailable: "Account access is unavailable in this preview. Contact support@operitron.com for assistance.",
+    loginReady: "Secure account access.",
+    signingIn: "Signing in...",
+    creatingAccount: "Creating account...",
+    sessionConfirmed: "Account confirmed. You can now sign in.",
     propertyReady: "Ready to search.",
     rentcastKeyRequired: "RentCast key required. Add VITE_RENTCAST_API_KEY to activate live records.",
     searchingRecords: "Searching property records...",
@@ -229,6 +260,7 @@ const enhancedCopy = {
     profile: "Perfil",
     privacy: "Política de Privacidad",
     terms: "Términos",
+    refund: "Política de Reembolsos",
     disclaimer: "Aviso Legal",
     startTrial: "Iniciar prueba gratis de 3 días",
     command: "AI Real Estate Operating System",
@@ -269,11 +301,18 @@ const enhancedCopy = {
     login: "Iniciar sesión",
     signUp: "Registrarse",
     password: "Contraseña",
-    supabaseReady: "Supabase está configurado.",
-    accountKeyNeeded: "El acceso de cuenta está listo para configurarse. Agrega las llaves de Supabase para cuentas reales.",
-    profileStarted: "Sesión de perfil iniciada. Agrega llaves de Supabase para cuentas persistentes.",
     checkEmail: "Revisa tu correo para confirmar la cuenta.",
     loggedIn: "Sesión iniciada.",
+    confirmEmail: "Confirmar correo electrónico",
+    forgotPassword: "¿Olvidaste tu contraseña?",
+    resetPassword: "Enviar enlace de recuperación",
+    resetSent: "Las instrucciones para restablecer tu contraseña se enviaron a tu correo.",
+    emailMismatch: "Los correos electrónicos no coinciden.",
+    authUnavailable: "El acceso a cuentas no está disponible en esta vista previa. Escribe a support@operitron.com para recibir ayuda.",
+    loginReady: "Acceso seguro a tu cuenta.",
+    signingIn: "Iniciando sesión...",
+    creatingAccount: "Creando cuenta...",
+    sessionConfirmed: "Cuenta confirmada. Ya puedes iniciar sesión.",
     propertyReady: "Listo para buscar.",
     rentcastKeyRequired: "Se requiere llave de RentCast. Agrega VITE_RENTCAST_API_KEY para activar registros reales.",
     searchingRecords: "Buscando registros de propiedad...",
@@ -408,13 +447,15 @@ const learningArticles = [
 
 function AppShell() {
   const [language, setLanguage] = useState("en");
-  const [activePage, setActivePage] = useState("dashboard");
+  const [activePage, setActivePage] = useState(getPageFromPath);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [projects, setProjects] = useState(initialProjects);
   const [activeTool, setActiveTool] = useState(null);
   const [history, setHistory] = useState([]);
   const [user, setUser] = useState(null);
+  const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const t = enhancedCopy[language];
 
   useEffect(() => {
@@ -422,39 +463,108 @@ function AppShell() {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const go = (page) => {
+  useEffect(() => {
+    const handleNavigation = () => setActivePage(getPageFromPath());
+    window.addEventListener("popstate", handleNavigation);
+    return () => window.removeEventListener("popstate", handleNavigation);
+  }, []);
+
+  useEffect(() => {
+    if (!supabase) {
+      setAuthLoading(false);
+      return undefined;
+    }
+    let active = true;
+    supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+      setUser(data.session?.user || null);
+      setAuthLoading(false);
+    });
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+      setAuthLoading(false);
+    });
+    return () => {
+      active = false;
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (authLoading || user || publicPages.has(activePage)) return;
+    window.history.replaceState({}, "", pagePaths.settings);
+    setActivePage("settings");
+  }, [activePage, authLoading, user]);
+
+  useEffect(() => {
+    if (!supabase || !user) return;
+    let active = true;
+    supabase.from("projects").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
+      if (active && !error) setProjects(data || []);
+    });
+    supabase.from("profiles").select("subscription_status, subscription_plan, trial_ends_at, current_period_end").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (active) setSubscription(data || { subscription_status: "inactive", subscription_plan: "Free Trial" });
+    });
+    return () => {
+      active = false;
+    };
+  }, [user]);
+  const hasPremium = ["active", "trialing"].includes(subscription?.subscription_status);
+
+  const go = (page, replace = false) => {
     setHistory((old) => [...old, activePage]);
+    const target = pagePaths[page] || "/";
+    window.history[replace ? "replaceState" : "pushState"]({}, "", target);
     setActivePage(page);
     setMobileOpen(false);
   };
 
   const back = () => {
     const previous = history[history.length - 1];
-    if (!previous) return;
+    if (!previous) {
+      window.history.back();
+      return;
+    }
     setHistory((old) => old.slice(0, -1));
+    window.history.pushState({}, "", pagePaths[previous] || "/");
     setActivePage(previous);
   };
 
+  async function signOut() {
+    if (supabase) await supabase.auth.signOut();
+    setUser(null);
+    setSubscription(null);
+    setProjects(initialProjects);
+    go("home", true);
+  }
+
+  async function saveProject(project) {
+    setProjects((current) => [project, ...current]);
+    if (!supabase || !user) return;
+    const { id, ...values } = project;
+    await supabase.from("projects").insert({ id, user_id: user.id, ...values });
+  }
+
   const page = useMemo(() => {
-    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser };
-    if (!user && !["dashboard", "pricing", "settings", "learning", "knowledge", "tutorials", "tours", "privacy", "terms", "disclaimer"].includes(activePage)) return <PublicHome t={t} go={go} />;
-    if (activePage === "dashboard" && !user) return <PublicHome t={t} go={go} />;
-    if (activePage === "dashboard") return <Dashboard {...props} />;
-    if (activePage === "projectTools") return <ProjectTools {...props} />;
-    if (activePage === "propertySearch") return <PropertySearch t={t} />;
+    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription };
+    if (activePage === "home") return user ? <Dashboard {...props} onAddProject={saveProject} /> : <PublicHome t={t} go={go} />;
+    if (activePage === "dashboard" && !user) return <SettingsPage {...props} />;
+    if (activePage === "dashboard") return <Dashboard {...props} onAddProject={saveProject} />;
+    if (activePage === "projectTools") return hasPremium ? <ProjectTools {...props} /> : <SubscriptionGate language={language} go={go} />;
+    if (activePage === "propertySearch") return hasPremium ? <PropertySearch t={t} /> : <SubscriptionGate language={language} go={go} />;
     if (activePage === "learning") return <LearningCenter t={t} language={language} go={go} />;
     if (activePage === "knowledge") return <KnowledgeBase t={t} language={language} />;
     if (activePage === "tutorials") return <Tutorials t={t} language={language} />;
     if (activePage === "tours") return <Tours t={t} language={language} />;
     if (activePage === "dropbox") return <DropboxPage t={t} />;
-    if (activePage === "pricing") return <PricingPlans language={language} />;
+    if (activePage === "pricing") return <PricingPlans language={language} user={user} go={go} />;
     if (activePage === "settings") return <SettingsPage {...props} />;
     if (activePage === "profile") return <ProfilePage t={t} language={language} user={user} back={back} />;
-    if (["privacy", "terms", "disclaimer"].includes(activePage)) return <LegalPage type={activePage} language={language} />;
+    if (["privacy", "terms", "refund", "disclaimer"].includes(activePage)) return <LegalPage type={activePage} language={language} />;
     return <Dashboard {...props} />;
-  }, [activePage, language, projects, user]);
+  }, [activePage, language, projects, user, subscription]);
 
-  if (loading) return <LoadingScreen />;
+  if (loading || authLoading) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#050817] text-slate-200">
@@ -463,10 +573,10 @@ function AppShell() {
         <div className="absolute right-[-120px] top-20 h-[460px] w-[460px] rounded-full bg-amber-400/18 blur-3xl" />
         <div className="absolute bottom-[-160px] left-[34%] h-[520px] w-[520px] rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
-      {user && <Sidebar t={t} activePage={activePage} go={go} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}
+      {user && <Sidebar t={t} user={user} activePage={activePage} go={go} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} />}
       {user && mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/70 lg:hidden" />}
-      <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} />
-      <main className={`relative z-10 p-5 lg:p-8 ${user ? "lg:ml-72" : "mx-auto max-w-7xl"}`}>
+      <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} />
+      <main className={`relative z-10 p-4 pb-28 sm:p-5 sm:pb-28 lg:p-8 lg:pb-8 ${user ? "lg:ml-72" : "mx-auto max-w-7xl"}`}>
         {user && history.length > 0 && activePage !== "dashboard" && <button onClick={back} className="mb-5 inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 hover:border-amber-400/50 hover:text-white">
           ← {t.back}
         </button>}
@@ -474,7 +584,9 @@ function AppShell() {
           {page}
         </motion.div>
       </main>
-      {activeTool && <ToolModal t={t} language={language} toolId={activeTool} onClose={() => setActiveTool(null)} />}
+      {!user && activePage !== "home" && <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 sm:px-5 lg:px-8 lg:pb-8"><PublicFooter isEs={language === "es"} go={go} /></div>}
+      <MobileNavigation t={t} language={language} activePage={activePage} go={go} user={user} />
+      {activeTool && (hasPremium ? <ToolModal t={t} language={language} toolId={activeTool} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
     </div>
   );
 }
@@ -483,7 +595,7 @@ function LoadingScreen() {
   return <div className="grid min-h-screen place-items-center bg-[#050817] p-6 text-slate-200"><div className="text-center"><BrandLogo size="splash" /><p className="mt-7 text-xs font-black uppercase tracking-[0.24em] text-slate-400">AI Real Estate Operating System</p><div className="mx-auto mt-6 h-1.5 w-48 overflow-hidden rounded-full bg-slate-800"><motion.div initial={{ x: "-100%" }} animate={{ x: "100%" }} transition={{ duration: 0.8, repeat: Infinity, ease: "linear" }} className="h-full w-1/2 rounded-full bg-gradient-to-r from-slate-100 to-cyan-400 shadow-[0_0_20px_rgba(56,189,248,.7)]" /></div></div></div>;
 }
 
-function Sidebar({ t, activePage, go, mobileOpen, setMobileOpen }) {
+function Sidebar({ t, user, activePage, go, mobileOpen, setMobileOpen }) {
   const items = [
     ["dashboard", Home, t.dashboard],
     ["projectTools", Hammer, t.projectTools],
@@ -497,6 +609,7 @@ function Sidebar({ t, activePage, go, mobileOpen, setMobileOpen }) {
     ["settings", Settings, t.settings],
     ["privacy", FileText, t.privacy],
     ["terms", ClipboardCheck, t.terms],
+    ["refund", DollarSign, t.refund],
     ["disclaimer", Sparkles, t.disclaimer],
   ];
 
@@ -504,7 +617,7 @@ function Sidebar({ t, activePage, go, mobileOpen, setMobileOpen }) {
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-slate-950/90 p-5 backdrop-blur-xl transition-transform lg:translate-x-0 ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <BrandLogo onClick={() => go("dashboard")} size="sidebar" />
 
-      <ProfileMini t={t} go={go} />
+      <ProfileMini t={t} user={user} go={go} />
 
       <nav className="mt-6 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {items.map(([id, Icon, label]) => (
@@ -524,72 +637,92 @@ function Sidebar({ t, activePage, go, mobileOpen, setMobileOpen }) {
   );
 }
 
-function Header({ t, language, setLanguage, setMobileOpen, go, user }) {
+function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut }) {
+  const [accountOpen, setAccountOpen] = useState(false);
   return (
-    <header className={`sticky top-0 z-30 border-b border-white/10 bg-slate-950/70 px-5 py-4 backdrop-blur-xl ${user ? "lg:ml-72" : ""}`}>
-      <div className={`mx-auto flex items-center justify-between gap-4 ${user ? "" : "max-w-7xl"}`}>
+    <header className={`sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 px-3 py-3 backdrop-blur-xl sm:px-5 ${user ? "lg:ml-72" : ""}`}>
+      <div className={`mx-auto flex items-center justify-between gap-2 sm:gap-4 ${user ? "" : "max-w-7xl"}`}>
         <div className="flex min-w-0 items-center gap-3">
           {user && <button onClick={() => setMobileOpen(true)} className="rounded-xl border border-white/10 p-2 text-white lg:hidden"><Menu /></button>}
-          <BrandLogo onClick={() => go("dashboard")} compact />
-          {user && <div className="hidden min-w-0 xl:block"><p className="text-xs font-bold uppercase tracking-widest text-slate-500">{t.command}</p><h2 className="truncate text-lg font-black text-white">{user.email}</h2></div>}
+          <BrandLogo onClick={() => go(user ? "dashboard" : "home")} compact />
         </div>
-        <div className="flex items-center gap-3">
-          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} className="flex min-w-[8.5rem] items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 py-3 font-bold text-slate-300 hover:border-amber-400/50 hover:text-white">
-            <Languages size={18} /> {language === "en" ? "Español" : "English"}
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "Español" : "English"} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">
+            <Languages size={17} /><span className="hidden md:inline">{language === "en" ? "Español" : "English"}</span><span className="md:hidden">{language === "en" ? "ES" : "EN"}</span>
           </button>
-          {user ? <button onClick={() => go("profile")} className="hidden rounded-2xl border border-white/10 p-3 text-slate-300 hover:border-cyan-300/50 hover:text-white sm:block"><UserCircle /></button> : <button onClick={() => go("settings")} className="hidden rounded-2xl border border-white/10 px-4 py-3 font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:block">{t.login}</button>}
-          <button onClick={() => go("pricing")} className="hidden rounded-2xl bg-amber-400 px-5 py-3 font-black text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.35)] transition hover:-translate-y-0.5 hover:bg-amber-300 md:block">
-            {t.startTrial}
-          </button>
+          {user ? <div className="relative">
+            <button onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} className="flex items-center gap-2 rounded-xl border border-white/10 p-2 text-slate-300 hover:border-cyan-300/50 hover:text-white sm:px-3"><UserCircle /><span className="hidden max-w-40 truncate text-sm font-bold xl:block">{user.email}</span></button>
+            {accountOpen && <div className="absolute right-0 top-[calc(100%+0.65rem)] z-50 w-64 rounded-2xl border border-white/10 bg-slate-950 p-2 shadow-2xl shadow-black/50">
+              <p className="truncate px-3 py-2 text-xs font-bold text-slate-500">{user.email}</p>
+              <button onClick={() => { setAccountOpen(false); go("dashboard"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.dashboard}</button>
+              <button onClick={() => { setAccountOpen(false); go("profile"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.profile}</button>
+              <button onClick={() => { setAccountOpen(false); go("pricing"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.pricing}</button>
+              <button onClick={() => { setAccountOpen(false); signOut(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-red-300 hover:bg-red-400/10"><LogOut size={16} />{language === "es" ? "Cerrar sesión" : "Sign out"}</button>
+            </div>}
+          </div> : <button onClick={() => go("settings")} className="whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">{t.login}</button>}
+          {!user && <button onClick={() => go("pricing")} className="hidden whitespace-nowrap rounded-2xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.35)] transition hover:-translate-y-0.5 hover:bg-amber-300 lg:block xl:px-5 xl:text-base">{language === "es" ? "Prueba gratis de 3 días" : t.startTrial}</button>}
         </div>
       </div>
     </header>
   );
 }
 
+function MobileNavigation({ t, language, activePage, go, user }) {
+  const isEs = language === "es";
+  const items = user
+    ? [["dashboard", Home, isEs ? "Inicio" : "Home"], ["projectTools", Hammer, isEs ? "Obra" : "Tools"], ["propertySearch", Search, isEs ? "Buscar" : "Search"], ["profile", UserCircle, isEs ? "Perfil" : "Profile"]]
+    : [["home", Home, isEs ? "Inicio" : "Home"], ["learning", BookOpen, isEs ? "Guías" : "Learn"], ["pricing", DollarSign, isEs ? "Planes" : "Plans"], ["settings", UserCircle, isEs ? "Cuenta" : "Account"]];
+  return <nav aria-label={isEs ? "Navegación móvil" : "Mobile navigation"} className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 gap-1 rounded-[1.45rem] border border-white/10 bg-slate-950/95 p-1.5 shadow-[0_18px_50px_rgba(0,0,0,.5)] backdrop-blur-xl lg:hidden">{items.map(([page, Icon, label]) => {
+    const active = activePage === page || (!user && page === "home" && activePage === "dashboard");
+    return <button key={page} type="button" onClick={() => go(page)} className={`flex min-h-[3.6rem] flex-col items-center justify-center gap-1 rounded-[1.05rem] px-1 py-2 text-[0.68rem] font-bold transition ${active ? "bg-cyan-300/15 text-cyan-200" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}><Icon size={19} /><span className="truncate">{label}</span></button>;
+  })}</nav>;
+}
+
 function BrandLogo({ onClick, compact = false, size = "default" }) {
   const isFull = size === "splash";
   const logoSize = size === "splash" ? "h-auto w-[min(78vw,28rem)]" : size === "sidebar" ? "h-14 w-14" : compact ? "h-11 w-11 sm:h-12 sm:w-12" : "h-14 w-14";
   const wrapperClass = isFull ? "inline-flex justify-center rounded-3xl p-1" : "group flex min-w-0 shrink-0 items-center gap-3 rounded-2xl px-1 py-1 text-left transition hover:bg-white/[.04]";
-  const imageClass = isFull ? "h-auto w-full rounded-2xl object-contain shadow-[0_0_45px_rgba(37,99,235,.15)]" : "h-full w-full rounded-2xl object-contain shadow-[0_0_28px_rgba(37,99,235,.18)] transition duration-300 group-hover:shadow-[0_0_40px_rgba(34,211,238,.35)]";
+  const imageClass = isFull ? "rounded-2xl object-contain shadow-[0_0_45px_rgba(37,99,235,.15)]" : "shrink-0 rounded-2xl object-contain shadow-[0_0_28px_rgba(37,99,235,.18)] transition duration-300 group-hover:shadow-[0_0_40px_rgba(34,211,238,.35)]";
   return (
     <button type="button" onClick={onClick} className={wrapperClass} aria-label="Operitron home">
       <img src={isFull ? "/operitron-logo.png" : "/operitron-mark.png"} alt={isFull ? "OPERITRON.COM" : ""} width={isFull ? "768" : "256"} height={isFull ? "512" : "256"} decoding="async" loading="eager" fetchPriority={compact ? "high" : "auto"} className={`${logoSize} ${imageClass}`} />
-      {!isFull && <span className={`${compact ? "hidden sm:block" : "block"} min-w-0`}>
-        <span className="block truncate text-xl font-black tracking-wide text-white">OPERITRON.COM</span>
-        <span className="block truncate text-[0.62rem] font-bold uppercase tracking-[0.24em] text-cyan-300">AI Real Estate Operating System</span>
+      {!isFull && <span className={`${compact ? "hidden lg:block" : "block"} min-w-0`}>
+        <span className="block truncate text-lg font-black tracking-wide text-white xl:text-xl">OPERITRON.COM</span>
+        <span className="block truncate text-[0.58rem] font-bold uppercase tracking-[0.18em] text-cyan-300 xl:text-[0.62rem] xl:tracking-[0.24em]">AI Real Estate Operating System</span>
       </span>}
     </button>
   );
 }
 
-function Dashboard({ t, language, projects, setProjects, setActiveTool, go }) {
+function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAddProject }) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const totalProfit = projects.reduce((sum, p) => sum + p.profit, 0);
 
   function addProject() {
     if (!name.trim()) return;
-    setProjects([{ id: Date.now(), name, type: t.newAnalysis, address: address || t.propertyAddress, arv: 0, profit: 0, purchase: 0, repairs: 0, expenses: 0, progress: 0, status: t.earlyAccess }, ...projects]);
+    const project = { id: Date.now(), name, type: t.newAnalysis, address: address || t.propertyAddress, arv: 0, profit: 0, purchase: 0, repairs: 0, expenses: 0, progress: 0, status: t.earlyAccess };
+    if (onAddProject) onAddProject(project);
+    else setProjects([project, ...projects]);
     setName("");
     setAddress("");
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <Hero t={t} go={go} />
 
-      <section className="grid gap-5 md:grid-cols-3">
+      <section className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3">
         <Stat onClick={() => go("projectTools")} title={t.savedProjects} value={projects.length} icon={FolderOpen} help={t.savedProjectsHelp || "Number of saved property analyses in your workspace."} />
         <Stat onClick={() => setActiveTool("underwriter")} title={t.projectedProfit} value={formatMoney(totalProfit)} icon={WalletCards} help={t.projectedProfitHelp || "Combined expected profit from current projects."} />
-        <Stat onClick={() => setActiveTool("reports")} title={t.reportsReady} value="8" icon={FileText} help={t.reportsReadyHelp || "Reports available for PDF export or partner review."} />
+        <div className="col-span-2 md:col-span-1"><Stat onClick={() => setActiveTool("reports")} title={t.reportsReady} value="8" icon={FileText} help={t.reportsReadyHelp || "Reports available for PDF export or partner review."} /></div>
       </section>
 
       <section className="grid gap-6 xl:grid-cols-[1fr_390px]">
         <GlassPanel>
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
-              <h3 className="text-3xl font-black text-white">{t.myProjects}</h3>
+              <h3 className="text-2xl font-black text-white sm:text-3xl">{t.myProjects}</h3>
               <p className="text-slate-400">{t.projectHint}</p>
             </div>
             <button onClick={() => setActiveTool("underwriter")} className="primary-button">{t.newAnalysis}</button>
@@ -633,7 +766,7 @@ function PublicHome({ t, go }) {
       ["Construction Tools", "Manage takeoffs, punch lists, quotes, linked files, and collaborators from one workspace.", Hammer],
     ];
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <Hero t={t} go={go} />
       <section className="grid gap-5 lg:grid-cols-3">
         {publicCards.map(([title, text, Icon]) => (
@@ -649,7 +782,7 @@ function PublicHome({ t, go }) {
       <WhyChoose isEs={isEs} />
       <Testimonials isEs={isEs} />
       <ByNumbers isEs={isEs} />
-      <PricingPlans language={isEs ? "es" : "en"} />
+      <PricingPlans language={isEs ? "es" : "en"} go={go} />
       <LandingFAQ isEs={isEs} />
       <LandingKnowledgeBase isEs={isEs} />
       <GlassPanel>
@@ -729,18 +862,18 @@ function Hero({ t, go }) {
     ? ["Analizador de Deals", "Calculadora DSCR", "Calculadora BRRR", "Rastreador de Construcción", "Takeoff de Materiales con IA", "Punch List", "Checklist de Construcción", "Colaboración de Equipo"]
     : ["Deal Underwriter", "DSCR Calculator", "BRRR Calculator", "Construction Tracker", "AI Material Takeoff", "Punch List", "Construction Checklist", "Team Collaboration"];
   return (
-    <section className="overflow-hidden rounded-[2rem] border border-white/10 bg-gradient-to-br from-cyan-400/10 via-slate-900/80 to-amber-400/10 p-7 shadow-2xl shadow-black/30">
-      <div className="grid gap-8 xl:grid-cols-[1fr_430px]">
+    <section className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-cyan-400/10 via-slate-900/80 to-amber-400/10 p-5 shadow-2xl shadow-black/30 sm:rounded-[2rem] sm:p-7">
+      <div className="grid gap-6 sm:gap-8 xl:grid-cols-[1fr_430px]">
         <div>
-          <p className="text-sm font-black uppercase tracking-[0.3em] text-amber-300">{t.brand}</p>
-          <h1 className="mt-4 max-w-4xl text-4xl font-black leading-tight text-white md:text-5xl">{t.heroTitle}</h1>
-          <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">{t.trialNote} {t.heroText}</p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <button onClick={() => go("pricing")} className="primary-button">{t.startTrial}</button>
-            <button onClick={() => go("learning")} className="secondary-button">{t.viewLearning}</button>
+          <p className="text-xs font-black uppercase tracking-[0.23em] text-amber-300 sm:text-sm sm:tracking-[0.3em]">{t.brand}</p>
+          <h1 className="mt-4 max-w-4xl text-[2rem] font-black leading-[1.18] text-white sm:text-4xl md:text-5xl">{t.heroTitle}</h1>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300 sm:mt-5 sm:text-lg sm:leading-8">{t.trialNote} {t.heroText}</p>
+          <div className="mt-6 grid gap-3 sm:mt-7 sm:flex sm:flex-wrap">
+            <button onClick={() => go("pricing")} className="primary-button w-full sm:w-auto">{t.startTrial}</button>
+            <button onClick={() => go("learning")} className="secondary-button w-full sm:w-auto">{t.viewLearning}</button>
           </div>
         </div>
-        <div className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
+        <div className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 sm:rounded-3xl sm:p-5">
           <p className="font-black text-white">{t.whatsInside}</p>
           <div className="mt-4 grid gap-3">
             {insideItems.map((item) => (
@@ -756,10 +889,10 @@ function Hero({ t, go }) {
 }
 
 function PublicFooter({ isEs, go }) {
-  const toolLinks = isEs ? ["Análisis de Deals", "Calculadora DSCR", "Calculadora BRRR", "Rastreador de Construcción"] : ["Deal Analysis", "DSCR Calculator", "BRRR Calculator", "Construction Tracker"];
-  const moreLinks = isEs ? ["Takeoff con IA", "Punch List", "Lista de Tareas", "Precios"] : ["AI Takeoff", "Punch List", "To-Do List", "Pricing"];
-  const resourceLinks = isEs ? ["Aprende", "Tutoriales", "Plataforma", "Contacto", "Glosario Técnico"] : ["Learn", "Tutorials", "Platform", "Contact", "Technical Glossary"];
-  const companyLinks = isEs ? ["Sobre Nosotros", "Términos", "Privacidad"] : ["About Us", "Terms", "Privacy"];
+  const toolLinks = isEs ? [["Análisis de Deals"], ["Calculadora DSCR"], ["Calculadora BRRR"], ["Rastreador de Construcción"]] : [["Deal Analysis"], ["DSCR Calculator"], ["BRRR Calculator"], ["Construction Tracker"]];
+  const moreLinks = isEs ? [["Takeoff con IA"], ["Punch List"], ["Lista de Tareas"], ["Precios", "pricing"]] : [["AI Takeoff"], ["Punch List"], ["To-Do List"], ["Pricing", "pricing"]];
+  const resourceLinks = isEs ? [["Aprende", "learning"], ["Tutoriales", "tutorials"], ["Base de Conocimiento", "knowledge"], ["Recorridos", "tours"]] : [["Learn", "learning"], ["Tutorials", "tutorials"], ["Knowledge Base", "knowledge"], ["Tours", "tours"]];
+  const companyLinks = isEs ? [["Términos", "terms"], ["Privacidad", "privacy"], ["Reembolsos", "refund"], ["Aviso Legal", "disclaimer"]] : [["Terms", "terms"], ["Privacy", "privacy"], ["Refunds", "refund"], ["Disclaimer", "disclaimer"]];
   return (
     <footer className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-6 shadow-2xl shadow-black/20">
       <div className="grid gap-5 md:grid-cols-3">
@@ -772,18 +905,21 @@ function PublicFooter({ isEs, go }) {
         <p className="mt-2 leading-7 text-slate-300">{isEs ? "Importante: Operitron es una herramienta de apoyo a la toma de decisiones, no una garantía. Todas las proyecciones, presupuestos y rendimientos son estimaciones basadas en sus datos y suposiciones. Operitron no es responsable de pérdidas, retrasos, sobrecostos, problemas de cumplimiento de códigos, resultados de financiamiento o resultados de inversión. Siempre verifique los datos y consulte a profesionales licenciados." : "Operitron is decision-support software, not a guarantee. All projections, budgets, and returns are estimates based on your inputs and assumptions. Always verify data and consult licensed professionals."}</p>
       </div>
       <div className="mt-8 grid gap-6 border-t border-white/10 pt-6 sm:grid-cols-2 lg:grid-cols-4">
-        <FooterColumn title="Tools" items={toolLinks} />
-        <FooterColumn title="More" items={moreLinks} onPricing={() => go("pricing")} />
-        <FooterColumn title={isEs ? "Recursos" : "Resources"} items={resourceLinks} />
-        <FooterColumn title={isEs ? "Empresa" : "Company"} items={companyLinks} />
+        <FooterColumn title={isEs ? "Herramientas" : "Tools"} items={toolLinks} go={go} />
+        <FooterColumn title={isEs ? "Más" : "More"} items={moreLinks} go={go} />
+        <FooterColumn title={isEs ? "Recursos" : "Resources"} items={resourceLinks} go={go} />
+        <FooterColumn title={isEs ? "Empresa" : "Company"} items={companyLinks} go={go} />
       </div>
-      <p className="mt-8 text-sm text-slate-500">© 2026 Operitron. {isEs ? "Todos los derechos reservados." : "All rights reserved."}</p>
+      <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5 text-sm text-slate-500">
+        <p>© 2026 Operitron. {isEs ? "Todos los derechos reservados." : "All rights reserved."}</p>
+        <a href="mailto:support@operitron.com" className="font-bold text-cyan-300 transition hover:text-cyan-200">support@operitron.com</a>
+      </div>
     </footer>
   );
 }
 
-function FooterColumn({ title, items, onPricing }) {
-  return <div><p className="font-black text-white">{title}</p><div className="mt-3 grid gap-2">{items.map((item) => <button key={item} onClick={item === "Pricing" || item === "Precios" ? onPricing : undefined} className="text-left text-sm text-slate-400 hover:text-amber-300">{item}</button>)}</div></div>;
+function FooterColumn({ title, items, go }) {
+  return <div><p className="font-black text-white">{title}</p><div className="mt-3 grid gap-2">{items.map(([label, page]) => page ? <button key={label} onClick={() => go(page)} className="text-left text-sm text-slate-400 hover:text-cyan-300">{label}</button> : <span key={label} className="text-sm text-slate-500">{label}</span>)}</div></div>;
 }
 
 function ToolShell({ title, subtitle, children }) {
@@ -802,17 +938,17 @@ function ProjectCard({ project, open, t }) {
   const totalCost = project.purchase + project.repairs + project.expenses;
   const roi = formulas.roi(project.profit, totalCost);
   return (
-    <motion.button onClick={open} whileHover={{ y: -6, scale: 1.01 }} className="glow-card rounded-3xl border border-white/10 bg-gradient-to-br from-white/[.07] to-white/[.03] p-6 text-left shadow-2xl shadow-black/20">
+    <motion.button onClick={open} whileHover={{ y: -6, scale: 1.01 }} className="glow-card rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] to-white/[.03] p-4 text-left shadow-2xl shadow-black/20 sm:rounded-3xl sm:p-6">
       <div className="mb-5 flex items-start justify-between gap-4">
         <GlowIcon><FolderOpen /></GlowIcon>
         <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">{project.type}</span>
       </div>
-      <h4 className="text-2xl font-black text-white">{project.name}</h4>
+      <h4 className="text-xl font-black text-white sm:text-2xl">{project.name}</h4>
       <p className="mt-2 flex items-center gap-2 text-sm text-slate-400"><MapPin size={15} /> {project.address}</p>
-      <div className="mt-6 grid grid-cols-3 gap-3">
+      <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:grid-cols-3">
         <MiniMetric label="ARV" value={formatMoney(project.arv)} />
         <MiniMetric label="Profit" value={formatMoney(project.profit)} green />
-        <MiniMetric label="ROI" value={`${roi.toFixed(1)}%`} />
+        <div className="col-span-2 sm:col-span-1"><MiniMetric label="ROI" value={`${roi.toFixed(1)}%`} /></div>
       </div>
       <div className="mt-5 flex items-center justify-between">
         <span className="text-sm font-black text-amber-300">{t.openProject}</span>
@@ -824,12 +960,12 @@ function ProjectCard({ project, open, t }) {
 
 function ProjectTools({ t, language, setActiveTool }) {
   return (
-    <div className="space-y-7">
+    <div className="space-y-5 sm:space-y-7">
       <GlassPanel>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm font-black uppercase tracking-widest text-amber-300">{t.activeProject}</p>
-            <h2 className="mt-2 text-4xl font-black text-white">Silva Construction</h2>
+            <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">Silva Construction</h2>
             <p className="mt-2 max-w-2xl text-slate-400">A professional workspace for build phases, budgets, loan calculations, documents, collaborators, and field execution.</p>
           </div>
           <button onClick={() => navigator.clipboard?.writeText(window.location.href)} className="secondary-button flex items-center gap-2"><Share2 size={18} /> Share</button>
@@ -844,11 +980,11 @@ function ProjectTools({ t, language, setActiveTool }) {
 function ToolGrid({ setActiveTool, language = "en" }) {
   const visibleTools = getTools(language);
   return (
-    <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:gap-5 md:grid-cols-2 xl:grid-cols-3">
       {visibleTools.map(([id, title, desc, Icon, badge], index) => (
-        <motion.button key={id} whileHover={{ y: -7, scale: 1.015 }} onClick={() => setActiveTool(id)} className={`glow-card group relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br ${toolGradient(index)} p-6 text-left shadow-2xl shadow-black/20`}>
+        <motion.button key={id} whileHover={{ y: -7, scale: 1.015 }} onClick={() => setActiveTool(id)} className={`glow-card group relative overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br ${toolGradient(index)} p-4 text-left shadow-2xl shadow-black/20 sm:rounded-3xl sm:p-6`}>
           <div className="absolute right-[-30px] top-[-30px] h-28 w-28 rounded-full bg-white/10 blur-2xl transition group-hover:bg-amber-400/20" />
-          <div className="relative z-10 mb-6 flex items-start justify-between gap-4">
+          <div className="relative z-10 mb-4 flex items-start justify-between gap-4 sm:mb-6">
             <GlowIcon><Icon /></GlowIcon>
             <div className="flex items-center gap-2">
               <Tooltip text={desc} />
@@ -857,7 +993,7 @@ function ToolGrid({ setActiveTool, language = "en" }) {
           </div>
           <h4 className="relative z-10 text-xl font-black text-white">{title}</h4>
           <p className="relative z-10 mt-2 text-sm leading-6 text-slate-400">{desc}</p>
-          <div className="relative z-10 mt-6 flex items-center gap-2 font-black text-amber-300">Open tool <ChevronRight size={18} className="transition group-hover:translate-x-1" /></div>
+          <div className="relative z-10 mt-4 flex items-center gap-2 font-black text-amber-300 sm:mt-6">Open tool <ChevronRight size={18} className="transition group-hover:translate-x-1" /></div>
         </motion.button>
       ))}
     </div>
@@ -868,14 +1004,14 @@ function ToolModal({ t, language, toolId, onClose }) {
   const tool = getTools(language).find(([id]) => id === toolId) || getTools(language)[0];
   const [, title, desc, Icon] = tool;
   return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
-      <motion.div initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="max-h-[90vh] w-full max-w-5xl overflow-y-auto rounded-[2rem] border border-white/10 bg-[#080d1f] p-6 shadow-2xl shadow-black">
-        <div className="mb-6 flex items-start justify-between gap-4">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-0 backdrop-blur-sm sm:p-4">
+      <motion.div initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="h-[100dvh] w-full overflow-y-auto bg-[#080d1f] p-4 pb-24 shadow-2xl shadow-black sm:max-h-[90vh] sm:max-w-5xl sm:rounded-[2rem] sm:border sm:border-white/10 sm:p-6">
+        <div className="sticky top-0 z-10 -mx-4 -mt-4 mb-5 flex items-start justify-between gap-3 border-b border-white/10 bg-[#080d1f]/95 p-4 backdrop-blur sm:static sm:mx-0 sm:mt-0 sm:mb-6 sm:border-0 sm:bg-transparent sm:p-0">
           <div className="flex gap-4">
             <GlowIcon><Icon /></GlowIcon>
             <div>
-              <h2 className="text-3xl font-black text-white">{title}</h2>
-              <p className="mt-1 text-slate-400">{desc}</p>
+              <h2 className="text-xl font-black text-white sm:text-3xl">{title}</h2>
+              <p className="mt-1 hidden text-slate-400 sm:block">{desc}</p>
             </div>
           </div>
           <button onClick={onClose} className="rounded-2xl border border-white/10 p-3 text-slate-300 hover:border-amber-400/50 hover:text-white"><X /></button>
@@ -884,6 +1020,15 @@ function ToolModal({ t, language, toolId, onClose }) {
       </motion.div>
     </div>
   );
+}
+
+function ToolModalFrame({ children, onClose }) {
+  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-0 backdrop-blur-sm sm:p-4"><motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} className="relative flex h-[100dvh] w-full items-center bg-[#080d1f] p-4 shadow-2xl shadow-black sm:h-auto sm:max-w-xl sm:rounded-[2rem] sm:border sm:border-white/10 sm:p-6"><button aria-label="Close" onClick={onClose} className="absolute right-5 top-5 z-10 rounded-xl border border-white/10 p-2 text-slate-300 hover:border-cyan-300/50"><X size={18} /></button>{children}</motion.div></div>;
+}
+
+function SubscriptionGate({ language, go }) {
+  const isEs = language === "es";
+  return <section className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 to-purple-500/10 p-7"><DollarSign className="text-cyan-300" size={32} /><h2 className="mt-5 pr-8 text-2xl font-black text-white">{isEs ? "Activa tu prueba de 3 días" : "Activate your 3-day trial"}</h2><p className="mt-3 leading-7 text-slate-300">{isEs ? "Las herramientas profesionales se habilitan con un plan Monthly o Annual activo. Comienza de forma segura con Stripe Checkout." : "Professional tools unlock with an active Monthly or Annual plan. Start securely through Stripe Checkout."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{isEs ? "Ver planes" : "View plans"}</button></section>;
 }
 
 function ToolBody({ t, language, toolId }) {
@@ -1317,8 +1462,10 @@ function KnowledgeBase({ t, language }) {
   return <GlassPanel><h2 className="text-4xl font-black text-white">{t.knowledge}</h2><p className="mt-3 text-slate-400">{language === "es" ? `Respuestas detalladas sobre cómo ${t.brand} potencia cada fase de la inversión inmobiliaria.` : `Detailed answers about how ${t.brand} supports each phase of real estate investing.`}</p><div className="mt-8 space-y-4">{faqs.map(([q, a]) => <details key={q} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><summary className="cursor-pointer text-lg font-black text-white">{q}</summary><p className="mt-4 leading-7 text-slate-300">{a}</p></details>)}</div></GlassPanel>;
 }
 
-function PricingPlans({ language }) {
+function PricingPlans({ language, user, go }) {
   const isEs = language === "es";
+  const [billingStatus, setBillingStatus] = useState("");
+  const [billingLoading, setBillingLoading] = useState("");
   const monthlyFeatures = isEs
     ? ["Proyectos y deals ilimitados", "Analizador de deals y fix-and-flip", "Calculadoras DSCR, BRRR y cash-out", "Rastreador de construcción", "Takeoff de materiales con IA", "Punch list", "Gestión de subcontratistas y ofertas", "Compartir proyectos y colaborar", "Asistente IA en cada herramienta"]
     : ["Unlimited projects & deals", "Deal & Fix-and-Flip underwriter", "DSCR, BRRR & Cash-Out calculators", "Construction tracker", "AI material takeoff", "Punch list", "Subcontractor & bid management", "Project sharing & collaboration", "AI assistant on every tool"];
@@ -1326,81 +1473,176 @@ function PricingPlans({ language }) {
     ? ["Todo lo incluido en Monthly", "Soporte prioritario", "Acceso anticipado a funciones nuevas", "Historial de datos extendido"]
     : ["Everything in Monthly", "Priority support", "Early access to new features", "Extended data history"];
   const plans = [
-    { name: "Monthly", price: "$29.99", cadence: isEs ? "/mes" : "/month", note: isEs ? "Prueba gratis de 3 días" : "3-day free trial", detail: isEs ? "Acceso flexible mes a mes." : "Flexible month-to-month access.", features: monthlyFeatures },
-    { name: "Annual", price: "$249.99", cadence: isEs ? "/año" : "/year", note: isEs ? "Ahorra más de 30% · Prueba gratis de 3 días" : "Save over 30% · 3-day free trial", detail: isEs ? "El mejor valor para operadores activos." : "Best value for active operators.", features: annualFeatures, featured: true },
+    { id: "monthly", priceId: monthlyPriceId, name: "Monthly", price: "$29.99", cadence: isEs ? "/mes" : "/month", note: isEs ? "Prueba gratis de 3 días" : "3-day free trial", detail: isEs ? "Acceso flexible mes a mes." : "Flexible month-to-month access.", features: monthlyFeatures },
+    { id: "annual", priceId: annualPriceId, name: "Annual", price: "$249.99", cadence: isEs ? "/año" : "/year", note: isEs ? "Ahorra más de 30% · Prueba gratis de 3 días" : "Save over 30% · 3-day free trial", detail: isEs ? "El mejor valor para operadores activos." : "Best value for active operators.", features: annualFeatures, featured: true },
   ];
-  return <div className="space-y-8"><section className="mx-auto max-w-3xl text-center"><p className="text-sm font-black uppercase tracking-widest text-cyan-300">{isEs ? "Precios simples" : "Simple Pricing"}</p><h2 className="mt-3 text-4xl font-black text-white md:text-5xl">{isEs ? "Elige cómo quieres crecer con Operitron" : "Choose how you want to grow with Operitron"}</h2><p className="mt-4 text-lg leading-8 text-slate-400">{isEs ? "Dos planes claros para analizar deals, gestionar construcción y colaborar con tu equipo." : "Two clean plans for analyzing deals, managing construction, and collaborating with your team."}</p></section><div className="grid gap-6 lg:grid-cols-2">{plans.map((plan) => <motion.div key={plan.name} whileHover={{ y: -6 }} className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-2xl backdrop-blur-xl ${plan.featured ? "border-cyan-300/50 bg-gradient-to-br from-cyan-400/15 via-purple-500/10 to-white/[.055] shadow-cyan-500/10" : "border-white/10 bg-white/[.055] shadow-black/20"}`}>{plan.featured && <div className="absolute right-5 top-5 rounded-full border border-cyan-300/30 bg-cyan-300 px-4 py-1 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">{isEs ? "Mejor Valor" : "Best Value"}</div>}<div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/20 blur-3xl" /><div className="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" /><div className="relative z-10"><p className="text-2xl font-black text-white">{plan.name}</p><p className="mt-2 min-h-12 max-w-md text-slate-400">{plan.detail}</p><div className="mt-6 flex items-end gap-2"><span className={`text-5xl font-black ${plan.featured ? "text-cyan-200" : "text-amber-300"}`}>{plan.price}</span><span className="pb-2 font-bold text-slate-500">{plan.cadence}</span></div><p className="mt-3 font-bold text-emerald-300">{plan.note}</p><button className={`mt-7 w-full rounded-2xl py-4 font-black transition ${plan.featured ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.28)] hover:bg-cyan-200" : "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.22)] hover:bg-amber-300"}`}>{isEs ? "Comenzar" : "Get Started"}</button><ul className="mt-7 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-3 text-slate-300"><CheckCircle2 className={plan.featured ? "text-cyan-300" : "text-emerald-400"} size={19} /><span>{feature}</span></li>)}</ul></div></motion.div>)}</div></div>;
+  async function beginCheckout(plan) {
+    if (!user) {
+      go("settings");
+      return;
+    }
+    if (!plan.priceId) {
+      setBillingStatus(isEs ? "El plan estará disponible cuando se configure su precio seguro." : "This plan will be available when its secure price is configured.");
+      return;
+    }
+    setBillingLoading(plan.id);
+    setBillingStatus("");
+    try {
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch(checkoutEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
+        body: JSON.stringify({ priceId: plan.priceId, plan: plan.id }),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Checkout could not start.");
+      window.location.assign(result.url);
+    } catch (error) {
+      setBillingStatus(isEs ? "No se pudo iniciar el pago. Intenta de nuevo." : "Checkout could not start. Please try again.");
+    } finally {
+      setBillingLoading("");
+    }
+  }
+  return <div className="space-y-8"><section className="mx-auto max-w-3xl text-center"><p className="text-sm font-black uppercase tracking-widest text-cyan-300">{isEs ? "Precios simples" : "Simple Pricing"}</p><h2 className="mt-3 text-4xl font-black text-white md:text-5xl">{isEs ? "Elige cómo quieres crecer con Operitron" : "Choose how you want to grow with Operitron"}</h2><p className="mt-4 text-lg leading-8 text-slate-400">{isEs ? "Dos planes claros para analizar deals, gestionar construcción y colaborar con tu equipo." : "Two clean plans for analyzing deals, managing construction, and collaborating with your team."}</p></section><div className="grid gap-6 lg:grid-cols-2">{plans.map((plan) => <motion.div key={plan.name} whileHover={{ y: -6 }} className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-2xl backdrop-blur-xl ${plan.featured ? "border-cyan-300/50 bg-gradient-to-br from-cyan-400/15 via-purple-500/10 to-white/[.055] shadow-cyan-500/10" : "border-white/10 bg-white/[.055] shadow-black/20"}`}>{plan.featured && <div className="absolute right-5 top-5 rounded-full border border-cyan-300/30 bg-cyan-300 px-4 py-1 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">{isEs ? "Mejor Valor" : "Best Value"}</div>}<div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/20 blur-3xl" /><div className="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" /><div className="relative z-10"><p className="text-2xl font-black text-white">{plan.name}</p><p className="mt-2 min-h-12 max-w-md text-slate-400">{plan.detail}</p><div className="mt-6 flex items-end gap-2"><span className={`text-5xl font-black ${plan.featured ? "text-cyan-200" : "text-amber-300"}`}>{plan.price}</span><span className="pb-2 font-bold text-slate-500">{plan.cadence}</span></div><p className="mt-3 font-bold text-emerald-300">{plan.note}</p><button disabled={billingLoading === plan.id} onClick={() => beginCheckout(plan)} className={`mt-7 w-full rounded-2xl py-4 font-black transition disabled:cursor-wait disabled:opacity-70 ${plan.featured ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.28)] hover:bg-cyan-200" : "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.22)] hover:bg-amber-300"}`}>{billingLoading === plan.id ? (isEs ? "Cargando..." : "Loading...") : (isEs ? "Comenzar" : "Get Started")}</button><ul className="mt-7 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-3 text-slate-300"><CheckCircle2 className={plan.featured ? "text-cyan-300" : "text-emerald-400"} size={19} /><span>{feature}</span></li>)}</ul></div></motion.div>)}</div>{billingStatus && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-center text-sm text-cyan-100">{billingStatus}</p>}</div>;
 }
 
-function Pricing({ t, language }) {
-  const plans = language === "es"
-    ? [["Starter", "$29", "Inversionistas individuales", ["5 proyectos", "Calculadoras principales", "Reportes PDF", "Prueba gratis de 3 días"]], ["Pro", "$79", "Operadores activos", ["Proyectos ilimitados", "API de propiedades lista", "Reportes con IA", "Underwriting avanzado"]], ["Agency", "$149", "Equipos", ["Colaboradores", "Controles de proyecto", "Soporte prioritario", "Espacio de equipo"]]]
-    : [["Starter", "$29", "Solo investors", ["5 projects", "Core calculators", "PDF reports", "3-day free trial"]], ["Pro", "$79", "Active operators", ["Unlimited projects", "Property API ready", "AI reports", "Advanced underwriting"]], ["Agency", "$149", "Teams", ["Collaborators", "Project controls", "Priority support", "Team workspace"]]];
-  return <div className="grid gap-6 md:grid-cols-3">{plans.map(([name, price, detail, features], index) => <GlassPanel key={name}><p className="text-xl font-black text-white">{name}</p><p className="text-sm text-slate-400">{detail}</p><p className="mt-5 text-5xl font-black text-amber-300">{price}<span className="text-base text-slate-500">/mo</span></p><ul className="mt-6 space-y-3">{features.map((f) => <li key={f} className="flex gap-2 text-slate-300"><CheckCircle2 className="text-emerald-400" size={18} /> {f}</li>)}</ul><button className={`mt-7 w-full rounded-2xl py-3 font-black ${index === 1 ? "bg-amber-400 text-slate-950" : "border border-white/10 text-white hover:border-amber-400/40"}`}>{t.startTrial}</button></GlassPanel>)}</div>;
-}
-
-function SettingsPage({ t, language, user, setUser, go, back }) {
+function SettingsPage({ t, language, user, setUser, go, back, signOut }) {
   const isEs = language === "es";
   const [mode, setMode] = useState("register");
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
+  const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [status, setStatus] = useState(supabase ? t.supabaseReady : t.accountKeyNeeded);
+  const [status, setStatus] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const ui = isEs
-    ? { register: "Registrarse", login: "Iniciar sesión", details: "Crea tu cuenta de Operitron para acceder al dashboard, herramientas y proyectos.", fullName: "Nombre completo", company: "Empresa", phone: "Teléfono", dashboard: "Volver al Dashboard", signOut: "Cerrar sesión", back: "Volver", save: "Crear cuenta" }
-    : { register: "Register", login: "Login", details: "Create your Operitron account to access the dashboard, tools, and projects.", fullName: "Full name", company: "Company", phone: "Phone", dashboard: "Go to Dashboard", signOut: "Sign Out", back: "Back", save: "Create Account" };
-  async function auth(mode) {
+    ? { register: "Registrarse", login: "Iniciar sesión", details: "Crea tu cuenta de Operitron para acceder al panel, herramientas y proyectos.", fullName: "Nombre completo", company: "Empresa", phone: "Teléfono", dashboard: "Volver al panel", signOut: "Cerrar sesión", back: "Volver", save: "Crear cuenta", secure: "Tu cuenta se protege mediante autenticación segura y verificación por correo." }
+    : { register: "Register", login: "Login", details: "Create your Operitron account to access the dashboard, tools, and projects.", fullName: "Full name", company: "Company", phone: "Phone", dashboard: "Go to Dashboard", signOut: "Sign Out", back: "Back", save: "Create Account", secure: "Your account is protected with secure authentication and email verification." };
+  async function auth(action) {
     if (!supabase) {
-      setUser({ email: email || "brandon@operitron.com", user_metadata: { name, company, phone } });
-      go("dashboard");
-      return setStatus(t.profileStarted);
+      setStatus(t.authUnavailable);
+      return;
     }
-    const result = mode === "signup" ? await supabase.auth.signUp({ email, password }) : await supabase.auth.signInWithPassword({ email, password });
-    if (result.error) setStatus(result.error.message);
-    else {
-      setUser(result.data.user);
-      go("dashboard");
-      setStatus(mode === "signup" ? t.checkEmail : t.loggedIn);
+    if (action === "signup" && email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
+      setStatus(t.emailMismatch);
+      return;
+    }
+    setSubmitting(true);
+    setStatus("");
+    try {
+      const result = action === "signup"
+        ? await supabase.auth.signUp({
+          email: email.trim(),
+          password,
+          options: {
+            data: { full_name: name.trim(), company: company.trim(), phone: phone.trim() },
+            emailRedirectTo: `${window.location.origin}/login`,
+          },
+        })
+        : await supabase.auth.signInWithPassword({ email: email.trim(), password });
+      if (result.error) {
+        setStatus(result.error.message);
+      } else if (action === "signup" && !result.data.session) {
+        setMode("login");
+        setStatus(t.checkEmail);
+      } else {
+        setUser(result.data.user);
+        setStatus(t.loggedIn);
+        go("dashboard", true);
+      }
+    } finally {
+      setSubmitting(false);
     }
   }
-  function signOut() {
-    setUser(null);
-    go("dashboard");
+  async function resetPassword() {
+    if (!supabase) return setStatus(t.authUnavailable);
+    if (!email.trim()) return setStatus(isEs ? "Ingresa tu correo electrónico primero." : "Enter your email address first.");
+    setSubmitting(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${window.location.origin}/login` });
+    setStatus(error ? error.message : t.resetSent);
+    setSubmitting(false);
   }
   if (user) return <GlassPanel><h2 className="text-3xl font-black text-white">{t.accountSettings}</h2><p className="mt-2 text-slate-400">{user.email}</p><div className="mt-6 flex flex-wrap gap-3"><button onClick={() => go("dashboard")} className="primary-button">{ui.dashboard}</button><button onClick={signOut} className="secondary-button"><LogOut size={18} /> {ui.signOut}</button></div></GlassPanel>;
-  return <GlassPanel><div className="flex flex-wrap items-center justify-between gap-4"><div><p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-cyan-300">OPERITRON.COM</p><h2 className="text-3xl font-black text-white">{mode === "register" ? ui.register : ui.login}</h2><p className="mt-2 text-slate-400">{ui.details}</p></div><button onClick={back} className="secondary-button">← {ui.back}</button></div><div className="mt-6 grid gap-3 md:max-w-xl"><div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-slate-950/70 p-1"><button onClick={() => setMode("register")} className={`rounded-xl px-4 py-3 font-black ${mode === "register" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.register}</button><button onClick={() => setMode("login")} className={`rounded-xl px-4 py-3 font-black ${mode === "login" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.login}</button></div>{mode === "register" && <><input value={name} onChange={(e) => setName(e.target.value)} className="field" placeholder={ui.fullName} /><input value={company} onChange={(e) => setCompany(e.target.value)} className="field" placeholder={ui.company} /><input value={phone} onChange={(e) => setPhone(e.target.value)} className="field" placeholder={ui.phone} /></>}<input value={email} onChange={(e) => setEmail(e.target.value)} className="field" placeholder={t.email} /><input value={password} onChange={(e) => setPassword(e.target.value)} className="field" type="password" placeholder={t.password} /><button onClick={() => auth(mode === "register" ? "signup" : "login")} className="primary-button">{mode === "register" ? ui.save : ui.login}</button><p className="text-sm text-slate-400">{status}</p></div></GlassPanel>;
+  return <GlassPanel><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-cyan-300">OPERITRON.COM</p><h2 className="text-3xl font-black text-white">{mode === "register" ? ui.register : ui.login}</h2><p className="mt-2 max-w-xl leading-7 text-slate-400">{ui.details}</p></div><button onClick={back} className="secondary-button">← {ui.back}</button></div><div className="mt-7 grid gap-6 lg:grid-cols-[minmax(280px,36rem)_1fr]"><div className="grid gap-3"><div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-slate-950/70 p-1"><button onClick={() => { setMode("register"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "register" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.register}</button><button onClick={() => { setMode("login"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "login" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.login}</button></div>{mode === "register" && <><input value={name} onChange={(e) => setName(e.target.value)} className="field" autoComplete="name" placeholder={ui.fullName} /><input value={company} onChange={(e) => setCompany(e.target.value)} className="field" autoComplete="organization" placeholder={ui.company} /><input value={phone} onChange={(e) => setPhone(e.target.value)} className="field" autoComplete="tel" placeholder={ui.phone} /></>}<input value={email} onChange={(e) => setEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.email} />{mode === "register" && <input value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.confirmEmail} />}<input value={password} onChange={(e) => setPassword(e.target.value)} className="field" autoComplete={mode === "register" ? "new-password" : "current-password"} type="password" placeholder={t.password} /><button disabled={submitting} onClick={() => auth(mode === "register" ? "signup" : "login")} className="primary-button disabled:cursor-wait disabled:opacity-70">{submitting ? (mode === "register" ? t.creatingAccount : t.signingIn) : (mode === "register" ? ui.save : ui.login)}</button>{mode === "login" && <button disabled={submitting} onClick={resetPassword} className="text-left text-sm font-bold text-cyan-300 hover:text-cyan-200">{t.forgotPassword} {t.resetPassword}</button>}{status && <p role="status" className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm leading-6 text-cyan-100">{status}</p>}<p className="pt-2 text-sm text-slate-400">{isEs ? "¿Necesitas ayuda?" : "Need help?"} <a className="font-bold text-cyan-300 hover:text-cyan-200" href="mailto:support@operitron.com">support@operitron.com</a></p></div><div className="hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/10 via-slate-950 to-purple-500/10 p-7 lg:block"><h3 className="text-2xl font-black text-white">{isEs ? "Cuenta segura de Operitron" : "Secure Operitron account"}</h3><p className="mt-3 leading-7 text-slate-300">{ui.secure}</p><ul className="mt-6 space-y-3 text-sm font-bold text-slate-300"><li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Proyectos privados protegidos por usuario" : "Private projects protected per user"}</li><li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Facturación segura mediante Stripe" : "Secure billing through Stripe"}</li><li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Recuperación de contraseña por correo" : "Email password recovery"}</li></ul></div></div></GlassPanel>;
 }
 
-function ProfileMini({ t, go }) {
-  return <button onClick={() => go("profile")} className="mt-5 flex w-full shrink-0 items-center gap-3 rounded-3xl border border-white/10 bg-white/[.04] p-4 text-left hover:border-cyan-300/40"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-300 text-slate-950"><UserCircle /></div><div><p className="font-black text-white">Brandon</p><p className="text-xs font-bold text-slate-500">Agency {t.earlyAccess}</p></div></button>;
+function ProfileMini({ t, user, go }) {
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || t.profile;
+  return <button onClick={() => go("profile")} className="mt-5 flex w-full shrink-0 items-center gap-3 rounded-3xl border border-white/10 bg-white/[.04] p-4 text-left hover:border-cyan-300/40"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-300 text-slate-950"><UserCircle /></div><div className="min-w-0"><p className="truncate font-black text-white">{displayName}</p><p className="truncate text-xs font-bold text-slate-500">{user?.email}</p></div></button>;
 }
 
 function ProfilePage({ t, language, user, back }) {
-  const [name, setName] = useState("Brandon");
-  const [email, setEmail] = useState(user?.email || "brandon@operitron.com");
-  const [plan, setPlan] = useState("Agency");
-  const [company, setCompany] = useState("Silva Construction");
-  const [phone, setPhone] = useState("(850) 555-0198");
-  const ui = language === "es" ? { company: "Compañía", phone: "Teléfono", ready: "Perfil listo", saved: "Perfil guardado para esta sesión.", trialEnds: "La prueba termina en 3 días", save: "Guardar Perfil" } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved for this session.", trialEnds: "Trial ends in 3 days", save: "Save Profile" };
+  const [name, setName] = useState(user?.user_metadata?.full_name || "");
+  const [email] = useState(user?.email || "");
+  const [plan, setPlan] = useState("Free Trial");
+  const [company, setCompany] = useState(user?.user_metadata?.company || "");
+  const [phone, setPhone] = useState(user?.user_metadata?.phone || "");
+  const ui = language === "es" ? { company: "Compañía", phone: "Teléfono", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "Prueba de 3 días al suscribirte", save: "Guardar Perfil", billing: "Administrar facturación", billingError: "No se pudo abrir la facturación." } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved.", trialEnds: "3-day trial on subscription", save: "Save Profile", billing: "Manage billing", billingError: "Billing portal could not open." };
   const [status, setStatus] = useState(ui.ready);
-  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} /><div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field" value={email} onChange={(e) => setEmail(e.target.value)} /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><select className="field" value={plan} onChange={(e) => setPlan(e.target.value)}><option>Starter</option><option>Pro</option><option>Agency</option></select></label><label className="block"><span className="label">{t.language}</span><select className="field" defaultValue="English / Español"><option>English / Español</option><option>English</option><option>Español</option></select></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-amber-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name}</h3><p className="text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={`${plan} ${t.earlyAccess}`} green /><MiniMetric label={t.trial} value={ui.trialEnds} /><MiniMetric label={t.workspace} value={company} /></div><button onClick={() => setStatus(ui.saved)} className="primary-button mt-5 w-full">{ui.save}</button><p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
+  useEffect(() => {
+    if (!supabase || !user) return;
+    supabase.from("profiles").select("full_name, company, phone, subscription_plan").eq("id", user.id).maybeSingle().then(({ data }) => {
+      if (!data) return;
+      setName(data.full_name || name);
+      setCompany(data.company || company);
+      setPhone(data.phone || phone);
+      setPlan(data.subscription_plan || plan);
+    });
+  }, [user]);
+  async function saveProfile() {
+    if (supabase && user) {
+      const { error } = await supabase.from("profiles").update({ full_name: name, company, phone, updated_at: new Date().toISOString() }).eq("id", user.id);
+      if (error) return setStatus(error.message);
+    }
+    setStatus(ui.saved);
+  }
+  async function manageBilling() {
+    try {
+      const { data } = await supabase.auth.getSession();
+      const response = await fetch(portalEndpoint, { method: "POST", headers: { Authorization: `Bearer ${data.session.access_token}` } });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error);
+      window.location.assign(result.url);
+    } catch (_error) {
+      setStatus(ui.billingError);
+    }
+  }
+  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} /><div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={plan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={plan} green /><MiniMetric label={t.trial} value={ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button><button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button><p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
 }
 
 function LegalPage({ type, language }) {
   const english = {
-    privacy: ["Privacy Policy", "Operitron collects account details, project inputs, property-search queries, and usage data needed to operate the service. Payment processing is handled through Stripe Checkout, and property records may be requested from authorized public or licensed APIs. We do not sell raw project workspaces as advertising profiles."],
-    terms: ["Terms of Service", "Operitron is analysis and workflow software for real estate investors and builders. Users are responsible for verifying financial assumptions, construction scopes, property data, legal requirements, and financing terms with qualified professionals before making decisions."],
-    disclaimer: ["Disclaimer", "Operitron does not provide legal, tax, appraisal, brokerage, lending, engineering, or construction advice. All valuations, formulas, reports, public data, and AI-style summaries are informational estimates and must be independently verified."],
+    privacy: {
+      title: "Privacy Policy",
+      intro: "This Privacy Policy explains how OPERITRON.COM collects, uses, and safeguards information when you use our real estate investment and construction workflow software.",
+      sections: [["Information We Collect", "We may collect account information such as name, email address, company, phone number, authentication activity, saved projects, calculations, uploaded records, collaborator details, and support communications."], ["How We Use Information", "We use information to authenticate users, operate your workspace, save analyses and project records, enable billing, provide customer support, improve security, and maintain service performance."], ["Payments and Service Providers", "Payments are processed by Stripe. Authentication and stored workspace data may be provided through Supabase. Authorized property and public data providers process searches requested by you. Each provider processes information under its own privacy terms."], ["Data Security and Retention", "We use access controls and row-level database policies intended to limit each user's access to their own records. No online service can guarantee absolute security. We retain information as needed to provide the service, meet legal obligations, or resolve disputes."], ["Your Choices", "You may request access, correction, or deletion of your account information by contacting Operitron support. Subscription cancellation does not automatically erase legally required transaction records."]],
+    },
+    terms: {
+      title: "Terms of Service",
+      intro: "These Terms govern your use of OPERITRON.COM, an investor and construction workflow platform.",
+      sections: [["Account Responsibilities", "You must provide accurate account information, protect your login credentials, and remain responsible for activity performed through your account or invited collaborators."], ["Permitted Use", "You may use Operitron to organize projects, analyze investments, estimate construction scope, and prepare reports for your operations. You may not attempt unauthorized access, disrupt the service, resell the platform without permission, or misuse data providers."], ["Subscriptions and Trials", "Paid access is offered through monthly and annual subscriptions with a three-day free trial when presented at checkout. Billing, renewals, discounts, taxes, cancellation timing, and trial eligibility are controlled by your accepted Stripe checkout terms."], ["Customer Data", "You retain ownership of content you submit. You grant Operitron the limited permission needed to host, process, and display that content to deliver the service to you and your authorized collaborators."], ["Limitation of Liability", "To the maximum extent permitted by law, Operitron is not liable for investment losses, construction overruns, financing outcomes, missed opportunities, or indirect damages arising from reliance on platform outputs."]],
+    },
+    refund: {
+      title: "Refund Policy",
+      intro: "We aim to keep Operitron billing straightforward and predictable for active investors and builders.",
+      sections: [["Three-Day Free Trial", "Eligible new subscriptions may include a three-day trial as displayed at checkout. Cancel before the trial period ends to avoid the first subscription charge."], ["Cancellations", "You may cancel a subscription through the billing portal. Cancellation prevents future renewals and ordinarily leaves access available until the end of the current paid billing period."], ["Refund Requests", "Subscription charges are generally non-refundable once a billing period begins, except where required by law or where a billing error occurred. Contact support promptly if you believe you were charged incorrectly."], ["Promotions", "Discounts and promotion codes are applied through Stripe Checkout and cannot be exchanged for cash or retroactively applied to previous charges."]],
+    },
+    disclaimer: {
+      title: "Disclaimer",
+      intro: "Operitron is decision-support software, not professional advice or a guarantee of results.",
+      sections: [["Financial Estimates", "ARV, ROI, cap rate, cash-on-cash return, DSCR, mortgage payments, max-offer calculations, cash flow, budgets, and forecasts depend on user inputs and assumptions. Independently validate every input."], ["Property and Public Data", "Property records, comparable sales, tax information, HUD or Census data, and other third-party information may be delayed, incomplete, or inaccurate. Confirm important facts with authoritative records."], ["Construction Outputs", "Takeoffs, schedules, punch lists, scopes, cost estimates, and AI-assisted summaries are planning aids. Consult licensed contractors, engineers, inspectors, and permitting authorities before acting."], ["No Professional Relationship", "Operitron does not provide legal, tax, appraisal, brokerage, lending, architectural, engineering, or construction advice and does not create a professional-client relationship."]],
+    },
   };
   const spanish = {
-    privacy: ["Política de Privacidad", "Operitron recopila datos de cuenta, entradas de proyectos, búsquedas de propiedad y uso necesario para operar el servicio. Los pagos se procesan mediante Stripe Checkout, y los registros de propiedad pueden solicitarse desde APIs públicas o con licencia. No vendemos espacios de trabajo de proyectos como perfiles publicitarios."],
-    terms: ["Términos de Servicio", "Operitron es software de análisis y flujo de trabajo para inversionistas y constructores inmobiliarios. Los usuarios son responsables de verificar supuestos financieros, alcances de construcción, datos de propiedad, requisitos legales y términos de financiamiento con profesionales calificados antes de tomar decisiones."],
-    disclaimer: ["Aviso Legal", "Operitron no proporciona asesoría legal, fiscal, de avalúo, corretaje, préstamos, ingeniería o construcción. Todas las valuaciones, fórmulas, reportes, datos públicos y resúmenes estilo IA son estimaciones informativas y deben verificarse de forma independiente."],
+    privacy: { title: "Política de Privacidad", intro: "Esta Política de Privacidad explica cómo OPERITRON.COM recopila, usa y protege información al usar nuestro software inmobiliario y de construcción.", sections: [["Información que Recopilamos", "Podemos recopilar datos de cuenta, correo, empresa, teléfono, actividad de autenticación, proyectos guardados, cálculos, documentos, colaboradores y comunicaciones de soporte."], ["Uso de la Información", "Usamos la información para autenticar usuarios, operar espacios de trabajo, guardar análisis, habilitar facturación, brindar soporte y mantener la seguridad del servicio."], ["Pagos y Proveedores", "Stripe procesa los pagos. Supabase puede administrar autenticación y datos guardados. Los proveedores autorizados de datos procesan búsquedas solicitadas por usted bajo sus propias políticas."], ["Seguridad y Retención", "Usamos controles de acceso y políticas a nivel de fila para limitar el acceso de cada usuario a sus propios registros. Ningún servicio en línea garantiza seguridad absoluta."], ["Sus Opciones", "Puede solicitar acceso, corrección o eliminación de información de su cuenta comunicándose con soporte de Operitron."]]},
+    terms: { title: "Términos de Servicio", intro: "Estos Términos regulan el uso de OPERITRON.COM, una plataforma para inversionistas y operadores de construcción.", sections: [["Responsabilidad de Cuenta", "Debe proporcionar información precisa, proteger sus credenciales y responsabilizarse por la actividad de su cuenta y colaboradores invitados."], ["Uso Permitido", "Puede usar Operitron para organizar proyectos, analizar inversiones, estimar construcción y preparar reportes. No puede interrumpir el servicio ni intentar acceso no autorizado."], ["Suscripciones y Pruebas", "El acceso pagado se ofrece mediante planes mensuales y anuales con prueba gratis de tres días cuando se muestre en checkout. Stripe controla la facturación aceptada por usted."], ["Datos del Cliente", "Usted conserva propiedad de su contenido y autoriza su procesamiento limitado para prestar el servicio."], ["Limitación de Responsabilidad", "En la medida permitida por ley, Operitron no responde por pérdidas de inversión, sobrecostos de construcción o resultados de financiamiento basados en resultados de la plataforma."]]},
+    refund: { title: "Política de Reembolsos", intro: "Buscamos que la facturación de Operitron sea clara y predecible.", sections: [["Prueba Gratis de Tres Días", "Las nuevas suscripciones elegibles pueden incluir una prueba de tres días según se muestre en checkout. Cancele antes del fin de la prueba para evitar el primer cargo."], ["Cancelaciones", "Puede cancelar en el portal de facturación. La cancelación evita renovaciones futuras y normalmente mantiene acceso hasta terminar el período pagado actual."], ["Solicitudes de Reembolso", "Los cargos de suscripción generalmente no son reembolsables una vez iniciado el período, salvo exigencia legal o error de facturación."], ["Promociones", "Los descuentos se aplican mediante Stripe Checkout y no se cambian por efectivo ni se aplican retroactivamente."]]},
+    disclaimer: { title: "Aviso Legal", intro: "Operitron es software de apoyo para decisiones, no asesoría profesional ni garantía de resultados.", sections: [["Estimaciones Financieras", "ARV, ROI, cap rate, cash-on-cash, DSCR, pagos hipotecarios, ofertas máximas, flujos de efectivo y presupuestos dependen de datos y supuestos del usuario."], ["Datos Públicos y de Propiedad", "Registros, comparables, impuestos y datos públicos pueden estar incompletos o atrasados. Confirme hechos importantes en fuentes autorizadas."], ["Resultados de Construcción", "Takeoffs, cronogramas, punch lists, alcances, estimaciones y resúmenes asistidos por IA son ayudas de planeación. Consulte profesionales licenciados."], ["Sin Relación Profesional", "Operitron no proporciona asesoría legal, fiscal, de avalúo, corretaje, préstamo, arquitectura, ingeniería o construcción."]]},
   };
   const data = (language === "es" ? spanish : english)[type];
-  return <section className="mx-auto max-h-[calc(100vh-9rem)] max-w-4xl overflow-y-auto rounded-[2rem] border border-white/10 bg-white/[.055] p-6 leading-8 shadow-2xl shadow-black/20 md:p-10"><h2 className="text-4xl font-black text-white">{data[0]}</h2><p className="mt-6 whitespace-normal break-words text-lg leading-9 text-slate-300">{data[1]}</p><div className="mt-8 grid gap-4 md:grid-cols-2"><Info title={language === "es" ? "Diseño legible" : "Readable layout"} text={language === "es" ? "Esta página usa ancho controlado, buen interlineado, padding y saltos responsivos para móvil." : "This page uses a constrained width, generous line-height, padding, and mobile-friendly wrapping."} /><Info title={language === "es" ? "Texto original" : "Original text"} text={language === "es" ? "Las páginas legales están escritas para Operitron y deben ser revisadas por tu abogado antes del lanzamiento." : "The legal pages are written for Operitron and should be reviewed by your attorney before launch."} /></div></section>;
+  return <article className="mx-auto max-w-4xl rounded-[1.5rem] border border-white/10 bg-white/[.055] p-5 shadow-2xl shadow-black/20 sm:rounded-[2rem] sm:p-6 md:p-10"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300 sm:text-sm">OPERITRON.COM</p><h1 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl">{data.title}</h1><p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">{data.intro}</p><p className="mt-4 text-sm font-bold text-slate-500">{language === "es" ? "Vigente: 25 de mayo de 2026" : "Effective: May 25, 2026"}</p><div className="mt-8 space-y-7 sm:mt-10 sm:space-y-8">{data.sections.map(([heading, text]) => <section key={heading} className="border-t border-white/10 pt-6 sm:pt-7"><h2 className="text-xl font-black text-white">{heading}</h2><p className="mt-3 whitespace-normal break-words text-base leading-7 text-slate-300 sm:leading-8">{text}</p></section>)}</div><p className="mt-8 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-4 text-sm leading-7 text-slate-400 sm:mt-10">{language === "es" ? "Contacto: Para preguntas sobre estas políticas, escriba a " : "Contact: For questions about these policies, email "}<a href="mailto:support@operitron.com" className="font-bold text-cyan-300 hover:text-cyan-200">support@operitron.com</a>.</p></article>;
 }
 
 function AIAssistant({ t = enhancedCopy.en, large }) {
@@ -1409,17 +1651,17 @@ function AIAssistant({ t = enhancedCopy.en, large }) {
 }
 
 function SectionHeader({ title, detail }) {
-  return <div className="mb-5"><h3 className="text-3xl font-black text-white">{title}</h3>{detail && <p className="mt-2 text-slate-400">{detail}</p>}</div>;
+  return <div className="mb-4 sm:mb-5"><h3 className="text-2xl font-black text-white sm:text-3xl">{title}</h3>{detail && <p className="mt-2 text-sm leading-6 text-slate-400 sm:text-base">{detail}</p>}</div>;
 }
 
 function Stat({ title, value, icon: Icon, help, onClick }) {
-  const content = <><div className="flex items-start justify-between"><GlowIcon><Icon /></GlowIcon>{help && <Tooltip text={help} />}</div><p className="mt-5 text-sm font-black uppercase tracking-widest text-slate-500">{title}</p><p className="mt-2 text-3xl font-black text-white">{value}</p></>;
-  if (onClick) return <motion.button type="button" onClick={onClick} whileHover={{ y: -5 }} className="glow-card w-full rounded-3xl border border-white/10 bg-white/[.055] p-6 text-left shadow-2xl shadow-black/20 backdrop-blur-xl hover:border-amber-400/40">{content}</motion.button>;
-  return <motion.div whileHover={{ y: -5 }} className="glow-card rounded-3xl border border-white/10 bg-white/[.055] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">{content}</motion.div>;
+  const content = <><div className="flex items-start justify-between"><GlowIcon><Icon /></GlowIcon>{help && <Tooltip text={help} />}</div><p className="mt-4 text-[0.68rem] font-black uppercase tracking-widest text-slate-500 sm:mt-5 sm:text-sm">{title}</p><p className="mt-2 break-words text-xl font-black text-white sm:text-3xl">{value}</p></>;
+  if (onClick) return <motion.button type="button" onClick={onClick} whileHover={{ y: -5 }} className="glow-card h-full w-full rounded-2xl border border-white/10 bg-white/[.055] p-4 text-left shadow-2xl shadow-black/20 backdrop-blur-xl hover:border-amber-400/40 sm:rounded-3xl sm:p-6">{content}</motion.button>;
+  return <motion.div whileHover={{ y: -5 }} className="glow-card rounded-2xl border border-white/10 bg-white/[.055] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:rounded-3xl sm:p-6">{content}</motion.div>;
 }
 
 function GlassPanel({ children }) {
-  return <section className="glow-card rounded-[2rem] border border-white/10 bg-white/[.055] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl">{children}</section>;
+  return <section className="glow-card rounded-[1.5rem] border border-white/10 bg-white/[.055] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:rounded-[2rem] sm:p-6">{children}</section>;
 }
 
 function GlowIcon({ children }) {
@@ -1427,7 +1669,7 @@ function GlowIcon({ children }) {
 }
 
 function MiniMetric({ label, value, green }) {
-  return <div className="glow-card rounded-2xl border border-white/10 bg-slate-950/60 p-4"><p className="text-xs font-black uppercase tracking-widest text-slate-500">{label}</p><p className={`mt-1 font-black ${green ? "text-emerald-400" : "text-white"}`}>{value}</p></div>;
+  return <div className="glow-card h-full rounded-2xl border border-white/10 bg-slate-950/60 p-3 sm:p-4"><p className="text-[0.66rem] font-black uppercase tracking-widest text-slate-500 sm:text-xs">{label}</p><p className={`mt-1 break-words text-sm font-black sm:text-base ${green ? "text-emerald-400" : "text-white"}`}>{value}</p></div>;
 }
 
 function Step({ label, detail, done }) {
@@ -1439,7 +1681,7 @@ function ResultBox({ items }) {
 }
 
 function Tooltip({ text }) {
-  return <span className="group relative inline-flex shrink-0"><HelpCircle className="text-slate-500 group-hover:text-amber-300" size={18} /><span className="pointer-events-none absolute right-1/2 top-8 z-[80] w-72 max-w-[80vw] translate-x-1/2 rounded-2xl border border-amber-400/20 bg-slate-950 p-3 text-left text-xs leading-5 text-slate-300 opacity-0 shadow-2xl shadow-black/50 transition group-hover:opacity-100">{text}</span></span>;
+  return <span title={text} aria-label={text} className="inline-flex shrink-0 text-slate-500 transition hover:text-cyan-300"><HelpCircle size={18} /></span>;
 }
 
 function Info({ title, text }) {
