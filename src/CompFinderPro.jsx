@@ -856,24 +856,17 @@ function PublicHome({ t, go }) {
       <WhyChoose isEs={isEs} />
       <Testimonials isEs={isEs} />
       <ByNumbers isEs={isEs} />
+      <LandingCTA isEs={isEs} t={t} go={go} />
       <PricingPlans language={isEs ? "es" : "en"} go={go} />
       <LandingFAQ isEs={isEs} />
       <LandingKnowledgeBase isEs={isEs} />
-      <GlassPanel>
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h3 className="text-3xl font-black text-white">{isEs ? "Listo para empezar con OPERITRON.COM?" : "Ready to Start with OPERITRON.COM?"}</h3>
-            <p className="mt-2 text-slate-400">{isEs ? "OPERITRON.COM te da análisis de deals, herramientas de construcción, takeoffs, punch lists y colaboración en una sola plataforma. " : "OPERITRON.COM gives you deal analysis, construction tools, takeoffs, punch lists, and collaboration in one platform. "}{t.trialNote}</p>
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => go("settings")} className="primary-button">{isEs ? "Crear cuenta" : "Create Account"}</button>
-            <button onClick={() => go("pricing")} className="secondary-button">{t.pricing}</button>
-          </div>
-        </div>
-      </GlassPanel>
       <PublicFooter isEs={isEs} go={go} />
     </div>
   );
+}
+
+function LandingCTA({ isEs, t, go }) {
+  return <section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-r from-cyan-400/[.10] via-slate-950 to-purple-500/[.10] p-5 shadow-[0_0_42px_rgba(34,211,238,.08)] sm:p-7"><div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-cyan-400/15 blur-3xl" /><div className="relative flex flex-col items-start justify-between gap-5 lg:flex-row lg:items-center"><div className="max-w-3xl"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">{isEs ? "Comienza hoy" : "Start today"}</p><h3 className="mt-3 text-2xl font-black text-white sm:text-3xl">{isEs ? "¿Listo para empezar con OPERITRON.COM?" : "Ready to Start with OPERITRON.COM?"}</h3><p className="mt-3 leading-7 text-slate-300">{isEs ? "OPERITRON.COM te ofrece análisis de deals, herramientas de construcción, takeoffs, punch lists y colaboración en una sola plataforma. " : "OPERITRON.COM gives you deal analysis, construction tools, takeoffs, punch lists, and collaboration in one platform. "}{t.trialNote}</p></div><div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"><button onClick={() => go("settings")} className="primary-button whitespace-nowrap">{isEs ? "Crear cuenta" : "Create Account"}</button><button onClick={() => go("pricing")} className="secondary-button whitespace-nowrap">{t.pricing}</button></div></div></section>;
 }
 
 function LandingStats({ isEs }) {
