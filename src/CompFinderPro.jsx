@@ -48,7 +48,7 @@ const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supa
 const rentcastApiKey = import.meta.env.VITE_RENTCAST_API_KEY;
 const checkoutEndpoint = import.meta.env.VITE_STRIPE_CHECKOUT_ENDPOINT || "/api/create-checkout-session";
 const portalEndpoint = import.meta.env.VITE_STRIPE_PORTAL_ENDPOINT || "/api/create-billing-portal";
-const monthlyPriceId = import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID || import.meta.env.VITE_STRIPE_STARTER_PRICE_ID;
+const monthlyPriceId = import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID;
 const annualPriceId = import.meta.env.VITE_STRIPE_ANNUAL_PRICE_ID;
 
 const publicPages = new Set(["home", "pricing", "settings", "learning", "knowledge", "tutorials", "tours", "privacy", "terms", "refund", "disclaimer"]);
@@ -195,6 +195,11 @@ const enhancedCopy = {
     forgotPassword: "Forgot password?",
     resetPassword: "Send reset link",
     resetSent: "Password reset instructions have been sent to your email.",
+    newPassword: "New password",
+    confirmPassword: "Confirm new password",
+    updatePassword: "Update password",
+    passwordMismatch: "Passwords do not match.",
+    passwordUpdated: "Password updated. You can continue to your dashboard.",
     emailMismatch: "Email addresses do not match.",
     authUnavailable: "Account access is unavailable in this preview. Contact support@operitron.com for assistance.",
     loginReady: "Secure account access.",
@@ -307,6 +312,11 @@ const enhancedCopy = {
     forgotPassword: "¿Olvidaste tu contraseña?",
     resetPassword: "Enviar enlace de recuperación",
     resetSent: "Las instrucciones para restablecer tu contraseña se enviaron a tu correo.",
+    newPassword: "Nueva contraseña",
+    confirmPassword: "Confirmar nueva contraseña",
+    updatePassword: "Actualizar contraseña",
+    passwordMismatch: "Las contraseñas no coinciden.",
+    passwordUpdated: "Contraseña actualizada. Puedes continuar a tu panel.",
     emailMismatch: "Los correos electrónicos no coinciden.",
     authUnavailable: "El acceso a cuentas no está disponible en esta vista previa. Escribe a support@operitron.com para recibir ayuda.",
     loginReady: "Acceso seguro a tu cuenta.",
@@ -456,6 +466,7 @@ function AppShell() {
   const [subscription, setSubscription] = useState(null);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
+  const [passwordRecovery, setPasswordRecovery] = useState(false);
   const t = enhancedCopy[language];
 
   useEffect(() => {
@@ -480,9 +491,14 @@ function AppShell() {
       setUser(data.session?.user || null);
       setAuthLoading(false);
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user || null);
       setAuthLoading(false);
+      if (event === "PASSWORD_RECOVERY") {
+        setPasswordRecovery(true);
+        window.history.replaceState({}, "", pagePaths.settings);
+        setActivePage("settings");
+      }
     });
     return () => {
       active = false;
@@ -534,6 +550,7 @@ function AppShell() {
     if (supabase) await supabase.auth.signOut();
     setUser(null);
     setSubscription(null);
+    setPasswordRecovery(false);
     setProjects(initialProjects);
     go("home", true);
   }
@@ -546,7 +563,7 @@ function AppShell() {
   }
 
   const page = useMemo(() => {
-    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription };
+    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery };
     if (activePage === "home") return user ? <Dashboard {...props} onAddProject={saveProject} /> : <PublicHome t={t} go={go} />;
     if (activePage === "dashboard" && !user) return <SettingsPage {...props} />;
     if (activePage === "dashboard") return <Dashboard {...props} onAddProject={saveProject} />;
@@ -562,7 +579,7 @@ function AppShell() {
     if (activePage === "profile") return <ProfilePage t={t} language={language} user={user} back={back} />;
     if (["privacy", "terms", "refund", "disclaimer"].includes(activePage)) return <LegalPage type={activePage} language={language} />;
     return <Dashboard {...props} />;
-  }, [activePage, language, projects, user, subscription]);
+  }, [activePage, language, projects, user, subscription, passwordRecovery]);
 
   if (loading || authLoading) return <LoadingScreen />;
 
@@ -1506,29 +1523,29 @@ function PricingPlans({ language, user, go }) {
   return <div className="space-y-8"><section className="mx-auto max-w-3xl text-center"><p className="text-sm font-black uppercase tracking-widest text-cyan-300">{isEs ? "Precios simples" : "Simple Pricing"}</p><h2 className="mt-3 text-4xl font-black text-white md:text-5xl">{isEs ? "Elige cómo quieres crecer con Operitron" : "Choose how you want to grow with Operitron"}</h2><p className="mt-4 text-lg leading-8 text-slate-400">{isEs ? "Dos planes claros para analizar deals, gestionar construcción y colaborar con tu equipo." : "Two clean plans for analyzing deals, managing construction, and collaborating with your team."}</p></section><div className="grid gap-6 lg:grid-cols-2">{plans.map((plan) => <motion.div key={plan.name} whileHover={{ y: -6 }} className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-2xl backdrop-blur-xl ${plan.featured ? "border-cyan-300/50 bg-gradient-to-br from-cyan-400/15 via-purple-500/10 to-white/[.055] shadow-cyan-500/10" : "border-white/10 bg-white/[.055] shadow-black/20"}`}>{plan.featured && <div className="absolute right-5 top-5 rounded-full border border-cyan-300/30 bg-cyan-300 px-4 py-1 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">{isEs ? "Mejor Valor" : "Best Value"}</div>}<div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/20 blur-3xl" /><div className="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" /><div className="relative z-10"><p className="text-2xl font-black text-white">{plan.name}</p><p className="mt-2 min-h-12 max-w-md text-slate-400">{plan.detail}</p><div className="mt-6 flex items-end gap-2"><span className={`text-5xl font-black ${plan.featured ? "text-cyan-200" : "text-amber-300"}`}>{plan.price}</span><span className="pb-2 font-bold text-slate-500">{plan.cadence}</span></div><p className="mt-3 font-bold text-emerald-300">{plan.note}</p><button disabled={billingLoading === plan.id} onClick={() => beginCheckout(plan)} className={`mt-7 w-full rounded-2xl py-4 font-black transition disabled:cursor-wait disabled:opacity-70 ${plan.featured ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.28)] hover:bg-cyan-200" : "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.22)] hover:bg-amber-300"}`}>{billingLoading === plan.id ? (isEs ? "Cargando..." : "Loading...") : (isEs ? "Comenzar" : "Get Started")}</button><ul className="mt-7 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-3 text-slate-300"><CheckCircle2 className={plan.featured ? "text-cyan-300" : "text-emerald-400"} size={19} /><span>{feature}</span></li>)}</ul></div></motion.div>)}</div>{billingStatus && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-center text-sm text-cyan-100">{billingStatus}</p>}</div>;
 }
 
-function SettingsPage({ t, language, user, setUser, go, back, signOut }) {
+function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordRecovery, setPasswordRecovery }) {
   const isEs = language === "es";
-  const [mode, setMode] = useState("register");
+  const [mode, setMode] = useState(passwordRecovery ? "recover" : "register");
   const [name, setName] = useState("");
   const [company, setCompany] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [confirmEmail, setConfirmEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const ui = isEs
-    ? { register: "Registrarse", login: "Iniciar sesión", details: "Crea tu cuenta de Operitron para acceder al panel, herramientas y proyectos.", fullName: "Nombre completo", company: "Empresa", phone: "Teléfono", dashboard: "Volver al panel", signOut: "Cerrar sesión", back: "Volver", save: "Crear cuenta", secure: "Tu cuenta se protege mediante autenticación segura y verificación por correo." }
-    : { register: "Register", login: "Login", details: "Create your Operitron account to access the dashboard, tools, and projects.", fullName: "Full name", company: "Company", phone: "Phone", dashboard: "Go to Dashboard", signOut: "Sign Out", back: "Back", save: "Create Account", secure: "Your account is protected with secure authentication and email verification." };
+    ? { register: "Registrarse", login: "Iniciar sesión", details: "Crea tu cuenta de Operitron para acceder al panel, herramientas y proyectos.", recoveryDetails: "Crea una nueva contraseña segura para tu cuenta.", fullName: "Nombre completo", company: "Empresa", phone: "Teléfono", dashboard: "Volver al panel", signOut: "Cerrar sesión", back: "Volver", save: "Crear cuenta", secure: "Tu cuenta se protege mediante autenticación segura y verificación por correo." }
+    : { register: "Register", login: "Login", details: "Create your Operitron account to access the dashboard, tools, and projects.", recoveryDetails: "Create a new secure password for your account.", fullName: "Full name", company: "Company", phone: "Phone", dashboard: "Go to Dashboard", signOut: "Sign Out", back: "Back", save: "Create Account", secure: "Your account is protected with secure authentication and email verification." };
+
+  useEffect(() => {
+    if (passwordRecovery) setMode("recover");
+  }, [passwordRecovery]);
+
   async function auth(action) {
-    if (!supabase) {
-      setStatus(t.authUnavailable);
-      return;
-    }
-    if (action === "signup" && email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
-      setStatus(t.emailMismatch);
-      return;
-    }
+    if (!supabase) return setStatus(t.authUnavailable);
+    if (action === "signup" && email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) return setStatus(t.emailMismatch);
     setSubmitting(true);
     setStatus("");
     try {
@@ -1542,20 +1559,18 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut }) {
           },
         })
         : await supabase.auth.signInWithPassword({ email: email.trim(), password });
-      if (result.error) {
-        setStatus(result.error.message);
-      } else if (action === "signup" && !result.data.session) {
+      if (result.error) return setStatus(result.error.message);
+      if (action === "signup" && !result.data.session) {
         setMode("login");
-        setStatus(t.checkEmail);
-      } else {
-        setUser(result.data.user);
-        setStatus(t.loggedIn);
-        go("dashboard", true);
+        return setStatus(t.checkEmail);
       }
+      setUser(result.data.user);
+      go("dashboard", true);
     } finally {
       setSubmitting(false);
     }
   }
+
   async function resetPassword() {
     if (!supabase) return setStatus(t.authUnavailable);
     if (!email.trim()) return setStatus(isEs ? "Ingresa tu correo electrónico primero." : "Enter your email address first.");
@@ -1564,8 +1579,61 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut }) {
     setStatus(error ? error.message : t.resetSent);
     setSubmitting(false);
   }
-  if (user) return <GlassPanel><h2 className="text-3xl font-black text-white">{t.accountSettings}</h2><p className="mt-2 text-slate-400">{user.email}</p><div className="mt-6 flex flex-wrap gap-3"><button onClick={() => go("dashboard")} className="primary-button">{ui.dashboard}</button><button onClick={signOut} className="secondary-button"><LogOut size={18} /> {ui.signOut}</button></div></GlassPanel>;
-  return <GlassPanel><div className="flex flex-wrap items-start justify-between gap-4"><div><p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-cyan-300">OPERITRON.COM</p><h2 className="text-3xl font-black text-white">{mode === "register" ? ui.register : ui.login}</h2><p className="mt-2 max-w-xl leading-7 text-slate-400">{ui.details}</p></div><button onClick={back} className="secondary-button">← {ui.back}</button></div><div className="mt-7 grid gap-6 lg:grid-cols-[minmax(280px,36rem)_1fr]"><div className="grid gap-3"><div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-slate-950/70 p-1"><button onClick={() => { setMode("register"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "register" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.register}</button><button onClick={() => { setMode("login"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "login" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.login}</button></div>{mode === "register" && <><input value={name} onChange={(e) => setName(e.target.value)} className="field" autoComplete="name" placeholder={ui.fullName} /><input value={company} onChange={(e) => setCompany(e.target.value)} className="field" autoComplete="organization" placeholder={ui.company} /><input value={phone} onChange={(e) => setPhone(e.target.value)} className="field" autoComplete="tel" placeholder={ui.phone} /></>}<input value={email} onChange={(e) => setEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.email} />{mode === "register" && <input value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.confirmEmail} />}<input value={password} onChange={(e) => setPassword(e.target.value)} className="field" autoComplete={mode === "register" ? "new-password" : "current-password"} type="password" placeholder={t.password} /><button disabled={submitting} onClick={() => auth(mode === "register" ? "signup" : "login")} className="primary-button disabled:cursor-wait disabled:opacity-70">{submitting ? (mode === "register" ? t.creatingAccount : t.signingIn) : (mode === "register" ? ui.save : ui.login)}</button>{mode === "login" && <button disabled={submitting} onClick={resetPassword} className="text-left text-sm font-bold text-cyan-300 hover:text-cyan-200">{t.forgotPassword} {t.resetPassword}</button>}{status && <p role="status" className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm leading-6 text-cyan-100">{status}</p>}<p className="pt-2 text-sm text-slate-400">{isEs ? "¿Necesitas ayuda?" : "Need help?"} <a className="font-bold text-cyan-300 hover:text-cyan-200" href="mailto:support@operitron.com">support@operitron.com</a></p></div><div className="hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/10 via-slate-950 to-purple-500/10 p-7 lg:block"><h3 className="text-2xl font-black text-white">{isEs ? "Cuenta segura de Operitron" : "Secure Operitron account"}</h3><p className="mt-3 leading-7 text-slate-300">{ui.secure}</p><ul className="mt-6 space-y-3 text-sm font-bold text-slate-300"><li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Proyectos privados protegidos por usuario" : "Private projects protected per user"}</li><li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Facturación segura mediante Stripe" : "Secure billing through Stripe"}</li><li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Recuperación de contraseña por correo" : "Email password recovery"}</li></ul></div></div></GlassPanel>;
+
+  async function updatePassword() {
+    if (!supabase) return setStatus(t.authUnavailable);
+    if (!password || password !== confirmPassword) return setStatus(t.passwordMismatch);
+    setSubmitting(true);
+    const { error } = await supabase.auth.updateUser({ password });
+    setSubmitting(false);
+    if (error) return setStatus(error.message);
+    setPasswordRecovery(false);
+    setStatus(t.passwordUpdated);
+    go("dashboard", true);
+  }
+
+  if (user && mode !== "recover") return <GlassPanel><h2 className="text-3xl font-black text-white">{t.accountSettings}</h2><p className="mt-2 text-slate-400">{user.email}</p><div className="mt-6 flex flex-wrap gap-3"><button onClick={() => go("dashboard")} className="primary-button">{ui.dashboard}</button><button onClick={signOut} className="secondary-button"><LogOut size={18} /> {ui.signOut}</button></div></GlassPanel>;
+
+  return (
+    <GlassPanel>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="mb-2 text-xs font-black uppercase tracking-[0.24em] text-cyan-300">OPERITRON.COM</p>
+          <h2 className="text-3xl font-black text-white">{mode === "recover" ? t.updatePassword : mode === "register" ? ui.register : ui.login}</h2>
+          <p className="mt-2 max-w-xl leading-7 text-slate-400">{mode === "recover" ? ui.recoveryDetails : ui.details}</p>
+        </div>
+        <button onClick={back} className="secondary-button">← {ui.back}</button>
+      </div>
+      <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(280px,36rem)_1fr]">
+        <div className="grid gap-3">
+          {mode !== "recover" && <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-slate-950/70 p-1">
+            <button onClick={() => { setMode("register"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "register" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.register}</button>
+            <button onClick={() => { setMode("login"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "login" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.login}</button>
+          </div>}
+          {mode === "register" && <><input value={name} onChange={(e) => setName(e.target.value)} className="field" autoComplete="name" placeholder={ui.fullName} /><input value={company} onChange={(e) => setCompany(e.target.value)} className="field" autoComplete="organization" placeholder={ui.company} /><input value={phone} onChange={(e) => setPhone(e.target.value)} className="field" autoComplete="tel" placeholder={ui.phone} /></>}
+          {mode !== "recover" && <input value={email} onChange={(e) => setEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.email} />}
+          {mode === "register" && <input value={confirmEmail} onChange={(e) => setConfirmEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.confirmEmail} />}
+          <input value={password} onChange={(e) => setPassword(e.target.value)} className="field" autoComplete={mode === "login" ? "current-password" : "new-password"} type="password" placeholder={mode === "recover" ? t.newPassword : t.password} />
+          {mode === "recover" && <input value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} className="field" autoComplete="new-password" type="password" placeholder={t.confirmPassword} />}
+          {mode === "recover"
+            ? <button disabled={submitting} onClick={updatePassword} className="primary-button disabled:cursor-wait disabled:opacity-70">{t.updatePassword}</button>
+            : <button disabled={submitting} onClick={() => auth(mode === "register" ? "signup" : "login")} className="primary-button disabled:cursor-wait disabled:opacity-70">{submitting ? (mode === "register" ? t.creatingAccount : t.signingIn) : (mode === "register" ? ui.save : ui.login)}</button>}
+          {mode === "login" && <button disabled={submitting} onClick={resetPassword} className="text-left text-sm font-bold text-cyan-300 hover:text-cyan-200">{t.forgotPassword} {t.resetPassword}</button>}
+          {status && <p role="status" className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm leading-6 text-cyan-100">{status}</p>}
+          <p className="pt-2 text-sm text-slate-400">{isEs ? "¿Necesitas ayuda?" : "Need help?"} <a className="font-bold text-cyan-300 hover:text-cyan-200" href="mailto:support@operitron.com">support@operitron.com</a></p>
+        </div>
+        <div className="hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/10 via-slate-950 to-purple-500/10 p-7 lg:block">
+          <h3 className="text-2xl font-black text-white">{isEs ? "Cuenta segura de Operitron" : "Secure Operitron account"}</h3>
+          <p className="mt-3 leading-7 text-slate-300">{ui.secure}</p>
+          <ul className="mt-6 space-y-3 text-sm font-bold text-slate-300">
+            <li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Proyectos privados protegidos por usuario" : "Private projects protected per user"}</li>
+            <li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Facturación segura mediante Stripe" : "Secure billing through Stripe"}</li>
+            <li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Recuperación de contraseña por correo" : "Email password recovery"}</li>
+          </ul>
+        </div>
+      </div>
+    </GlassPanel>
+  );
 }
 
 function ProfileMini({ t, user, go }) {

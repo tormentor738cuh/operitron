@@ -18,9 +18,14 @@ export default async function handler(request, response) {
   const { data, error } = await getSupabase().auth.getUser(token);
   if (error || !data.user) return response.status(401).json({ error: "Invalid session." });
 
-  const allowedPrices = new Set([process.env.STRIPE_MONTHLY_PRICE_ID, process.env.STRIPE_ANNUAL_PRICE_ID].filter(Boolean));
   const { priceId, plan } = request.body || {};
-  if (!allowedPrices.has(priceId)) return response.status(400).json({ error: "Invalid plan." });
+  const priceByPlan = {
+    monthly: process.env.STRIPE_MONTHLY_PRICE_ID || process.env.VITE_STRIPE_MONTHLY_PRICE_ID,
+    annual: process.env.STRIPE_ANNUAL_PRICE_ID || process.env.VITE_STRIPE_ANNUAL_PRICE_ID,
+  };
+  if (!priceByPlan[plan] || priceByPlan[plan] !== priceId) {
+    return response.status(400).json({ error: "Invalid plan." });
+  }
 
   try {
     const appUrl = process.env.APP_URL || "https://operitron.com";
@@ -31,6 +36,7 @@ export default async function handler(request, response) {
       line_items: [{ price: priceId, quantity: 1 }],
       allow_promotion_codes: true,
       subscription_data: {
+        // Both supported subscription plans start with the same three-day trial.
         trial_period_days: 3,
         metadata: { user_id: data.user.id, plan },
       },
