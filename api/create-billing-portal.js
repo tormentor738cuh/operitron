@@ -18,29 +18,42 @@ export default async function handler(request, response) {
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!stripeSecretKey || !supabaseUrl || !anonKey || !serviceKey) {
+  if (!stripeSecretKey || !supabaseUrl || !anonKey) {
     console.error("[portal] Missing server configuration.");
     return response.status(503).json({ error: "Billing setup is incomplete. Please contact support@operitron.com." });
   }
   const stripe = new Stripe(stripeSecretKey);
   const authClient = createClient(supabaseUrl, anonKey, { auth: { persistSession: false, autoRefreshToken: false } });
-  const adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
   const token = request.headers.authorization?.replace(/^Bearer\s+/i, "");
   if (!token) return response.status(401).json({ error: "Sign in required." });
   const { data, error: authError } = await authClient.auth.getUser(token);
   if (authError || !data.user) return response.status(401).json({ error: "Invalid session." });
 
   try {
-    await ensureProfile(adminClient, data.user);
-    const { data: profile, error: profileError } = await adminClient.from("profiles").select("stripe_customer_id").eq("id", data.user.id).maybeSingle();
-    if (profileError) throw new Error("profile_lookup_failed");
-    let customerId = profile?.stripe_customer_id;
+    let adminClient = null;
+    let customerId = null;
+    if (serviceKey) {
+      try {
+        adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
+        await ensureProfile(adminClient, data.user);
+        const { data: profile, error: profileError } = await adminClient.from("profiles").select("stripe_customer_id").eq("id", data.user.id).maybeSingle();
+        if (profileError) throw profileError;
+        customerId = profile?.stripe_customer_id;
+      } catch (profileError) {
+        console.error("[portal] Profile lookup unavailable; resolving customer by email.", {
+          message: profileError?.message,
+          userId: data.user.id,
+        });
+      }
+    } else {
+      console.warn("[portal] SUPABASE_SERVICE_ROLE_KEY is not configured; resolving customer by email.");
+    }
     if (!customerId) {
       const matchingCustomers = await stripe.customers.list({ email: data.user.email, limit: 1 });
       customerId = matchingCustomers.data[0]?.id;
-      if (customerId) {
+      if (customerId && adminClient) {
         const { error: customerSaveError } = await adminClient.from("profiles").update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq("id", data.user.id);
-        if (customerSaveError) throw new Error("customer_save_failed");
+        if (customerSaveError) console.error("[portal] Unable to persist Stripe customer ID.", { message: customerSaveError.message, userId: data.user.id });
       }
     }
     if (!customerId) return response.status(400).json({ error: "Start a subscription first." });
@@ -57,9 +70,6 @@ export default async function handler(request, response) {
       message: error?.message,
       userId: data.user.id,
     });
-    if (String(error?.message).includes("profile_")) {
-      return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
-    }
     return response.status(500).json({ error: "Billing portal could not be created. Please contact support@operitron.com." });
   }
 }

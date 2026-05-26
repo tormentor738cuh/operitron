@@ -118,7 +118,7 @@ export default function AIAnalyzerPanel({ language = "en", getAccessToken, large
     [isEs ? "Próximos pasos" : "Next Steps", analysis.nextSteps],
   ] : [];
 
-  return <section className={`rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/[.09] via-slate-950 to-purple-500/[.09] p-4 shadow-[0_0_38px_rgba(34,211,238,.1)] sm:p-6 ${large ? "min-h-72" : ""}`}>
+  return <section className={`rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/[.09] via-slate-950 to-purple-500/[.09] p-4 shadow-[0_0_38px_rgba(34,211,238,.1)] sm:p-6 ${large ? "min-h-72 w-full" : ""}`}>
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
         <div className="flex items-center gap-2 text-cyan-300"><Bot /><p className="font-black">{isEs ? "Analizador IA de Deals" : "AI Deal Analyzer"}</p></div>
@@ -127,7 +127,7 @@ export default function AIAnalyzerPanel({ language = "en", getAccessToken, large
       {analysis && <div className="flex gap-2"><button onClick={copyAnalysis} className="secondary-button !px-3" aria-label="Copy analysis"><Clipboard size={17} /></button><button onClick={exportAnalysis} className="secondary-button !px-3" aria-label="Export analysis"><Download size={17} /></button></div>}
     </div>
 
-    <div className={`mt-6 grid min-w-0 gap-6 ${large ? "xl:grid-cols-[minmax(300px,1fr)_minmax(300px,1fr)]" : ""}`}>
+    <div className={`mt-6 grid min-w-0 gap-6 ${large ? "lg:grid-cols-[minmax(420px,1.05fr)_minmax(360px,.95fr)]" : ""}`}>
       <div>
         <div className="grid gap-3 sm:grid-cols-2">
           {fields.map(([key, enLabel, esLabel]) => <label key={key} className="block"><span className="label">{isEs ? esLabel : enLabel}</span><input className="field" type="number" step={key === "interestRate" ? "0.01" : "1"} value={values[key]} onChange={(event) => update(key, event.target.value)} /></label>)}

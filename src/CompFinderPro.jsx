@@ -827,9 +827,10 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
             <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.propertyAddress} className="field mt-3" />
             <button onClick={addProject} className="primary-button mt-4 flex w-full items-center justify-center gap-2"><Plus size={18} /> {t.addProject}</button>
           </GlassPanel>
-          <AIAssistant t={t} />
         </div>
       </section>
+
+      <AIAssistant t={t} large />
 
       <SectionHeader title={t.quickTools} detail={t.everyCard} />
       <ToolGrid language={language} setActiveTool={setActiveTool} />
@@ -1152,6 +1153,25 @@ function ToolBody({ t, language, toolId, project }) {
   return <AIAssistant t={t} large />;
 }
 
+function createConstructionPhases(answers) {
+  return [
+    { name: "Contracts", weeks: 2, tasks: ["Land Purchase", "Land Documents (Deeds, Title Insurance)", "Consult with insurance agent and obtain Builder's Risk policy", "Sign Construction Agreement"] },
+    { name: "Pre-Construction Preparation and Design", weeks: 2, tasks: ["Buy plans or hire architect", "Request and verify plan modifications", "Verify municipal construction requirements", "Coordinate municipal sewer connection", "Order JD Manual (AC Manual)", "Order Land Survey", "Pay city or county fees", "Apply for construction permits and pay", "Obtain construction permits", "Install security cameras at construction site", "Install permit box with permits and plans", "Arrange debris container / roll-off dumpster delivery", "Arrange portable sanitation unit", "Order temporary electricity pole installation", "Pay water service fee", "Define interior design, finishes, and color palettes", "Choose cabinets and confirm lead time", "Order Windows and Exterior Doors - Critical Order", "Select appliances and confirm lead times"] },
+    { name: "Land Preparation", weeks: 1, tasks: ["Evaluate land and soil conditions", "Mark trees to preserve", "Call 811 before excavation", "Clear additional trees for parking", "Remove approved trees", "Grade the land", "Perform soil compaction", "Commission professional soil compaction test", "Install erosion control barriers", "Develop an excavation plan"] },
+    { name: `Foundation - ${answers.foundation.includes("Slab") ? "Slab" : answers.foundation}`, weeks: 2, tasks: ["Service portable sanitation unit if applicable", "Excavate foundation trenches (footings)", "Place slab-edge form boards", "Form underground plumbing", "Excavate interior and exterior beam trenches", "Pour gravel and sand per local code", "Install plastic moisture barrier", "Insert steel reinforcement in footings", "Form underground electricity", "Order lumber and schedule delivery - Critical Order", "Pour concrete", "Install drainage elements"] },
+    { name: "Wood Framing", weeks: 3, tasks: ["Service portable sanitation unit", "Schedule debris container exchange", "Install sealed bottom plate for air and pest control", `Install ${answers.structure} framing structure`, "Verify exterior and interior door rough openings", "Order Interior Doors and Trim - Critical Order", "Install blocking for TVs, curtains, cabinets, and hood", "Install exterior doors and windows", "Measure and verify interior door sizes", "Order Roofing Materials and Delivery - Critical Order"] },
+    { name: "Roofing", weeks: 1.5, tasks: ["Service portable sanitation unit if applicable", "Exchange debris container", `Install ${answers.roof}`, "Locate and prepare gutters"] },
+    { name: "Rough-In (HVAC, Plumbing, Electrical)", weeks: 2.5, tasks: ["Service portable sanitation unit", "Order Garage Door - Critical Order", "Order Interior Doors and Trim Package - Critical Order", "Verify kitchen cabinet layout and clearances", "Order Cabinets - Critical Order", "Locate AC ducts", "Install secondary drain pan for air handler", "Install rough-in plumbing", "Define water heater size", "Rough in water outlets and drains", "Install rough-in electrical", "Install internet and cable pathways", "Install gas lines if required", "Verify cabinet layout locations", "Order Exterior Siding Materials - Critical Order"] },
+    { name: "Insulation", weeks: 1, tasks: ["Service portable sanitation unit", "Install exterior insulation", "Install interior insulation", "Install attic and roof insulation", "Review plans before drywall", "Verify support wood blocking"] },
+    { name: "Drywall", weeks: 2, tasks: ["Service portable sanitation unit", "Install water-resistant drywall in wet areas", "Install sheetrock / drywall", "Tape and mud coat 1, cure and sand", "Tape and mud coat 2, cure and sand", "Tape and mud coat 3, final cure and sand", "Prime drywall for paint", "Order Appliances - Critical Order", "Call electric company for permanent service"] },
+    { name: "Exterior Siding", weeks: 2, tasks: ["Install selected exterior siding", "Install exterior trim and molding", "Complete exterior carpentry"] },
+    { name: "Interior Trim", weeks: 3.5, tasks: ["Service portable sanitation unit", "Order Tile Materials and Schedule Delivery - Critical Order", "Order Flooring Delivery - Critical Order", "Install interior doors", "Install ceramic flooring in bathrooms and laundry", "Install shower wall tile", "Install cabinets", "Install cabinet hardware", "Measure countertop surfaces", "Install baseboards", "Install closet shelving", "Install pantry shelving", "Install flooring", "Order Carpet Materials and Delivery - Critical Order", "Install carpet", "Install shoe molding", "Install countertops", "Install backsplash"] },
+    { name: "Paint", weeks: 1, tasks: ["Choose paint finish", "Test paint colors on small sections", "Apply primer", "Protect surfaces and paint", "Apply water-repellent exterior paint", "Stain, clear-coat, or paint woodwork"] },
+    { name: "Final Finishes", weeks: 2, tasks: ["Service portable sanitation unit", "Complete HVAC trim-out and install condenser", "Install faucets and plumbing fixtures", "Install lights, fans, and electrical fixtures", "Install appliances", "Install hardware and pulls", "Install gutters", "Install concrete driveway", "Install walkway", "Connect and test gas appliances", "Complete gas pressure test and inspection", "Order preventive termite treatment", "Review final details and touch-ups", "Final portable sanitation service"] },
+    { name: "Project Completion", weeks: 1, tasks: ["Complete final construction inspection", "Obtain certificate of occupancy", "Complete owner handover", "Choose and purchase home warranty"] },
+  ];
+}
+
 function ConstructionWizard({ language = "en", project }) {
   const [step, setStep] = useState(1);
   const [generatedPlan, setGeneratedPlan] = useState(null);
@@ -1202,20 +1222,8 @@ function ConstructionWizard({ language = "en", project }) {
   ];
   function generateChecklist() {
     const sqft = Math.max(500, cleanNumber(answers.sqft));
-    const weeksFactor = sqft / 2000;
     const highFinish = answers.finish === "Luxury" ? 1.22 : answers.finish === "Semi-Luxury" ? 1.1 : 1;
-    const permitWeeks = answers.permit === "Standard Permits" ? 0 : 2;
-    const phases = [
-      ["Contracts & permits", 2 + permitWeeks, ["Confirm survey and title", `Submit ${answers.permit}`, "Approve lender draw schedule"]],
-      ["Site preparation", answers.lot === "Flat Lot" ? 1 : 2, [`Prepare ${answers.lot}`, `Install ${answers.driveway} access`, "Verify erosion controls"]],
-      ["Foundation", answers.foundation.includes("Slab") ? 2 : 3, [`Build ${answers.foundation}`, "Foundation inspection", "Record concrete receipts"]],
-      ["Framing & dry-in", Math.ceil(3 * weeksFactor), [`Frame ${answers.structure}`, `Install ${answers.roof}`, "Window and weather barrier check"]],
-      ["MEP rough-in", 3, [`Connect ${answers.water}`, `Install ${answers.sewer}`, `${answers.heating} rough-in inspection`]],
-      ["Insulation & drywall", Math.ceil(2 * weeksFactor), ["Insulation inspection", "Hang and finish drywall", "Moisture review"]],
-      ["Interior finishes", Math.ceil(3 * weeksFactor * highFinish), [`Install ${answers.finish} finishes`, `${answers.bathrooms} fit-out`, "Cabinet and trim punch"]],
-      ["Exterior & site closeout", 2, [`Complete ${answers.driveway}`, `${answers.landscaping} landscaping`, "Final exterior inspection"]],
-      ["Final inspections & turnover", 1, ["Punch list resolution", "Certificate of occupancy", "Investor closeout packet"]],
-    ].map(([name, weeks, tasks], index) => ({ name, weeks, tasks, complete: index < 2 }));
+    const phases = createConstructionPhases(answers);
     const totalWeeks = phases.reduce((sum, phase) => sum + phase.weeks, 0);
     const baseCost = sqft * (answers.finish === "Luxury" ? 245 : answers.finish === "Semi-Luxury" ? 194 : 158);
     const extras = (answers.fireplace ? 6500 : 0) + (answers.gas ? 4800 : 0) + (answers.carpet ? 3200 : 0);
@@ -1264,10 +1272,10 @@ function ConstructionWizard({ language = "en", project }) {
             <h3 className="text-3xl font-black text-white">Construction Wizard</h3>
             <p className="mt-1 font-bold text-cyan-300">Step {step} of 9</p>
           </div>
-          <p className="text-3xl font-black text-amber-300">{progress}%</p>
+          <motion.p key={progress} initial={{ opacity: 0.45, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.25 }} className="text-3xl font-black text-amber-300">{progress}%</motion.p>
         </div>
         <div className="mt-5 h-3 overflow-hidden rounded-full bg-slate-800">
-          <div className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-purple-400 to-amber-300 shadow-[0_0_24px_rgba(34,211,238,.35)]" style={{ width: `${progress}%` }} />
+          <motion.div initial={false} animate={{ width: `${progress}%` }} transition={{ duration: 0.45, ease: "easeOut" }} className="h-full rounded-full bg-gradient-to-r from-cyan-300 via-purple-400 to-amber-300 shadow-[0_0_24px_rgba(34,211,238,.35)]" />
         </div>
       </div>
 
@@ -1287,7 +1295,7 @@ function ConstructionWizard({ language = "en", project }) {
       </div>
 
       {step === 9 && !generatedPlan && <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><h4 className="text-xl font-black text-white">Ready to Generate</h4><p className="mt-2 text-slate-300">Your checklist will be built from the selections above, including schedule duration, estimated construction cost, contingency, and risk flags.</p></div>}
-      {generatedPlan && <GeneratedConstructionChecklist plan={generatedPlan} assumptions={checklist} language={language} />}
+      {generatedPlan && <SmartConstructionChecklist plan={generatedPlan} assumptions={checklist} language={language} />}
     </div>
   );
 }
@@ -1320,8 +1328,93 @@ function GeneratedConstructionChecklist({ plan, assumptions, language }) {
   </section>;
 }
 
+function SmartConstructionChecklist({ plan, assumptions, language }) {
+  const isEs = language === "es";
+  const [checked, setChecked] = useState({});
+  const [location, setLocation] = useState("");
+  const [weather, setWeather] = useState(null);
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const totalTasks = plan.phases.reduce((sum, phase) => sum + phase.tasks.length, 0);
+  const completeTasks = Object.values(checked).filter(Boolean).length;
+  const completion = totalTasks ? Math.round(completeTasks / totalTasks * 100) : 0;
+  const totalWeeks = plan.phases.reduce((sum, phase) => sum + phase.weeks, 0);
+  const maxWeeks = Math.max(...plan.phases.map((phase) => phase.weeks), 1);
+  const taskKey = (phase, task) => `${phase}:${task}`;
+  const recommendations = [
+    ["Site Preparation & Staking", "Complete clearing and initial grading, stake house corners, and verify permitted setbacks."],
+    ["Subcontractor Onboarding", "Finalize concrete and plumbing contracts for slab work, including licensing and insurance review."],
+    ["Truss Package Submittal", "Submit engineered truss specifications now to protect the framing and dry-in schedule."],
+  ];
+  const coordination = [
+    ["Foundation", "Plumber + Concrete Contractor", "Plumbing Rough-in -> Slab Reinforcement -> Concrete Pour", "Confirm all under-slab waste lines and sleeves before concrete placement."],
+    ["Framing", "Framing Crew + Lumber Supplier", "Slab Cure -> Lumber Delivery -> First Floor Framing", "Deliver lumber before crew mobilization so framing starts without idle days."],
+  ];
+  const alerts = [
+    ["HIGH", "Truss Lead Time Delay", "Engineering and delivery can affect the dry-in milestone.", "Place the truss deposit this week."],
+    ["MEDIUM", "Utility Lateral Coordination", "Gas and utility scheduling can conflict with driveway placement.", "Apply for service lateral scheduling early."],
+  ];
+  const orders = [
+    ["Lumber and Framing Package (Wood Framing)", "2 weeks", "June 9, 2026"],
+    ["Engineered Roof Trusses (2-Story)", "4-6 weeks", "June 2, 2026"],
+    ["Vinyl Siding and Accessories", "2 weeks", "June 23, 2026"],
+  ];
+  const optimizationTips = [
+    ["Batch Concrete Mobilization", "Coordinate garage and main slab pours to reduce equipment and delivery mobilization charges.", "$500 - $1,000"],
+    ["Value Engineered Framing", "Use standard framing spacing and stock window dimensions where plans allow to reduce waste.", "$1,500 - $2,500"],
+  ];
+  async function analyzeWeather() {
+    if (!location.trim()) return;
+    setWeatherLoading(true);
+    setWeather(null);
+    try {
+      const lookup = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location.trim())}&count=1&language=en&format=json`);
+      const found = (await lookup.json()).results?.[0];
+      if (!found) throw new Error("location");
+      const response = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${found.latitude}&longitude=${found.longitude}&daily=precipitation_probability_max,wind_gusts_10m_max,temperature_2m_max&forecast_days=7&timezone=auto`);
+      const data = await response.json();
+      const rain = Math.max(...(data.daily?.precipitation_probability_max || [0]));
+      const wind = Math.max(...(data.daily?.wind_gusts_10m_max || [0]));
+      const severity = rain >= 65 || wind >= 55 ? "HIGH" : rain >= 40 || wind >= 35 ? "MEDIUM" : "LOW";
+      setWeather({ place: `${found.name}, ${found.admin1 || found.country}`, rain, wind, severity, time: new Date().toLocaleTimeString() });
+    } catch (_error) {
+      setWeather({ error: isEs ? "No se pudo obtener el pronóstico para esta ubicación." : "Forecast could not be found for this location." });
+    } finally {
+      setWeatherLoading(false);
+    }
+  }
+  return <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 rounded-3xl border border-cyan-300/25 bg-slate-950/70 p-5 sm:p-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? "Plan Generado" : "Generated Plan"}</p><h4 className="mt-2 text-2xl font-black text-white">{isEs ? "Tu Lista de Construcción" : "Your Construction Checklist"}</h4><p className="mt-2 text-sm text-slate-400">{isEs ? "Plan operativo de 14 fases con recomendaciones y seguimiento." : "A 14-phase operating plan with recommendations and live tracking."}</p><p className="mt-2 text-xs text-slate-500">{isEs ? "Ultima actualizacion" : "Last updated"}: {new Date().toLocaleTimeString()}</p></div>
+      <button className="secondary-button">{isEs ? "Guardar en Proyecto" : "Save to Project"}</button>
+    </div>
+    <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[.06] p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-black text-emerald-200">{isEs ? "Duración Total Estimada" : "Total Estimated Duration"}: {totalWeeks} {isEs ? "semanas" : "weeks"}</p><p className="font-black text-cyan-200">{completion}% {isEs ? "completo" : "complete"}</p></div>
+      <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-800"><motion.div animate={{ width: `${completion}%` }} className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-300" /></div>
+    </div>
+    <div className="grid gap-3 sm:grid-cols-4"><MiniMetric label={isEs ? "Costo Estimado" : "Estimated Cost"} value={formatMoney(plan.estimatedCost)} /><MiniMetric label={isEs ? "Contingencia" : "Contingency"} value={formatMoney(plan.contingency)} /><MiniMetric label={isEs ? "Tareas Completadas" : "Completed Tasks"} value={`${completeTasks} / ${totalTasks}`} green={completeTasks > 0} /><MiniMetric label={isEs ? "Riesgo" : "Schedule Risk"} value={plan.risk} /></div>
+    <section className="rounded-3xl border border-purple-300/20 bg-purple-300/[.05] p-5">
+      <div className="flex items-center gap-3"><Bot className="text-purple-300" /><div><h5 className="font-black text-white">{isEs ? "Recomendaciones de IA" : "AI Recommendations"}</h5><p className="text-xs text-slate-400">{isEs ? "Enfoque semanal para proteger calendario y presupuesto" : "Weekly focus to protect schedule and budget"}</p></div></div>
+      <div className="mt-4 grid gap-3 lg:grid-cols-3">{recommendations.map(([title, text], index) => <motion.div key={title} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.08 }} className="rounded-2xl border border-white/10 bg-slate-950/55 p-4"><p className="text-xs font-black uppercase text-cyan-300">Weekly Focus {index + 1}</p><p className="mt-2 font-black text-white">{title}</p><p className="mt-2 text-sm leading-6 text-slate-400">{text}</p></motion.div>)}</div>
+    </section>
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="space-y-3">{plan.phases.map((phase, index) => { const done = phase.tasks.filter((task) => checked[taskKey(phase.name, task)]).length; return <details key={phase.name} className="rounded-2xl border border-white/10 bg-white/[.03] p-4" open={index < 2}><summary className="flex cursor-pointer list-none flex-wrap items-center gap-3"><span className={`grid h-8 w-8 place-items-center rounded-full text-xs font-black ${done === phase.tasks.length ? "bg-emerald-400 text-slate-950" : "bg-slate-800 text-slate-300"}`}>{index + 1}</span><span className="min-w-40 flex-1 font-black text-white">{phase.name}</span><span className="text-xs font-bold text-slate-400">{phase.tasks.length} {isEs ? "tareas" : "tasks"}</span><span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">~{phase.weeks} {isEs ? "sem" : "wk"}</span></summary><div className="mt-4 grid gap-2 sm:ml-11">{phase.tasks.map((task) => { const critical = task.includes("Critical Order"); const key = taskKey(phase.name, task); return <label key={task} className="flex items-start gap-3 rounded-xl p-2 text-sm text-slate-300 hover:bg-white/[.03]"><input type="checkbox" checked={Boolean(checked[key])} onChange={(event) => setChecked((current) => ({ ...current, [key]: event.target.checked }))} className="mt-1 accent-cyan-300" /><span className={checked[key] ? "text-slate-500 line-through" : ""}>{task.replace(" - Critical Order", "")}</span>{critical && <span className="ml-auto shrink-0 rounded-full bg-amber-300/10 px-2 py-1 text-[0.62rem] font-black text-amber-300">Critical Order</span>}</label>})}<button className="mt-2 rounded-xl border border-dashed border-white/10 p-2 text-left text-sm font-bold text-cyan-300"><Plus className="mr-2 inline" size={14} />{isEs ? "Agregar tarea" : "Add task"}</button></div></details>; })}</div>
+      <div className="space-y-4">
+        <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "Coordinación de Oficios" : "Trade Coordination"}</h5>{coordination.map(([title, crew, sequence, detail]) => <div key={title} className="mt-4 border-t border-white/10 pt-4"><p className="font-black text-white">{title}</p><p className="text-sm font-bold text-cyan-200">{crew}</p><p className="mt-2 text-xs font-black text-amber-300">{sequence}</p><p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p></div>)}</section>
+        <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "Alertas de Riesgo" : "Risk Alerts"}</h5>{alerts.map(([level, title, detail, mitigation]) => <div key={title} className="mt-4 rounded-xl bg-slate-950/60 p-3"><span className={`rounded-full px-2 py-1 text-[0.65rem] font-black ${level === "HIGH" ? "bg-rose-400/15 text-rose-300" : "bg-amber-300/15 text-amber-300"}`}>{level}</span><p className="mt-2 font-black text-white">{title}</p><p className="mt-1 text-sm text-slate-400">{detail}</p><p className="mt-2 text-sm text-emerald-300">Mitigation: {mitigation}</p></div>)}</section>
+        <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "Consejos de Optimizacion" : "Optimization Tips"}</h5>{optimizationTips.map(([title, detail, savings]) => <div key={title} className="mt-4 border-t border-white/10 pt-4"><p className="font-black text-white">{title}</p><p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p><p className="mt-2 text-sm font-black text-emerald-300">{isEs ? "Ahorro potencial" : "Potential savings"}: {savings}</p></div>)}</section>
+        <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "Órdenes de Material" : "Material Orders"}</h5>{orders.map(([title, lead, due]) => <div key={title} className="mt-3 rounded-xl bg-slate-950/60 p-3"><p className="font-bold text-white">{title}</p><p className="mt-1 text-xs text-slate-400">Lead time: {lead}</p><p className="mt-2 text-xs font-black text-cyan-300">Order by: {due}</p></div>)}</section>
+      </div>
+    </div>
+    <section className="rounded-3xl border border-cyan-300/20 bg-white/[.03] p-5"><div className="flex flex-wrap justify-between gap-3"><h5 className="flex items-center gap-2 text-lg font-black text-white"><Globe2 className="text-cyan-300" />{isEs ? "Análisis Climático" : "Weather Risk Analysis"}</h5>{weather?.time && <p className="text-xs text-slate-500">{isEs ? "Actualizado" : "Updated"}: {weather.time}</p>}</div><div className="mt-4 flex flex-col gap-3 sm:flex-row"><input className="field" value={location} onChange={(event) => setLocation(event.target.value)} placeholder={isEs ? "Buscar ciudad o dirección..." : "Search city or address..."} /><button onClick={analyzeWeather} disabled={weatherLoading} className="primary-button shrink-0">{weatherLoading ? (isEs ? "Analizando..." : "Analyzing...") : (isEs ? "Analizar" : "Analyze")}</button></div>{!weather && <p className="mt-3 text-sm text-slate-400">{isEs ? "Configura la ubicación y analiza riesgos con pronóstico de siete días." : "Set the project location and analyze risks with a seven-day forecast."}</p>}{weather?.error && <p className="mt-4 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-200">{weather.error}</p>}{weather && !weather.error && <div className="mt-4 grid gap-3 sm:grid-cols-4"><MiniMetric label={isEs ? "Ubicación" : "Location"} value={weather.place} /><MiniMetric label={isEs ? "Riesgo" : "Risk"} value={weather.severity} green={weather.severity === "LOW"} /><MiniMetric label={isEs ? "Prob. lluvia" : "Rain Chance"} value={`${weather.rain}%`} /><MiniMetric label={isEs ? "Ráfaga máx." : "Max Wind Gust"} value={`${weather.wind} km/h`} /></div>}</section>
+    <section className="rounded-3xl border border-white/10 bg-white/[.03] p-5"><div className="flex flex-wrap items-center justify-between gap-3"><h5 className="text-lg font-black text-white">{isEs ? "Cronograma del Proyecto (Gantt)" : "Project Timeline (Gantt)"}</h5><div className="flex items-center gap-2 text-xs font-bold text-slate-400"><span>{isEs ? "Agregar demoras" : "Add Delays"}</span><button className="rounded-lg border border-white/10 px-2 py-1" title="Weather delay">Weather</button><button className="rounded-lg border border-white/10 px-2 py-1" title="Inspection delay">Inspection</button><button className="rounded-lg border border-white/10 px-2 py-1" title="Alert">Alert</button></div></div><div className="mt-4 overflow-x-auto"><div className="min-w-[680px] space-y-2"><div className="ml-48 grid grid-cols-6 text-center text-xs font-bold text-slate-500">{[1, 2, 3, 4, 5, 6].map((month) => <span key={month}>{isEs ? "Mes" : "Month"} {month}</span>)}</div>{plan.phases.map((phase, index) => <div key={phase.name} className="grid grid-cols-[12rem_1fr] items-center gap-3 text-sm"><span className="truncate font-bold text-slate-300">{phase.name}</span><div className="relative h-8 rounded-lg bg-slate-800/70"><motion.div initial={{ width: 0 }} animate={{ width: `${Math.max(12, phase.weeks / maxWeeks * 45)}%` }} transition={{ delay: index * 0.04, duration: 0.5 }} className={`absolute h-full rounded-lg ${index < 2 ? "bg-emerald-400/55" : "bg-cyan-300/45"}`} style={{ left: `${Math.min(76, index * 6)}%` }}><span className="flex h-full items-center justify-center text-[0.62rem] font-black text-white">{phase.weeks} wk</span></motion.div></div></div>)}</div></div><div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm"><div className="flex gap-4 text-slate-400"><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-slate-700" />Pending</span><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-emerald-400/55" />Completed</span><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-cyan-300/45" />Phase Complete</span></div><p className="font-black text-cyan-200">{totalWeeks} {isEs ? "semanas totales" : "total weeks"} (~{Math.ceil(totalWeeks / 4.3)} {isEs ? "meses" : "months"})</p></div></section>
+    <Info title={isEs ? "Supuestos Registrados" : "Recorded Assumptions"} text={assumptions.slice(1, 4).join(" | ")} />
+  </motion.section>;
+}
+
 function WizardStep({ title, detail, children }) {
-  return <div className="rounded-3xl border border-white/10 bg-white/[.04] p-5"><h4 className="text-2xl font-black text-white">{title}</h4><p className="mt-2 text-slate-400">{detail}</p><div className="mt-5 space-y-5">{children}</div></div>;
+  const visual = { "Foundation Type": [Home, "text-emerald-300", "bg-emerald-300/10"], "Finish Level": [Sparkles, "text-amber-300", "bg-amber-300/10"], "Building Structure": [Building2, "text-blue-300", "bg-blue-300/10"], "Exterior Siding": [Layers, "text-orange-300", "bg-orange-300/10"], "Roof Type": [Home, "text-purple-300", "bg-purple-300/10"], "Site Conditions": [MapPin, "text-emerald-300", "bg-emerald-300/10"], "Utilities & Systems": [Globe2, "text-cyan-300", "bg-cyan-300/10"], "Bathrooms & Extras": [Building2, "text-violet-300", "bg-violet-300/10"], "Permits & Regulations": [FileText, "text-rose-300", "bg-rose-300/10"] }[title] || [Hammer, "text-cyan-300", "bg-cyan-300/10"];
+  const [Icon, color, background] = visual;
+  return <motion.div key={title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-3xl border border-white/10 bg-white/[.04] p-5"><motion.div initial={{ scale: 0.75, rotate: -6 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className={`mb-4 grid h-14 w-14 place-items-center rounded-2xl ${background} ${color}`}><Icon size={29} /></motion.div><h4 className="text-2xl font-black text-white">{title}</h4><p className="mt-2 text-slate-400">{detail}</p><div className="mt-5 space-y-5">{children}</div></motion.div>;
 }
 
 function WizardGroup({ title, children }) {

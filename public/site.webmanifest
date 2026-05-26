@@ -1,0 +1,17 @@
+{
+  "name": "OPERITRON.COM",
+  "short_name": "Operitron",
+  "description": "AI Real Estate Operating System",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050a18",
+  "theme_color": "#050a18",
+  "icons": [
+    {
+      "src": "/operitron-mark.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
