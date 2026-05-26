@@ -863,12 +863,12 @@ function PublicHome({ t, go }) {
           </GlassPanel>
         ))}
       </section>
+      <LandingCTA isEs={isEs} t={t} go={go} />
       <LandingStats isEs={isEs} />
       <LandingFeatureSections isEs={isEs} />
       <WhyChoose isEs={isEs} />
       <Testimonials isEs={isEs} />
       <ByNumbers isEs={isEs} />
-      <LandingCTA isEs={isEs} t={t} go={go} />
       <PricingPlans language={isEs ? "es" : "en"} go={go} />
       <LandingFAQ isEs={isEs} />
       <LandingKnowledgeBase isEs={isEs} />
