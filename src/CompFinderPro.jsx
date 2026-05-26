@@ -879,7 +879,7 @@ function PublicHome({ t, go }) {
     ];
   return (
     <div className="space-y-6 sm:space-y-8">
-      <Hero t={t} go={go} />
+      <PublicConstructionHero t={t} go={go} />
       <section className="grid gap-5 lg:grid-cols-3">
         {publicCards.map(([title, text, Icon]) => (
           <GlassPanel key={title}>
@@ -902,6 +902,83 @@ function PublicHome({ t, go }) {
       <PublicFooter isEs={isEs} go={go} />
     </div>
   );
+}
+
+function PublicConstructionHero({ t, go }) {
+  const isEs = t.dashboard === "Panel";
+  const stages = isEs
+    ? ["Terreno natural", "Estacas de levantamiento", "Limpieza del sitio", "Excavación", "Zapatas", "Formas de cimentación", "Colado de losa", "Plomería subterránea", "Entrega de madera", "Entramado de piso", "Muros exteriores", "Muros interiores", "Cerchas de techo", "Casa completamente enmarcada"]
+    : ["Raw land", "Survey stakes", "Site clearing", "Excavation", "Footings", "Foundation forms", "Concrete slab pour", "Underground plumbing", "Framing lumber delivered", "Floor framing", "Exterior wall framing", "Interior wall framing", "Roof trusses", "Full framed house"];
+  const [stage, setStage] = useState(0);
+
+  useEffect(() => {
+    const interval = window.setInterval(() => setStage((current) => (current + 1) % stages.length), 1900);
+    return () => window.clearInterval(interval);
+  }, [stages.length]);
+
+  const built = (threshold) => (stage >= threshold ? "is-built" : "");
+  const percent = Math.round(((stage + 1) / stages.length) * 100);
+
+  return <section className="construction-hero">
+    <div className="construction-copy">
+      <p className="construction-eyebrow">OPERITRON.COM · {isEs ? "Inteligencia para construir" : "Construction intelligence"}</p>
+      <h1>{isEs ? "Analiza la inversión. Construye con control." : "Analyze the investment. Build with control."}</h1>
+      <p className="construction-subtitle">{isEs ? "Visualiza cada fase de una residencia premium, desde el terreno inicial hasta el enmarcado final, mientras Operitron conecta números, cronograma y ejecución." : "See a premium residence rise from raw land to finished framing while Operitron connects underwriting, budget, schedule, and execution."}</p>
+      <div className="construction-actions">
+        <button onClick={() => go("pricing")} className="primary-button">{isEs ? "Iniciar prueba gratis de 3 días" : "Start 3-Day Free Trial"}</button>
+        <button onClick={() => go("learning")} className="secondary-button">{isEs ? "Ver cómo funciona" : "See How It Works"}</button>
+      </div>
+      <div className="construction-proof">
+        <span><CheckCircle2 /> {isEs ? "Deal underwriting" : "Deal underwriting"}</span>
+        <span><CheckCircle2 /> {isEs ? "Control de obra" : "Build tracking"}</span>
+        <span><CheckCircle2 /> {isEs ? "Reportes IA" : "AI reporting"}</span>
+      </div>
+    </div>
+
+    <div className="construction-visual">
+      <div className="construction-status">
+        <span className="construction-stage-count">{String(stage + 1).padStart(2, "0")} / 14</span>
+        <span className="construction-stage-pill">{isEs ? "ETAPA ACTIVA" : "ACTIVE STAGE"}</span>
+      </div>
+      <div className="build-scene" data-stage={stage + 1}>
+        <div className="scene-moon" />
+        <div className="scene-ray" />
+        <div className="scene-particles">{Array.from({ length: 11 }, (_, index) => <span key={index} />)}</div>
+        <div className="scene-horizon" />
+        <div className={`scene-land ${built(0)}`} />
+        <div className={`scene-stakes ${built(1)}`}><i /><i /><i /><i /></div>
+        <div className={`scene-clearing ${built(2)}`} />
+        <div className={`scene-excavation ${built(3)}`} />
+        <div className={`scene-footings ${built(4)}`}><i /><i /><i /></div>
+        <div className={`scene-forms ${built(5)}`}><i /><i /><i /><i /></div>
+        <div className={`scene-slab ${built(6)}`} />
+        <div className={`scene-plumbing ${built(7)}`}><i /><i /><i /></div>
+        <div className={`scene-lumber ${built(8)}`}><i /><i /><i /><i /></div>
+        <div className={`scene-floor-frame ${built(9)}`}><i /><i /><i /><i /><i /></div>
+        <div className={`scene-exterior-frame ${built(10)}`}>
+          <b className="post post-1" /><b className="post post-2" /><b className="post post-3" /><b className="post post-4" /><b className="post post-5" /><b className="beam-top" /><b className="beam-mid" />
+        </div>
+        <div className={`scene-interior-frame ${built(11)}`}><b /><b /><b /></div>
+        <div className={`scene-trusses ${built(12)}`}><b /><b /><b /><b /></div>
+        <div className={`scene-complete ${built(13)}`}><span>{isEs ? "MARCO COMPLETO" : "FRAME COMPLETE"}</span></div>
+        <div className="scene-blueprint" />
+      </div>
+      <div className="construction-timeline">
+        <div className="construction-timeline-head">
+          <div>
+            <p>{isEs ? "Secuencia de construcción" : "Construction sequence"}</p>
+            <h2 key={stages[stage]}>{stages[stage]}</h2>
+          </div>
+          <strong>{percent}%</strong>
+        </div>
+        <div className="construction-track">
+          <span style={{ width: `${percent}%` }} />
+          {stages.map((label, index) => <button key={label} type="button" aria-label={label} onClick={() => setStage(index)} className={index <= stage ? "active" : ""} />)}
+        </div>
+        <p className="construction-note">{isEs ? "Selecciona un punto para inspeccionar cualquier fase del proyecto." : "Select a checkpoint to inspect any build stage."}</p>
+      </div>
+    </div>
+  </section>;
 }
 
 function VisitorWorkflow({ isEs }) {
