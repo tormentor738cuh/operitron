@@ -78,9 +78,17 @@ function subscriptionPlanLabel(plan, language) {
   return plan;
 }
 
-const publicPages = new Set(["home", "pricing", "settings", "privacy", "terms", "refund", "disclaimer"]);
+const articlePages = new Set(["brrrCalculator", "dscrLoans", "constructionBudgets", "fixFlipAnalysis", "airbnbRoi", "houseBuildCosts", "framingTimelines"]);
+const publicPages = new Set(["home", "pricing", "settings", "privacy", "terms", "refund", "disclaimer", ...articlePages]);
 const pagePaths = {
   home: "/",
+  brrrCalculator: "/brrr-calculator",
+  dscrLoans: "/dscr-loans",
+  constructionBudgets: "/construction-budgets",
+  fixFlipAnalysis: "/fix-and-flip-analysis",
+  airbnbRoi: "/airbnb-roi",
+  houseBuildCosts: "/house-build-costs",
+  framingTimelines: "/framing-timelines",
   dashboard: "/dashboard",
   pricing: "/pricing",
   settings: "/login",
@@ -100,6 +108,163 @@ const pagePaths = {
 };
 const pathPages = Object.fromEntries(Object.entries(pagePaths).map(([page, path]) => [path, page]));
 const getPageFromPath = () => pathPages[window.location.pathname.replace(/\/+$/, "") || "/"] || "home";
+
+const seoArticles = {
+  brrrCalculator: {
+    category: "BRRR Strategy",
+    title: "BRRR Calculator: How to Calculate ROI, Refinance Proceeds, and Cash Left in a Deal",
+    description: "Learn how to calculate BRRR ROI, equity captured, refinance proceeds, cash left in the deal, DSCR, and monthly cash flow before you buy.",
+    readTime: "9 min read",
+    icon: WalletCards,
+    keywords: ["BRRR calculator", "BRRR ROI", "cash-out refinance", "rental cash flow"],
+    intro: "A BRRR deal only works when the numbers survive every phase: buy, rehab, rent, refinance, and repeat. The goal is not just to create equity. The goal is to know how much cash stays trapped in the project, whether the refinance supports the debt, and whether the property still cash flows after the dust settles.",
+    formulaBlocks: [
+      ["Equity Captured", "New Appraised Value - Total Project Cost"],
+      ["Cash Left in Deal", "Cash Invested - Refinance Cash Returned"],
+      ["Cash-on-Cash Return", "Annual Cash Flow / Cash Left in Deal"],
+      ["DSCR", "Net Operating Income / Annual Debt Service"],
+    ],
+    sections: [
+      ["The BRRR inputs that matter", "Start with purchase price, rehab budget, closing costs, holding costs, projected rent, taxes, insurance, vacancy, repairs, property management, refinance LTV, interest rate, and loan term. If any one of these is guessed too optimistically, the repeat part of BRRR gets harder."],
+      ["How to think about refinance proceeds", "Most investors model the refinance as a percentage of the new appraised value. For example, a 75% refinance on a $300,000 appraisal produces a $225,000 loan. That does not mean you receive $225,000 in cash. You must subtract the existing debt payoff, closing costs, reserves, and any lender holdbacks."],
+      ["What a good BRRR result looks like", "A strong BRRR often returns most or all invested cash while leaving positive monthly cash flow and a DSCR that lenders can support. A weak BRRR may show profit on paper but trap too much cash or create thin coverage after debt service."],
+    ],
+    checklist: ["Verify ARV with sold comps, not wishful listings.", "Stress-test refinance value at 70%, 75%, and 80% LTV.", "Include vacancy, repairs, management, taxes, insurance, and reserves.", "Confirm lender DSCR and seasoning requirements before closing.", "Compare cash left in deal against your next acquisition goal."],
+    cta: "Run BRRR, DSCR, and cash-out assumptions inside Operitron before you commit capital.",
+  },
+  dscrLoans: {
+    category: "Financing",
+    title: "DSCR Loans: How Investors Calculate Debt-Service Coverage Before Applying",
+    description: "Understand DSCR loan calculations, rental income coverage, lender thresholds, and how to improve a deal before sending it to a lender.",
+    readTime: "8 min read",
+    icon: Calculator,
+    keywords: ["DSCR loans", "DSCR calculator", "rental property loan", "debt service coverage"],
+    intro: "A DSCR loan is built around the income of the property instead of traditional borrower income. That makes it powerful for investors, but it also means one number can make or break the deal: the debt-service coverage ratio.",
+    formulaBlocks: [
+      ["DSCR", "Net Operating Income / Annual Debt Service"],
+      ["NOI", "Annual Rent - Operating Expenses"],
+      ["Annual Debt Service", "Monthly Principal and Interest x 12"],
+      ["Monthly Mortgage Payment", "Loan amortization using rate, term, and balance"],
+    ],
+    sections: [
+      ["What lenders are measuring", "DSCR tells a lender whether the rental income can support the debt. A DSCR of 1.00 means the property breaks even before reserves. Many lenders prefer 1.15 to 1.25 or higher, depending on asset type, borrower profile, market, and loan structure."],
+      ["Expenses investors often miss", "Taxes, insurance, HOA, repairs, vacancy, management, utilities, and reserves all affect DSCR. If you only subtract the mortgage payment from rent, you are not underwriting the same way a lender will."],
+      ["How to improve DSCR", "Lower the purchase price, increase the down payment, negotiate seller credits, reduce insurance costs, improve rent, or choose a loan structure with a lower payment. Each option changes both risk and return."],
+    ],
+    checklist: ["Use market rent, not best-case rent.", "Confirm taxes after sale or reassessment.", "Quote insurance before final underwriting.", "Model DSCR at multiple interest rates.", "Keep reserves for vacancy and repairs."],
+    cta: "Use Operitron’s investment loan calculator to compare DSCR, cash-out, and construction loan scenarios.",
+  },
+  constructionBudgets: {
+    category: "Construction",
+    title: "Construction Budgets: How Investors Build a Reliable Scope, Contingency, and Cost Tracker",
+    description: "A practical guide to construction budgeting for investors, builders, and developers managing rehabs or ground-up projects.",
+    readTime: "10 min read",
+    icon: Hammer,
+    keywords: ["construction budget", "rehab budget", "construction cost tracker", "builder budget"],
+    intro: "A construction budget is more than a list of prices. It is a control system for scope, bids, change orders, contingency, timing, and cash requirements. Good budgets prevent small misses from becoming deal-killing surprises.",
+    formulaBlocks: [
+      ["Total Project Cost", "Purchase/Land + Hard Costs + Soft Costs + Financing + Holding + Selling"],
+      ["Contingency", "Direct Construction Cost x 10% to 20%"],
+      ["Cost per Sq Ft", "Construction Cost / Finished Square Footage"],
+      ["Budget Variance", "Actual Cost - Original Budget"],
+    ],
+    sections: [
+      ["Separate hard costs and soft costs", "Hard costs include labor and materials. Soft costs include permits, surveys, engineering, design, insurance, utilities, lender fees, and professional services. Mixing them together makes it harder to see what is actually moving."],
+      ["Use bid comparison, not one quote", "A single quote tells you what one contractor wants to charge. A bid comparison tells you where scope is missing, where allowances are thin, and where one subcontractor is including something another excluded."],
+      ["Track committed, spent, and remaining", "The budget should show original budget, approved quote, amount paid, remaining commitment, change orders, and contingency used. Investors need a real-time view of where the project stands."],
+    ],
+    checklist: ["Create categories before collecting bids.", "Require written scopes from every subcontractor.", "Add contingency before judging profitability.", "Track change orders separately.", "Review budget variance weekly."],
+    cta: "Build a cleaner construction budget in Operitron with quotes, takeoffs, linked files, and project tools in one workspace.",
+  },
+  fixFlipAnalysis: {
+    category: "Deal Analysis",
+    title: "Fix and Flip Analysis: How to Calculate Profit, ROI, Max Offer, and Risk",
+    description: "Learn the core fix-and-flip formulas investors use to estimate ARV, rehab costs, holding costs, selling costs, profit, ROI, and max offer.",
+    readTime: "8 min read",
+    icon: LineChart,
+    keywords: ["fix and flip analysis", "flip calculator", "70 percent rule", "max offer"],
+    intro: "Fix-and-flip analysis is a speed game and a risk game. You need to screen deals quickly, but you also need enough discipline to avoid buying a property where rehab, timeline, or resale assumptions are doing all the heavy lifting.",
+    formulaBlocks: [
+      ["Profit", "ARV - Purchase Price - Rehab - Closing - Holding - Selling"],
+      ["ROI", "Profit / Total Cash or Total Cost"],
+      ["70% Rule Max Offer", "ARV x 70% - Repairs"],
+      ["Price per Sq Ft", "Sale Price / Square Footage"],
+    ],
+    sections: [
+      ["Start with ARV, then attack it", "ARV should come from nearby, recent, similar sold comps. The best investors try to disprove their ARV before they trust it. Listings, old sales, and oversized comps can make a deal look better than it is."],
+      ["Rehab budget needs a scope", "A rehab number without scope is just a guess. Break repairs into trades: demo, framing, electrical, plumbing, HVAC, roofing, windows, drywall, paint, flooring, cabinets, countertops, exterior, landscaping, permits, and cleanup."],
+      ["Holding and selling costs are real", "Taxes, utilities, insurance, interest, staging, agent commissions, seller credits, closing costs, and extra months can erase a deal. Model time honestly."],
+    ],
+    checklist: ["Use sold comps inside the same buyer pool.", "Add resale fees and seller concessions.", "Stress-test the timeline by 30 to 60 days.", "Get contractor bids before hard money draws begin.", "Set a minimum profit target before negotiating."],
+    cta: "Use Operitron’s deal underwriter to calculate profit, ROI, 70% rule, and max offer before making an offer.",
+  },
+  airbnbRoi: {
+    category: "Short-Term Rentals",
+    title: "Airbnb ROI: How to Calculate Short-Term Rental Cash Flow Before Buying",
+    description: "Learn how to estimate Airbnb ROI using revenue, occupancy, expenses, furnishing costs, debt service, cash invested, and seasonality.",
+    readTime: "9 min read",
+    icon: Home,
+    keywords: ["Airbnb ROI", "short term rental calculator", "STR cash flow", "vacation rental return"],
+    intro: "Airbnb ROI can look incredible when investors use peak-season revenue and forget the operational costs. A durable short-term rental analysis must include occupancy swings, cleaning, supplies, utilities, platform fees, furnishings, maintenance, local taxes, and regulation risk.",
+    formulaBlocks: [
+      ["Gross Revenue", "Average Daily Rate x Occupied Nights"],
+      ["NOI", "Gross Revenue - Operating Expenses"],
+      ["Cash Flow", "NOI - Annual Debt Service"],
+      ["Cash-on-Cash Return", "Annual Cash Flow / Cash Invested"],
+    ],
+    sections: [
+      ["Revenue is not just ADR", "Average daily rate matters, but occupancy and seasonality matter just as much. Model conservative, base, and strong cases so you understand downside risk."],
+      ["Operating costs are higher than long-term rentals", "Short-term rentals often include utilities, internet, furniture replacement, cleaning coordination, supplies, platform fees, local occupancy taxes, licensing, landscaping, pool service, and higher maintenance."],
+      ["Regulation can change the deal", "City rules, HOA restrictions, permit caps, insurance requirements, and tax registration can change whether the property can legally operate as planned."],
+    ],
+    checklist: ["Confirm zoning, HOA, and permit rules.", "Model occupancy by season.", "Include furniture and replacement reserves.", "Quote short-term-rental insurance.", "Compare STR returns against long-term rent fallback."],
+    cta: "Use Operitron to compare rental cash flow, debt service, reserves, and investor return before buying an Airbnb-style property.",
+  },
+  houseBuildCosts: {
+    category: "Ground-Up Construction",
+    title: "House Build Costs: What Investors Should Include Before Starting a New Construction Project",
+    description: "Understand house build costs from land and site work to foundation, framing, MEP, finishes, soft costs, financing, and contingency.",
+    readTime: "11 min read",
+    icon: Building2,
+    keywords: ["house build costs", "cost to build a house", "new construction budget", "ground up construction"],
+    intro: "The cost to build a house is not just sticks, bricks, and labor. Investors need to model land, site work, utilities, foundation, framing, roofing, MEP systems, finishes, permits, insurance, engineering, financing, carrying costs, and contingency.",
+    formulaBlocks: [
+      ["All-In Build Cost", "Land + Site Work + Hard Costs + Soft Costs + Financing + Contingency"],
+      ["Cost per Sq Ft", "Total Build Cost / Finished Sq Ft"],
+      ["Interest Reserve", "Expected Construction Interest x Safety Buffer"],
+      ["Projected Profit", "Sale Price or ARV - All-In Build Cost"],
+    ],
+    sections: [
+      ["Site work can surprise new builders", "Clearing, grading, fill, drainage, driveway, utilities, septic, well, erosion control, and retaining walls can change the budget before the house even comes out of the ground."],
+      ["Finish level drives the spread", "Basic, upgraded, and luxury finishes can create very different budgets for cabinets, flooring, tile, fixtures, appliances, trim, exterior materials, windows, doors, and landscaping."],
+      ["Soft costs deserve their own line items", "Plans, engineering, surveys, permits, utility taps, builder risk insurance, legal, accounting, lender fees, appraisal, inspections, and project management all belong in the budget."],
+    ],
+    checklist: ["Confirm utility availability before buying land.", "Price site work separately from vertical construction.", "Choose finish level before collecting bids.", "Add contingency for unknown conditions.", "Model construction interest and sale time."],
+    cta: "Use Operitron’s construction wizard and budget estimator to turn build assumptions into a project checklist and cost model.",
+  },
+  framingTimelines: {
+    category: "Project Management",
+    title: "Framing Timelines: How Long Wood Framing Takes and What Delays a Build",
+    description: "Learn how framing timelines work, what needs to happen before framing starts, and how truss, lumber, inspection, and weather delays affect a build.",
+    readTime: "7 min read",
+    icon: Layers,
+    keywords: ["framing timeline", "wood framing schedule", "construction timeline", "roof truss lead time"],
+    intro: "Framing is one of the most visible phases of construction, but the timeline depends on decisions made weeks earlier. Slab cure, lumber delivery, truss lead times, framing crew availability, weather, inspections, and plan changes all shape how fast the structure goes vertical.",
+    formulaBlocks: [
+      ["Framing Duration", "Crew Productivity x House Complexity x Weather/Inspection Buffer"],
+      ["Dry-In Path", "Foundation -> Framing -> Trusses -> Sheathing -> Roofing"],
+      ["Lead-Time Risk", "Order Date vs Required Install Date"],
+      ["Schedule Buffer", "Base Duration + Weather + Inspection + Material Delay"],
+    ],
+    sections: [
+      ["What must happen before framing", "The foundation needs to be complete, cured, inspected, and ready. Anchor bolts, slab dimensions, underground utilities, and lumber delivery need to line up before the crew arrives."],
+      ["Trusses are a critical order", "Roof trusses often require engineering and can have multi-week lead times. Waiting to order trusses until framing starts can delay dry-in and expose the project to weather risk."],
+      ["Complexity changes productivity", "A simple rectangle frames faster than a custom design with multiple rooflines, tall walls, balconies, steel beams, or unusual window and door layouts."],
+    ],
+    checklist: ["Order trusses before the framing crew needs them.", "Verify rough openings before window and door delivery.", "Confirm lumber package completeness.", "Schedule inspections early.", "Track weather risk during framing and dry-in."],
+    cta: "Use Operitron’s construction progress tools to track framing tasks, critical orders, risk alerts, and schedule dependencies.",
+  },
+};
 
 const formatMoney = (value) =>
   Number(value || 0).toLocaleString("en-US", {
@@ -652,6 +817,7 @@ function AppShell() {
     if (activePage === "pricing") return <PricingPlans language={language} user={user} go={go} />;
     if (activePage === "settings") return <SettingsPage {...props} />;
     if (activePage === "profile") return <ProfilePage t={t} language={language} user={user} back={back} isAdmin={isAdmin} go={go} />;
+    if (articlePages.has(activePage)) return <SEOArticlePage page={activePage} go={go} />;
     if (["privacy", "terms", "refund", "disclaimer"].includes(activePage)) return <LegalPage type={activePage} language={language} />;
     return <Dashboard {...props} />;
   }, [activePage, language, projects, user, subscription, passwordRecovery, hasProductAccess, isAdmin]);
@@ -904,6 +1070,7 @@ function PublicHome({ t, go }) {
       <PricingPlans language={isEs ? "es" : "en"} go={go} />
       <LandingFAQ isEs={isEs} />
       <LandingKnowledgeBase isEs={isEs} />
+      <SEOArticleGrid go={go} />
       <PublicFooter isEs={isEs} go={go} />
     </div>
   );
@@ -990,6 +1157,126 @@ function LandingFAQ({ isEs }) {
 function LandingKnowledgeBase({ isEs }) {
   const topics = isEs ? ["Cómo evaluar un deal más rápido", "Cómo preparar una oferta máxima", "Cómo organizar un cierre de construcción", "Cómo revisar DSCR antes de hablar con un prestamista"] : ["How to evaluate a deal faster", "How to prepare a max offer", "How to organize construction closeout", "How to review DSCR before calling a lender"];
   return <section><SectionHeader title={isEs ? "Base de Conocimiento para Inversionistas" : "Investor Knowledge Base"} detail={isEs ? "Guías originales para analizar, construir y operar con más claridad." : "Original guides for analyzing, building, and operating with more clarity."} /><div className="grid gap-4 md:grid-cols-2">{topics.map((topic) => <button key={topic} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 text-left font-black text-white hover:border-cyan-300/40">{topic}<ChevronRight className="float-right text-cyan-300" /></button>)}</div></section>;
+}
+
+function SEOArticleGrid({ go }) {
+  return (
+    <section>
+      <SectionHeader
+        title="Investor SEO Guides"
+        detail="Practical search-focused guides for investors and builders comparing formulas, financing, construction costs, and project timelines."
+      />
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        {Object.entries(seoArticles).map(([page, article]) => {
+          const Icon = article.icon;
+          return (
+            <motion.button
+              key={page}
+              whileHover={{ y: -4 }}
+              onClick={() => go(page)}
+              className="glow-card rounded-[2rem] border border-white/10 bg-slate-950/70 p-5 text-left shadow-2xl shadow-black/20 transition hover:border-cyan-300/35"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan-300/10 text-cyan-300"><Icon size={22} /></div>
+                <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs font-black text-amber-200">{article.readTime}</span>
+              </div>
+              <p className="mt-5 text-xs font-black uppercase tracking-[0.22em] text-cyan-300">{article.category}</p>
+              <h3 className="mt-3 text-xl font-black leading-snug text-white">{article.title}</h3>
+              <p className="mt-3 line-clamp-3 text-sm leading-6 text-slate-400">{article.description}</p>
+              <span className="mt-5 inline-flex items-center gap-2 font-black text-amber-300">Read guide <ChevronRight size={18} /></span>
+            </motion.button>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function SEOArticlePage({ page, go }) {
+  const article = seoArticles[page] || seoArticles.brrrCalculator;
+  const Icon = article.icon;
+  useEffect(() => {
+    const originalTitle = document.title;
+    const description = document.querySelector('meta[name="description"]');
+    const originalDescription = description?.getAttribute("content") || "";
+    document.title = `${article.title} | OPERITRON.COM`;
+    description?.setAttribute("content", article.description);
+    return () => {
+      document.title = originalTitle;
+      description?.setAttribute("content", originalDescription);
+    };
+  }, [article]);
+
+  const related = Object.entries(seoArticles).filter(([key]) => key !== page).slice(0, 3);
+  return (
+    <article className="mx-auto max-w-6xl space-y-8">
+      <section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/[.12] via-slate-950 to-purple-500/[.12] p-6 shadow-2xl shadow-black/25 sm:p-10">
+        <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
+        <button onClick={() => go("home")} className="secondary-button relative mb-6">← Home</button>
+        <div className="relative grid gap-6 lg:grid-cols-[1fr_320px] lg:items-end">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">{article.category}</p>
+            <h1 className="mt-4 text-3xl font-black leading-tight text-white sm:text-5xl">{article.title}</h1>
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-300">{article.description}</p>
+            <div className="mt-6 flex flex-wrap gap-3">
+              {article.keywords.map((keyword) => <span key={keyword} className="rounded-full border border-white/10 bg-white/[.05] px-4 py-2 text-sm font-bold text-slate-300">{keyword}</span>)}
+            </div>
+          </div>
+          <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-cyan-300 text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.25)]"><Icon size={26} /></div>
+            <p className="mt-5 text-sm font-black uppercase tracking-widest text-slate-500">Guide Length</p>
+            <p className="mt-1 text-2xl font-black text-white">{article.readTime}</p>
+            <button onClick={() => go("pricing")} className="primary-button mt-6 w-full">Start 3-Day Free Trial</button>
+          </div>
+        </div>
+      </section>
+
+      <section className="grid gap-6 lg:grid-cols-[1fr_340px]">
+        <div className="space-y-6">
+          <GlassPanel>
+            <p className="text-lg leading-8 text-slate-300">{article.intro}</p>
+          </GlassPanel>
+          {article.sections.map(([title, text], index) => (
+            <GlassPanel key={title}>
+              <p className="text-sm font-black uppercase tracking-[0.24em] text-cyan-300">Step {index + 1}</p>
+              <h2 className="mt-3 text-2xl font-black text-white">{title}</h2>
+              <p className="mt-4 text-lg leading-8 text-slate-300">{text}</p>
+            </GlassPanel>
+          ))}
+        </div>
+        <aside className="space-y-5 lg:sticky lg:top-28 lg:self-start">
+          <div className="rounded-[2rem] border border-white/10 bg-slate-950/75 p-5">
+            <h2 className="text-xl font-black text-white">Core Formulas</h2>
+            <div className="mt-4 space-y-3">
+              {article.formulaBlocks.map(([label, formula]) => <div key={label} className="rounded-2xl border border-cyan-300/15 bg-cyan-300/[.045] p-4"><p className="font-black text-cyan-200">{label}</p><p className="mt-2 text-sm leading-6 text-slate-300">{formula}</p></div>)}
+            </div>
+          </div>
+          <div className="rounded-[2rem] border border-white/10 bg-slate-950/75 p-5">
+            <h2 className="text-xl font-black text-white">Investor Checklist</h2>
+            <ul className="mt-4 space-y-3">
+              {article.checklist.map((item) => <li key={item} className="flex gap-3 text-sm leading-6 text-slate-300"><CheckCircle2 className="mt-0.5 shrink-0 text-emerald-300" size={18} />{item}</li>)}
+            </ul>
+          </div>
+        </aside>
+      </section>
+
+      <section className="rounded-[2rem] border border-amber-300/20 bg-amber-300/[.06] p-6 sm:p-8">
+        <h2 className="text-2xl font-black text-white">Put this into practice</h2>
+        <p className="mt-3 max-w-3xl text-lg leading-8 text-slate-300">{article.cta}</p>
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+          <button onClick={() => go("pricing")} className="primary-button">View Pricing</button>
+          <button onClick={() => go("settings")} className="secondary-button">Create Account</button>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeader title="Related Guides" detail="Continue with more Operitron investor and construction resources." />
+        <div className="grid gap-4 md:grid-cols-3">
+          {related.map(([key, relatedArticle]) => <button key={key} onClick={() => go(key)} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 text-left hover:border-cyan-300/35"><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{relatedArticle.category}</p><h3 className="mt-3 font-black text-white">{relatedArticle.title}</h3><p className="mt-3 text-sm leading-6 text-slate-400">{relatedArticle.readTime}</p></button>)}
+        </div>
+      </section>
+    </article>
+  );
 }
 
 function Hero({ t, go }) {
