@@ -1896,6 +1896,16 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
     go("dashboard", true);
   }
 
+  function submitAuth(event) {
+    event.preventDefault();
+    if (submitting) return;
+    if (mode === "recover") {
+      updatePassword();
+      return;
+    }
+    auth(mode === "register" ? "signup" : "login");
+  }
+
   if (user && mode !== "recover") return <GlassPanel><h2 className="text-3xl font-black text-white">{t.accountSettings}</h2><p className="mt-2 text-slate-400">{user.email}</p><div className="mt-6 flex flex-wrap gap-3"><button onClick={() => go("dashboard")} className="primary-button">{ui.dashboard}</button><button onClick={signOut} className="secondary-button"><LogOut size={18} /> {ui.signOut}</button></div></GlassPanel>;
 
   return (
@@ -1909,10 +1919,10 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
         <button onClick={back} className="secondary-button">← {ui.back}</button>
       </div>
       <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(280px,36rem)_1fr]">
-        <div className="grid gap-3">
+        <form onSubmit={submitAuth} className="grid gap-3">
           {mode !== "recover" && <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-slate-950/70 p-1">
-            <button onClick={() => { setMode("register"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "register" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.register}</button>
-            <button onClick={() => { setMode("login"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "login" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.login}</button>
+            <button type="button" onClick={() => { setMode("register"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "register" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.register}</button>
+            <button type="button" onClick={() => { setMode("login"); setStatus(""); }} className={`rounded-xl px-4 py-3 font-black ${mode === "login" ? "bg-amber-400 text-slate-950" : "text-slate-400"}`}>{ui.login}</button>
           </div>}
           {mode === "register" && <><input value={name} onChange={(e) => setName(e.target.value)} className="field" autoComplete="name" placeholder={ui.fullName} /><input value={company} onChange={(e) => setCompany(e.target.value)} className="field" autoComplete="organization" placeholder={ui.company} /><input value={phone} onChange={(e) => setPhone(e.target.value)} className="field" autoComplete="tel" placeholder={ui.phone} /></>}
           {mode !== "recover" && <input value={email} onChange={(e) => setEmail(e.target.value)} className="field" autoComplete="email" type="email" placeholder={t.email} />}
@@ -1920,12 +1930,12 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
           <PasswordField value={password} onChange={(e) => setPassword(e.target.value)} autoComplete={mode === "login" ? "current-password" : "new-password"} placeholder={mode === "recover" ? t.newPassword : t.password} visible={showPassword} onToggle={() => setShowPassword((current) => !current)} language={language} />
           {mode === "recover" && <PasswordField value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" placeholder={t.confirmPassword} visible={showConfirmPassword} onToggle={() => setShowConfirmPassword((current) => !current)} language={language} />}
           {mode === "recover"
-            ? <button disabled={submitting} onClick={updatePassword} className="primary-button disabled:cursor-wait disabled:opacity-70">{t.updatePassword}</button>
-            : <button disabled={submitting} onClick={() => auth(mode === "register" ? "signup" : "login")} className="primary-button disabled:cursor-wait disabled:opacity-70">{submitting ? (mode === "register" ? t.creatingAccount : t.signingIn) : (mode === "register" ? ui.save : ui.login)}</button>}
-          {mode === "login" && <div className="mt-1 rounded-2xl border border-white/10 bg-slate-950/40 p-3"><p className="text-sm font-bold text-slate-300">{t.forgotPassword}</p><button disabled={submitting} onClick={resetPassword} className="mt-2 text-left text-sm font-black text-cyan-300 hover:text-cyan-200">{t.resetPassword} →</button></div>}
+            ? <button type="submit" disabled={submitting} className="primary-button disabled:cursor-wait disabled:opacity-70">{t.updatePassword}</button>
+            : <button type="submit" disabled={submitting} className="primary-button disabled:cursor-wait disabled:opacity-70">{submitting ? (mode === "register" ? t.creatingAccount : t.signingIn) : (mode === "register" ? ui.save : ui.login)}</button>}
+          {mode === "login" && <div className="mt-1 rounded-2xl border border-white/10 bg-slate-950/40 p-3"><p className="text-sm font-bold text-slate-300">{t.forgotPassword}</p><button type="button" disabled={submitting} onClick={resetPassword} className="mt-2 text-left text-sm font-black text-cyan-300 hover:text-cyan-200">{t.resetPassword} →</button></div>}
           {status && <p role="status" className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm leading-6 text-cyan-100">{status}</p>}
           <p className="pt-2 text-sm text-slate-400">{isEs ? "¿Necesitas ayuda?" : "Need help?"} <a className="font-bold text-cyan-300 hover:text-cyan-200" href="mailto:support@operitron.com">support@operitron.com</a></p>
-        </div>
+        </form>
         <div className="hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/10 via-slate-950 to-purple-500/10 p-7 lg:block">
           <h3 className="text-2xl font-black text-white">{isEs ? "Cuenta segura de Operitron" : "Secure Operitron account"}</h3>
           <p className="mt-3 leading-7 text-slate-300">{ui.secure}</p>
