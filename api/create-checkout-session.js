@@ -15,6 +15,14 @@ function getAdminSupabase() {
   });
 }
 
+async function ensureProfile(adminClient, user) {
+  const { error } = await adminClient.from("profiles").upsert({
+    id: user.id,
+    email: user.email || "",
+  }, { onConflict: "id", ignoreDuplicates: true });
+  if (error) throw new Error("profile_setup_failed");
+}
+
 export default async function handler(request, response) {
   if (request.method !== "POST") return response.status(405).json({ error: "Method not allowed." });
 
@@ -35,7 +43,9 @@ export default async function handler(request, response) {
 
   try {
     const adminClient = getAdminSupabase();
-    const { data: profile } = await adminClient.from("profiles").select("stripe_customer_id").eq("id", data.user.id).maybeSingle();
+    await ensureProfile(adminClient, data.user);
+    const { data: profile, error: profileError } = await adminClient.from("profiles").select("stripe_customer_id").eq("id", data.user.id).maybeSingle();
+    if (profileError) throw new Error("profile_lookup_failed");
     let customerId = profile?.stripe_customer_id;
     if (!customerId) {
       const matchingCustomers = await stripe.customers.list({ email: data.user.email, limit: 1 });
@@ -44,7 +54,8 @@ export default async function handler(request, response) {
         metadata: { user_id: data.user.id },
       });
       customerId = customer.id;
-      await adminClient.from("profiles").update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq("id", data.user.id);
+      const { error: customerSaveError } = await adminClient.from("profiles").update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq("id", data.user.id);
+      if (customerSaveError) throw new Error("customer_save_failed");
     }
     const appUrl = process.env.APP_URL || "https://operitron.com";
     const session = await stripe.checkout.sessions.create({
@@ -63,7 +74,10 @@ export default async function handler(request, response) {
       cancel_url: `${appUrl}/pricing?checkout=cancelled`,
     });
     return response.status(200).json({ url: session.url });
-  } catch (_error) {
-    return response.status(500).json({ error: "Checkout could not be created." });
+  } catch (error) {
+    if (String(error?.message).includes("profile_")) {
+      return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
+    }
+    return response.status(500).json({ error: "Checkout could not be created. Please contact support@operitron.com." });
   }
 }

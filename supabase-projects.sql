@@ -164,4 +164,17 @@ create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.create_profile_for_new_user();
 
+-- Existing authenticated accounts predate the signup trigger and need profiles now.
+insert into public.profiles (id, email, full_name, company, phone)
+select
+  users.id,
+  coalesce(users.email, ''),
+  users.raw_user_meta_data ->> 'full_name',
+  users.raw_user_meta_data ->> 'company',
+  users.raw_user_meta_data ->> 'phone'
+from auth.users as users
+on conflict (id) do update
+set email = excluded.email,
+    updated_at = now();
+
 commit;

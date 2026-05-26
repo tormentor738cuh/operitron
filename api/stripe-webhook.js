@@ -14,9 +14,20 @@ async function readBody(request) {
   return Buffer.concat(chunks);
 }
 
+async function ensureProfile(userId) {
+  const { data, error: userError } = await adminClient.auth.admin.getUserById(userId);
+  if (userError || !data.user) throw userError || new Error("User not found.");
+  const { error } = await adminClient.from("profiles").upsert({
+    id: data.user.id,
+    email: data.user.email || "",
+  }, { onConflict: "id", ignoreDuplicates: true });
+  if (error) throw error;
+}
+
 async function syncSubscription(subscription) {
   const userId = subscription.metadata?.user_id;
   if (!userId) return;
+  await ensureProfile(userId);
   const details = {
     stripe_customer_id: String(subscription.customer),
     subscription_id: subscription.id,
@@ -26,8 +37,9 @@ async function syncSubscription(subscription) {
     current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
     updated_at: new Date().toISOString(),
   };
-  await adminClient.from("profiles").update(details).eq("id", userId);
-  await adminClient.from("subscriptions").upsert({
+  const { error: profileError } = await adminClient.from("profiles").update(details).eq("id", userId);
+  if (profileError) throw profileError;
+  const { error: subscriptionError } = await adminClient.from("subscriptions").upsert({
     user_id: userId,
     stripe_customer_id: String(subscription.customer),
     stripe_subscription_id: subscription.id,
@@ -38,6 +50,7 @@ async function syncSubscription(subscription) {
     current_period_end: details.current_period_end,
     updated_at: details.updated_at,
   }, { onConflict: "stripe_subscription_id" });
+  if (subscriptionError) throw subscriptionError;
 }
 
 export default async function handler(request, response) {
@@ -49,18 +62,24 @@ export default async function handler(request, response) {
     return response.status(400).json({ error: "Invalid webhook signature." });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object;
-    const userId = session.metadata?.user_id || session.client_reference_id;
-    if (userId && session.customer) {
-      await adminClient.from("profiles").update({
-        stripe_customer_id: String(session.customer),
-        updated_at: new Date().toISOString(),
-      }).eq("id", userId);
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object;
+      const userId = session.metadata?.user_id || session.client_reference_id;
+      if (userId && session.customer) {
+        await ensureProfile(userId);
+        const { error } = await adminClient.from("profiles").update({
+          stripe_customer_id: String(session.customer),
+          updated_at: new Date().toISOString(),
+        }).eq("id", userId);
+        if (error) throw error;
+      }
     }
-  }
-  if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"].includes(event.type)) {
-    await syncSubscription(event.data.object);
+    if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"].includes(event.type)) {
+      await syncSubscription(event.data.object);
+    }
+  } catch (_error) {
+    return response.status(500).json({ error: "Subscription update could not be stored." });
   }
   return response.status(200).json({ received: true });
 }

@@ -22,6 +22,14 @@ function adminEmails() {
     .filter(Boolean);
 }
 
+async function ensureProfile(user) {
+  const { error } = await adminClient.from("profiles").upsert({
+    id: user.id,
+    email: user.email || "",
+  }, { onConflict: "id", ignoreDuplicates: true });
+  if (error) throw new Error("profile_setup_failed");
+}
+
 function rateLimited(key) {
   const now = Date.now();
   const current = (recentRequests.get(key) || []).filter((timestamp) => now - timestamp < 60000);
@@ -87,7 +95,13 @@ export default async function handler(request, response) {
   if (authError || !data.user) return response.status(401).json({ error: "Invalid session." });
 
   const email = String(data.user.email || "").toLowerCase();
-  const { data: profile } = await adminClient.from("profiles").select("subscription_status, role").eq("id", data.user.id).maybeSingle();
+  try {
+    await ensureProfile(data.user);
+  } catch (_error) {
+    return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
+  }
+  const { data: profile, error: profileError } = await adminClient.from("profiles").select("subscription_status, role").eq("id", data.user.id).maybeSingle();
+  if (profileError) return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
   const isAdmin = profile?.role === "admin" || adminEmails().includes(email);
   if (!isAdmin && !allowedStatuses.has(profile?.subscription_status)) {
     return response.status(403).json({ error: "Start your 3-day free trial to access AI analysis." });
