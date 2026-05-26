@@ -27,7 +27,10 @@ async function ensureProfile(user) {
     id: user.id,
     email: user.email || "",
   }, { onConflict: "id", ignoreDuplicates: true });
-  if (error) throw new Error("profile_setup_failed");
+  if (error) {
+    console.error("[analysis] Profile setup failed", { code: error.code, message: error.message, userId: user.id });
+    throw new Error("profile_setup_failed");
+  }
 }
 
 function rateLimited(key) {

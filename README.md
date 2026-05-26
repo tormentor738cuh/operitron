@@ -12,4 +12,6 @@ The frontend and Vercel API routes require the Operitron Supabase schema before 
 
 When using Supabase CLI migrations instead of the SQL Editor, apply the files in `supabase/migrations` in order.
 
+Required server-side Vercel variables for billing are `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `SUPABASE_SERVICE_ROLE_KEY`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `VITE_STRIPE_MONTHLY_PRICE_ID`, and `VITE_STRIPE_ANNUAL_PRICE_ID`. The service-role key is required only by Vercel API functions for protected database writes; never expose it in frontend code or give it a `VITE_` prefix.
+
 Do not commit service-role keys, Stripe secret keys, administrator passwords, or OpenAI keys. Server secrets belong only in Vercel environment variables.

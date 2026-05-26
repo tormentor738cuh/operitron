@@ -52,8 +52,6 @@ const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supa
 const rentcastApiKey = import.meta.env.VITE_RENTCAST_API_KEY;
 const checkoutEndpoint = import.meta.env.VITE_STRIPE_CHECKOUT_ENDPOINT || "/api/create-checkout-session";
 const portalEndpoint = import.meta.env.VITE_STRIPE_PORTAL_ENDPOINT || "/api/create-billing-portal";
-const monthlyPriceId = import.meta.env.VITE_STRIPE_MONTHLY_PRICE_ID;
-const annualPriceId = import.meta.env.VITE_STRIPE_ANNUAL_PRICE_ID;
 const productionUrl = (import.meta.env.VITE_APP_URL || "https://operitron.com").replace(/\/+$/, "");
 const adminEmails = String(import.meta.env.VITE_ADMIN_EMAILS || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
 const LazyAIAnalyzerPanel = lazy(() => import("./AIAnalyzerPanel.jsx"));
@@ -105,6 +103,13 @@ const formatMoney = (value) =>
     currency: "USD",
     maximumFractionDigits: 0,
   });
+const formatMoneyCents = (value) =>
+  Number(value || 0).toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
 const formatNumber = (value, digits = 2) =>
   Number(value || 0).toLocaleString("en-US", { maximumFractionDigits: digits });
@@ -119,9 +124,10 @@ const formulas = {
     return valid.length ? valid.reduce((sum, value) => sum + value, 0) / valid.length : 0;
   },
   roi: (profit, totalCost) => (totalCost ? (profit / totalCost) * 100 : 0),
-    monthlyMortgage: (loan, annualRate, years) => {
+  monthlyMortgage: (loan, annualRate, years) => {
     const r = annualRate / 100 / 12;
     const n = years * 12;
+    if (!loan || !n) return 0;
     return r ? (loan * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1) : loan / n;
   },
   capRate: (noi, purchasePrice) => (purchasePrice ? (noi / purchasePrice) * 100 : 0),
@@ -658,7 +664,7 @@ function AppShell() {
       </main>
       {!user && activePage !== "home" && <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 sm:px-5 lg:px-8 lg:pb-8"><PublicFooter isEs={language === "es"} go={go} /></div>}
       <MobileNavigation t={t} language={language} activePage={activePage} go={go} user={user} hasProductAccess={hasProductAccess} />
-      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
+      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} projects={projects} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
     </div>
   );
 }
@@ -718,7 +724,9 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
       <div className={`mx-auto flex items-center justify-between gap-2 sm:gap-4 ${user ? "" : "max-w-7xl"}`}>
         <div className="flex min-w-0 items-center gap-3">
           {user && hasProductAccess && <button onClick={() => setMobileOpen(true)} className="rounded-xl border border-white/10 p-2 text-white lg:hidden"><Menu /></button>}
-          <BrandLogo onClick={() => go(user && hasProductAccess ? "dashboard" : "home")} compact />
+          <div className={user && hasProductAccess && !collapsed ? "lg:hidden" : ""}>
+            <BrandLogo onClick={() => go(user && hasProductAccess ? "dashboard" : "home")} compact />
+          </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "Español" : "English"} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">
@@ -1072,9 +1080,13 @@ function ToolGrid({ setActiveTool, language = "en" }) {
   );
 }
 
-function ToolModal({ t, language, toolId, onClose }) {
+function ToolModal({ t, language, toolId, projects, onClose }) {
   const tool = getTools(language).find(([id]) => id === toolId) || getTools(language)[0];
   const [, title, desc, Icon] = tool;
+  const requiresProject = ["underwriter", "loan", "loanCalcs"].includes(toolId);
+  const [projectReady, setProjectReady] = useState(!requiresProject);
+  const [showExisting, setShowExisting] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-0 backdrop-blur-sm sm:p-4">
       <motion.div initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="h-[100dvh] w-full overflow-y-auto bg-[#080d1f] p-4 pb-24 shadow-2xl shadow-black sm:max-h-[90vh] sm:max-w-5xl sm:rounded-[2rem] sm:border sm:border-white/10 sm:p-6">
@@ -1088,8 +1100,25 @@ function ToolModal({ t, language, toolId, onClose }) {
           </div>
           <button onClick={onClose} className="rounded-2xl border border-white/10 p-3 text-slate-300 hover:border-amber-400/50 hover:text-white"><X /></button>
         </div>
-        <ToolBody t={t} language={language} toolId={toolId} />
+        {projectReady ? <ToolBody t={t} language={language} toolId={toolId} project={selectedProject} /> : <ProjectPicker language={language} toolTitle={title} projects={projects} showExisting={showExisting} setShowExisting={setShowExisting} selectProject={(project) => { setSelectedProject(project); setProjectReady(true); }} />}
       </motion.div>
+    </div>
+  );
+}
+
+function ProjectPicker({ language, toolTitle, projects, showExisting, setShowExisting, selectProject }) {
+  const isEs = language === "es";
+  return (
+    <div className="mx-auto mt-6 max-w-xl rounded-[2rem] border border-white/10 bg-white/[.035] p-5 shadow-2xl shadow-black/30 sm:p-7">
+      <h3 className="text-2xl font-black text-white">{isEs ? "Selecciona un Proyecto" : "Select a Project"}</h3>
+      <p className="mt-2 text-slate-400">{isEs ? "Elige un proyecto para usar con" : "Choose a project to use with"} <span className="font-black text-cyan-300">{toolTitle}</span></p>
+      {!showExisting ? <div className="mt-7 grid gap-3">
+        <button onClick={() => selectProject({ name: isEs ? "Nuevo Proyecto" : "New Project" })} className="primary-button flex items-center justify-center gap-2"><Plus size={18} />{isEs ? "Crear Nuevo Proyecto" : "Create New Project"}</button>
+        <button onClick={() => setShowExisting(true)} className="secondary-button flex items-center justify-center gap-2"><FolderOpen size={18} />{isEs ? "Usar Proyecto Existente" : "Use Existing Project"}</button>
+      </div> : <div className="mt-6 space-y-3">
+        {projects.map((project) => <button key={project.id} onClick={() => selectProject(project)} className="glow-card flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left hover:border-cyan-300/35"><span><span className="block font-black text-white">{project.name}</span><span className="block text-sm text-slate-400">{project.address}</span></span><ChevronRight className="text-cyan-300" size={18} /></button>)}
+        <button onClick={() => setShowExisting(false)} className="mt-2 text-sm font-black text-slate-400 hover:text-cyan-300">← {isEs ? "Volver" : "Back"}</button>
+      </div>}
     </div>
   );
 }
@@ -1111,10 +1140,10 @@ function PremiumPaywall({ language, user, go }) {
   return <div className="mx-auto max-w-5xl space-y-7"><section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/12 via-slate-950 to-purple-500/12 p-6 text-center shadow-[0_0_55px_rgba(34,211,238,.12)] sm:p-10"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" /><Sparkles className="relative mx-auto text-cyan-300" size={38} /><p className="relative mt-5 text-xs font-black uppercase tracking-[0.28em] text-cyan-300">OPERITRON.COM</p><h1 className="relative mx-auto mt-3 max-w-3xl text-3xl font-black text-white sm:text-5xl">{isEs ? "Comienza tu prueba gratis de 3 días" : "Start your 3-day free trial"}</h1><p className="relative mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">{isEs ? "Tu cuenta está lista. Las herramientas profesionales se activan cuando inicias una suscripción Mensual o Anual mediante Stripe Checkout." : "Your account is ready. Professional tools activate when you start a Monthly or Annual subscription through secure Stripe Checkout."}</p><p className="relative mt-4 text-sm font-bold text-slate-400">{user?.email}</p><div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row"><button onClick={() => go("pricing")} className="primary-button">{isEs ? "Ver planes e iniciar prueba" : "View plans and start trial"}</button><button onClick={() => go("profile")} className="secondary-button">{isEs ? "Mi cuenta" : "My account"}</button></div></section><div className="grid gap-4 md:grid-cols-2">{perks.map((perk) => <div key={perk} className="rounded-2xl border border-white/10 bg-white/[.045] p-5 text-slate-200"><CheckCircle2 className="mb-3 text-cyan-300" size={20} /><p className="font-bold">{perk}</p></div>)}</div></div>;
 }
 
-function ToolBody({ t, language, toolId }) {
+function ToolBody({ t, language, toolId, project }) {
   if (toolId === "wizard") return <ConstructionWizard language={language} />;
-  if (toolId === "underwriter") return <DealUnderwriter language={language} />;
-  if (toolId === "loan" || toolId === "loanCalcs") return <InvestmentLoanCalculator language={language} />;
+  if (toolId === "underwriter") return <DealUnderwriter language={language} project={project} />;
+  if (toolId === "loan" || toolId === "loanCalcs") return <InvestmentLoanCalculator language={language} project={project} />;
   if (toolId === "todo") return <Checklist items={language === "es" ? ["Ordenar armaduras", "Confirmar inspección de cimentación", "Recopilar tres ofertas de HVAC", "Programar cuadrilla de drywall"] : ["Order trusses", "Confirm foundation inspection", "Collect three HVAC bids", "Schedule drywall crew"]} language={language} />;
   if (toolId === "punch") return <PunchListApp />;
   if (toolId === "takeoff") return <AITakeoff language={language} />;
@@ -1262,7 +1291,7 @@ function sidingDescription(name) {
   }[name];
 }
 
-function DealUnderwriter({ language = "en" }) {
+function DealUnderwriter({ language = "en", project }) {
   const isEs = language === "es";
   const [purchase, setPurchase] = useState(190000);
   const [rehab, setRehab] = useState(45000);
@@ -1273,22 +1302,98 @@ function DealUnderwriter({ language = "en" }) {
   const roi = formulas.roi(profit, total);
   const noi = 2800 * 12 - 8500;
   const debt = formulas.monthlyMortgage(cleanNumber(purchase) * 0.8, 7.25, 30) * 12;
-  return <div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de compra" : "Purchase Price"} value={purchase} setValue={setPurchase} /><MoneyInput label={isEs ? "Presupuesto de rehabilitación" : "Rehab Budget"} value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label={isEs ? "Cierre / Mantenimiento / Venta" : "Closing / Holding / Selling"} value={costs} setValue={setCosts} /></div><ResultBox items={[[isEs ? "Costo total" : "Total Cost", formatMoney(total)], [isEs ? "Ganancia" : "Profit", formatMoney(profit), profit > 0], ["ROI", `${roi.toFixed(1)}%`, roi > 15], [isEs ? "Oferta máxima al 70%" : "70% Max Offer", formatMoney(cleanNumber(arv) * 0.7 - cleanNumber(rehab)), true], [isEs ? "Tasa de capitalización" : "Cap Rate", `${formulas.capRate(noi, cleanNumber(purchase)).toFixed(2)}%`], ["DSCR", formulas.dscr(noi, debt).toFixed(2), formulas.dscr(noi, debt) >= 1.2], [isEs ? "Retorno sobre efectivo" : "Cash-on-Cash", `${formulas.cashOnCash(noi - debt, total * 0.25).toFixed(2)}%`]]} /></div>;
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de compra" : "Purchase Price"} value={purchase} setValue={setPurchase} /><MoneyInput label={isEs ? "Presupuesto de rehabilitación" : "Rehab Budget"} value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label={isEs ? "Cierre / Mantenimiento / Venta" : "Closing / Holding / Selling"} value={costs} setValue={setCosts} /></div><ResultBox items={[[isEs ? "Costo total" : "Total Cost", formatMoney(total)], [isEs ? "Ganancia" : "Profit", formatMoney(profit), profit > 0], ["ROI", `${roi.toFixed(1)}%`, roi > 15], [isEs ? "Oferta máxima al 70%" : "70% Max Offer", formatMoney(cleanNumber(arv) * 0.7 - cleanNumber(rehab)), true], [isEs ? "Tasa de capitalización" : "Cap Rate", `${formulas.capRate(noi, cleanNumber(purchase)).toFixed(2)}%`], ["DSCR", formulas.dscr(noi, debt).toFixed(2), formulas.dscr(noi, debt) >= 1.2], [isEs ? "Retorno sobre efectivo" : "Cash-on-Cash", `${formulas.cashOnCash(noi - debt, total * 0.25).toFixed(2)}%`]]} /></div></div>;
 }
 
-function InvestmentLoanCalculator({ language = "en" }) {
+function InvestmentLoanCalculator({ language = "en", project }) {
   const isEs = language === "es";
-  const [price, setPrice] = useState(300000);
-  const [down, setDown] = useState(20);
-  const [rate, setRate] = useState(7.25);
-  const [years, setYears] = useState(30);
-  const [rent, setRent] = useState(2800);
-  const [expenses, setExpenses] = useState(650);
-  const loan = cleanNumber(price) * (1 - cleanNumber(down) / 100);
-  const payment = formulas.monthlyMortgage(loan, cleanNumber(rate), cleanNumber(years));
-  const noi = (cleanNumber(rent) - cleanNumber(expenses)) * 12;
-  const dscr = payment ? noi / (payment * 12) : 0;
-  return <div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de la propiedad" : "Property Price"} value={price} setValue={setPrice} /><NumberInput label={isEs ? "Pago inicial %" : "Down Payment %"} value={down} setValue={setDown} /><NumberInput label={isEs ? "Tasa de interés %" : "Interest Rate %"} value={rate} setValue={setRate} /><NumberInput label={isEs ? "Años del préstamo" : "Loan Years"} value={years} setValue={setYears} /><MoneyInput label={isEs ? "Renta mensual" : "Monthly Rent"} value={rent} setValue={setRent} /><MoneyInput label={isEs ? "Gastos mensuales" : "Monthly Expenses"} value={expenses} setValue={setExpenses} /></div><ResultBox items={[[isEs ? "Monto del préstamo" : "Loan Amount", formatMoney(loan)], [isEs ? "Pago mensual" : "Monthly Payment", formatMoney(payment), true], ["DSCR", dscr.toFixed(2), dscr >= 1.2], [isEs ? "Flujo de caja mensual" : "Monthly Cash Flow", formatMoney(cleanNumber(rent) - cleanNumber(expenses) - payment), cleanNumber(rent) - cleanNumber(expenses) - payment > 0]]} /></div>;
+  const [mode, setMode] = useState("dscr");
+  const [dscr, setDscr] = useState({ value: 500000, loan: 400000, rate: 7.5, years: 30, rent: 4000, taxes: 6000, insurance: 2400, hoa: 0 });
+  const [cashout, setCashout] = useState({ value: 600000, balance: 300000, amount: 100000, rate: 7, years: 30, closing: 3 });
+  const [ground, setGround] = useState({ loan: 500000, rate: 12, construction: 9, sale: 3, schedule: "uniform" });
+  const patch = (setter, field) => (value) => setter((current) => ({ ...current, [field]: value }));
+  const dscrPI = formulas.monthlyMortgage(cleanNumber(dscr.loan), cleanNumber(dscr.rate), cleanNumber(dscr.years));
+  const dscrTaxes = cleanNumber(dscr.taxes) / 12;
+  const dscrInsurance = cleanNumber(dscr.insurance) / 12;
+  const dscrPayment = dscrPI + dscrTaxes + dscrInsurance + cleanNumber(dscr.hoa);
+  const dscrNoi = cleanNumber(dscr.rent) * 12 - cleanNumber(dscr.taxes) - cleanNumber(dscr.insurance) - cleanNumber(dscr.hoa) * 12;
+  const dscrRatio = formulas.dscr(dscrNoi, dscrPI * 12);
+  const dscrLtv = cleanNumber(dscr.value) ? cleanNumber(dscr.loan) / cleanNumber(dscr.value) * 100 : 0;
+  const cashLoan = cleanNumber(cashout.balance) + cleanNumber(cashout.amount);
+  const cashPayment = formulas.monthlyMortgage(cashLoan, cleanNumber(cashout.rate), cleanNumber(cashout.years));
+  const cashClosing = cashLoan * cleanNumber(cashout.closing) / 100;
+  const cashReceived = cleanNumber(cashout.amount) - cashClosing;
+  const cashEquity = cleanNumber(cashout.value) - cashLoan;
+  const cashLtv = cleanNumber(cashout.value) ? cashLoan / cleanNumber(cashout.value) * 100 : 0;
+  const constructionMonths = Math.max(1, Math.round(cleanNumber(ground.construction)));
+  const saleMonths = Math.max(0, Math.round(cleanNumber(ground.sale)));
+  const duration = constructionMonths + saleMonths;
+  const loan = cleanNumber(ground.loan);
+  const monthlyRate = cleanNumber(ground.rate) / 100 / 12;
+  const balances = Array.from({ length: duration }, (_, index) => index < constructionMonths ? loan * ((index + 1) / constructionMonths) : loan);
+  const interestByMonth = balances.map((balance) => balance * monthlyRate);
+  const constructionInterest = interestByMonth.reduce((sum, value) => sum + value, 0);
+  const reserve = constructionInterest * 1.1;
+  const effectiveRate = loan && duration ? constructionInterest / loan * (12 / duration) * 100 : 0;
+  const reset = () => {
+    if (mode === "dscr") setDscr({ value: 500000, loan: 400000, rate: 7.5, years: 30, rent: 4000, taxes: 6000, insurance: 2400, hoa: 0 });
+    if (mode === "cashout") setCashout({ value: 600000, balance: 300000, amount: 100000, rate: 7, years: 30, closing: 3 });
+    if (mode === "ground") setGround({ loan: 500000, rate: 12, construction: 9, sale: 3, schedule: "uniform" });
+  };
+  return (
+    <div className="space-y-6">
+      <ProjectContext project={project} language={language} />
+      <div className="text-center">
+        <h3 className="text-2xl font-black text-white sm:text-3xl">{isEs ? "Calculadora de Préstamos de Inversión" : "Investment Loan Calculator"}</h3>
+        <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-400">{isEs ? "Calcula pagos para préstamos DSCR, refinanciamiento cash-out y construcción desde cero." : "Calculate payments for DSCR, Cash-Out Refinance, and Ground-Up Construction loans."}</p>
+      </div>
+      <div className="mx-auto grid max-w-lg grid-cols-3 rounded-2xl bg-slate-900/80 p-1">
+        {[["dscr", "DSCR"], ["cashout", "Cash-Out"], ["ground", isEs ? "Construcción" : "Ground Up"]].map(([id, label]) => <button key={id} onClick={() => setMode(id)} className={`rounded-xl px-3 py-3 text-sm font-black transition ${mode === id ? "bg-cyan-300 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,.25)]" : "text-slate-400 hover:text-white"}`}>{label}</button>)}
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 sm:p-6">
+          <div className="mb-6 flex items-start justify-between gap-4">
+            <div><h4 className="text-xl font-black text-white">{mode === "dscr" ? (isEs ? "Calculadora DSCR" : "DSCR Loan Calculator") : mode === "cashout" ? (isEs ? "Calculadora de Refinanciamiento Cash-Out" : "Cash-Out Refinance Calculator") : (isEs ? "Calculadora de Interés de Construcción" : "Construction Interest Calculator")}</h4>{mode === "ground" && <p className="mt-1 text-sm text-slate-400">{isEs ? "Construcción desde cero" : "Ground-Up Construction"}</p>}</div>
+            <button onClick={reset} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-slate-400 hover:border-cyan-300/30 hover:text-white">{isEs ? "Limpiar" : "Clear"}</button>
+          </div>
+          {mode === "dscr" && <div className="grid gap-4 sm:grid-cols-2"><MoneyInput label={isEs ? "Valor de Propiedad" : "Property Value"} value={dscr.value} setValue={patch(setDscr, "value")} /><MoneyInput label={isEs ? "Monto del Préstamo" : "Loan Amount"} value={dscr.loan} setValue={patch(setDscr, "loan")} /><NumberInput label={isEs ? "Tasa de Interés (%)" : "Interest Rate (%)"} value={dscr.rate} setValue={patch(setDscr, "rate")} /><NumberInput label={isEs ? "Plazo (Años)" : "Loan Term (Years)"} value={dscr.years} setValue={patch(setDscr, "years")} /><MoneyInput label={isEs ? "Ingreso Mensual por Renta" : "Monthly Rental Income"} value={dscr.rent} setValue={patch(setDscr, "rent")} /><MoneyInput label={isEs ? "Impuestos Anuales" : "Annual Property Taxes"} value={dscr.taxes} setValue={patch(setDscr, "taxes")} /><MoneyInput label={isEs ? "Seguro Anual" : "Annual Insurance"} value={dscr.insurance} setValue={patch(setDscr, "insurance")} /><MoneyInput label="Monthly HOA" value={dscr.hoa} setValue={patch(setDscr, "hoa")} /></div>}
+          {mode === "cashout" && <div className="grid gap-4 sm:grid-cols-2"><MoneyInput label={isEs ? "Valor Actual de Propiedad" : "Current Property Value"} value={cashout.value} setValue={patch(setCashout, "value")} /><MoneyInput label={isEs ? "Saldo Actual del Préstamo" : "Current Loan Balance"} value={cashout.balance} setValue={patch(setCashout, "balance")} /><div className="sm:col-span-2"><MoneyInput label={isEs ? "Monto Cash-Out" : "Cash-Out Amount"} value={cashout.amount} setValue={patch(setCashout, "amount")} /></div><NumberInput label={isEs ? "Tasa Nueva (%)" : "New Interest Rate (%)"} value={cashout.rate} setValue={patch(setCashout, "rate")} /><NumberInput label={isEs ? "Plazo (Años)" : "Loan Term (Years)"} value={cashout.years} setValue={patch(setCashout, "years")} /><NumberInput label={isEs ? "Costos de Cierre (%)" : "Estimated Closing Costs (%)"} value={cashout.closing} setValue={patch(setCashout, "closing")} /></div>}
+          {mode === "ground" && <div className="grid gap-4 sm:grid-cols-2"><div className="sm:col-span-2"><MoneyInput label={isEs ? "Monto Total del Préstamo" : "Total Loan Amount"} value={ground.loan} setValue={patch(setGround, "loan")} /></div><NumberInput label={isEs ? "Tasa de Interés (%)" : "Interest Rate (%)"} value={ground.rate} setValue={patch(setGround, "rate")} /><NumberInput label={isEs ? "Tiempo de Construcción (Meses)" : "Construction Time (Months)"} value={ground.construction} setValue={patch(setGround, "construction")} /><NumberInput label={isEs ? "Tiempo de Venta (Meses)" : "Sale Time (Months)"} value={ground.sale} setValue={patch(setGround, "sale")} /><MiniMetric label={isEs ? "Duración Total" : "Total Project Duration"} value={`${duration} mo`} /><label className="block sm:col-span-2"><span className="label">{isEs ? "Programa de Desembolsos" : "Draw Schedule"}</span><select value={ground.schedule} onChange={(event) => patch(setGround, "schedule")(event.target.value)} className="field"><option value="uniform">{isEs ? "Uniforme (Desembolsos Iguales)" : "Uniform (Equal Draws)"}</option></select><p className="mt-2 text-xs text-slate-500">{isEs ? `Los desembolsos ocurren solo durante la fase de construcción de ${constructionMonths} meses.` : `Draws occur during the ${constructionMonths}-month construction phase only.`}</p></label></div>}
+        </section>
+        <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 sm:p-6">
+          <h4 className="text-xl font-black text-white">{isEs ? "Resultados" : "Results"}</h4>
+          {mode === "dscr" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Pago Mensual" : "Monthly Payment"} value={formatMoneyCents(dscrPayment)} accent /><CalculatorMetric label="DSCR Ratio" value={`${dscrRatio.toFixed(2)} ${dscrRatio < 1.2 ? (isEs ? "(Precaución)" : "(Warning)") : ""}`} accent={dscrRatio >= 1.2} /><CalculatorMetric label={isEs ? "Interés Total" : "Total Interest"} value={formatMoneyCents(Math.max(0, dscrPI * cleanNumber(dscr.years) * 12 - cleanNumber(dscr.loan)))} /><CalculatorMetric label="LTV Ratio" value={`${dscrLtv.toFixed(1)}%`} /></div><PaymentBreakdown principal={dscrPI} escrows={dscrTaxes + dscrInsurance + cleanNumber(dscr.hoa)} language={language} /></>}
+          {mode === "cashout" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Nuevo Préstamo" : "New Loan Amount"} value={formatMoneyCents(cashLoan)} /><CalculatorMetric label={isEs ? "Nuevo Pago Mensual" : "New Monthly Payment"} value={formatMoneyCents(cashPayment)} accent /><CalculatorMetric label={isEs ? "Efectivo Recibido" : "Cash Received (after costs)"} value={formatMoneyCents(cashReceived)} positive /><CalculatorMetric label={isEs ? "Capital Restante" : "Equity Remaining"} value={formatMoneyCents(cashEquity)} /><CalculatorMetric label="New LTV Ratio" value={`${cashLtv.toFixed(1)}%`} /><CalculatorMetric label={isEs ? "Interés Total" : "Total Interest"} value={formatMoneyCents(Math.max(0, cashPayment * cleanNumber(cashout.years) * 12 - cashLoan))} /></div><ComparisonBars current={formulas.monthlyMortgage(cleanNumber(cashout.balance), 5.5, cleanNumber(cashout.years))} next={cashPayment} language={language} /></>}
+          {mode === "ground" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Costo Total de Interés" : "Total Interest Cost"} value={formatMoneyCents(constructionInterest)} accent /><CalculatorMetric label={isEs ? "Interés Mensual Promedio" : "Average Monthly Interest"} value={formatMoneyCents(constructionInterest / duration)} /><CalculatorMetric label={isEs ? "Reserva de Interés Necesaria" : "Interest Reserve Needed"} value={formatMoneyCents(reserve)} positive /><CalculatorMetric label={isEs ? "Tasa Anual Efectiva" : "Effective Annual Rate"} value={`${effectiveRate.toFixed(2)}%`} /></div><InterestTimeline balances={balances} constructionMonths={constructionMonths} saleMonths={saleMonths} language={language} /></>}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function ProjectContext({ project, language }) {
+  if (!project) return null;
+  return <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-300/15 bg-cyan-300/[.06] px-4 py-3"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{language === "es" ? "Proyecto Seleccionado" : "Selected Project"}</p><p className="font-black text-white">{project.name}</p></div>{project.address && <p className="text-sm text-slate-400">{project.address}</p>}</div>;
+}
+
+function CalculatorMetric({ label, value, accent, positive }) {
+  return <div className="rounded-2xl border border-white/5 bg-slate-900/85 p-4"><p className="text-xs font-bold text-slate-400">{label}</p><p className={`mt-1 break-words text-xl font-black ${positive ? "text-emerald-300" : accent ? "text-cyan-300" : "text-white"}`}>{value}</p></div>;
+}
+
+function PaymentBreakdown({ principal, escrows, language }) {
+  const total = principal + escrows || 1;
+  const pPercent = principal / total * 100;
+  return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "Desglose del Pago" : "Payment Breakdown"}</p><div className="mx-auto flex h-36 w-36 items-center justify-center rounded-full" style={{ background: `conic-gradient(#22d3ee 0 ${pPercent}%, #818cf8 ${pPercent}% 100%)` }}><div className="h-20 w-20 rounded-full bg-[#080d1f]" /></div><div className="mt-4 flex flex-wrap justify-center gap-4 text-xs font-bold"><span className="text-cyan-300">■ {language === "es" ? "Principal e Interés" : "Principal & Interest"}</span><span className="text-indigo-300">■ {language === "es" ? "Impuestos y Seguro" : "Taxes & Insurance"}</span></div></div>;
+}
+
+function ComparisonBars({ current, next, language }) {
+  const max = Math.max(current, next, 1);
+  return <div className="mt-7"><p className="mb-4 font-black text-white">{language === "es" ? "Comparación de Pagos" : "Payment Comparison"}</p>{[[language === "es" ? "Actual" : "Current", current, "bg-indigo-400"], [language === "es" ? "Nuevo" : "New", next, "bg-cyan-300"]].map(([label, value, color]) => <div key={label} className="mb-4 grid grid-cols-[5rem_1fr] items-center gap-3"><span className="text-sm text-slate-400">{label}</span><div className="rounded-r-lg bg-slate-900"><div className={`${color} rounded-r-lg px-3 py-3 text-right text-xs font-black text-slate-950`} style={{ width: `${Math.max(16, value / max * 100)}%` }}>{formatMoneyCents(value)}</div></div></div>)}</div>;
+}
+
+function InterestTimeline({ balances, constructionMonths, saleMonths, language }) {
+  const max = Math.max(...balances, 1);
+  return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "Cronología de Acumulación de Interés" : "Interest Accumulation Timeline"}</p><div className="flex h-44 items-end gap-1.5 rounded-2xl border border-white/5 bg-slate-900/40 p-3 sm:gap-2">{balances.map((balance, index) => <div key={index} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"><div className={`w-full rounded-t-md ${index < constructionMonths ? "bg-gradient-to-t from-cyan-500/45 to-cyan-300" : "bg-gradient-to-t from-indigo-500/45 to-indigo-300"}`} style={{ height: `${Math.max(8, balance / max * 100)}%` }} title={formatMoney(balance)} /><span className="text-center text-[0.62rem] font-bold text-slate-500">{index + 1}</span></div>)}</div><div className="mt-4 flex flex-wrap justify-center gap-5 text-xs font-bold text-slate-400"><span className="text-cyan-300">{language === "es" ? `Construcción: 1-${constructionMonths} meses` : `Construction: 1-${constructionMonths} mo`}</span>{saleMonths > 0 && <span className="text-indigo-300">{language === "es" ? `Venta: ${constructionMonths + 1}-${constructionMonths + saleMonths} meses` : `Sale: ${constructionMonths + 1}-${constructionMonths + saleMonths} mo`}</span>}</div></div>;
 }
 
 function PropertySearch({ t }) {
@@ -1555,16 +1660,12 @@ function PricingPlans({ language, user, go }) {
     ? ["Todo lo incluido en Mensual", "Soporte prioritario", "Acceso anticipado a funciones nuevas", "Historial de datos extendido"]
     : ["Everything in Monthly", "Priority support", "Early access to new features", "Extended data history"];
   const plans = [
-    { id: "monthly", priceId: monthlyPriceId, name: isEs ? "Mensual" : "Monthly", price: "$29.99", cadence: isEs ? "/mes" : "/month", note: isEs ? "Prueba gratis de 3 días" : "3-day free trial", detail: isEs ? "Acceso flexible mes a mes." : "Flexible month-to-month access.", features: monthlyFeatures },
-    { id: "annual", priceId: annualPriceId, name: isEs ? "Anual" : "Annual", price: "$249.99", cadence: isEs ? "/año" : "/year", note: isEs ? "Ahorra más de 30% · Prueba gratis de 3 días" : "Save over 30% · 3-day free trial", detail: isEs ? "El mejor valor para operadores activos." : "Best value for active operators.", features: annualFeatures, featured: true },
+    { id: "monthly", name: isEs ? "Mensual" : "Monthly", price: "$29.99", cadence: isEs ? "/mes" : "/month", note: isEs ? "Prueba gratis de 3 días" : "3-day free trial", detail: isEs ? "Acceso flexible mes a mes." : "Flexible month-to-month access.", features: monthlyFeatures },
+    { id: "annual", name: isEs ? "Anual" : "Annual", price: "$249.99", cadence: isEs ? "/año" : "/year", note: isEs ? "Ahorra más de 30% · Prueba gratis de 3 días" : "Save over 30% · 3-day free trial", detail: isEs ? "El mejor valor para operadores activos." : "Best value for active operators.", features: annualFeatures, featured: true },
   ];
   async function beginCheckout(plan) {
     if (!user) {
       go("settings");
-      return;
-    }
-    if (!plan.priceId) {
-      setBillingStatus(isEs ? "El plan estará disponible cuando se configure su precio seguro." : "This plan will be available when its secure price is configured.");
       return;
     }
     setBillingLoading(plan.id);
@@ -1574,7 +1675,7 @@ function PricingPlans({ language, user, go }) {
       const response = await fetch(checkoutEndpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${data.session.access_token}` },
-        body: JSON.stringify({ priceId: plan.priceId, plan: plan.id }),
+        body: JSON.stringify({ plan: plan.id }),
       });
       const result = await readApiJson(response);
       if (!response.ok) throw new Error(result.error || "Checkout could not start.");
