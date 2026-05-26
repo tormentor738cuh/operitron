@@ -915,12 +915,12 @@ function WhyChoose({ isEs }) {
 function Testimonials({ isEs }) {
   const quotes = isEs
     ? [
-      { quote: "“Operitron nos ayudó a revisar más deals sin perder control de los supuestos.”", initial: "M", name: "Marcos R.", role: "Inversionista Inmobiliario", location: "Miami, FL", color: "from-cyan-400 to-blue-600" },
+      { quote: "“Operitron nos ayudó a revisar más deals sin perder control de los supuestos.”", initial: "C", name: "Camila S.", role: "Desarrolladora de Vivienda", location: "Phoenix, AZ", color: "from-cyan-400 to-blue-600" },
       { quote: "“La combinación de underwriting y construcción es exactamente lo que necesitaba nuestro equipo.”", initial: "A", name: "Adriana V.", role: "Constructora Residencial", location: "Austin, TX", color: "from-purple-400 to-indigo-600" },
       { quote: "“Los reportes y punch lists hacen que las conversaciones con contratistas sean más limpias.”", initial: "D", name: "Diego L.", role: "Operador BRRR", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
     ]
     : [
-      { quote: "“Operitron helps us review more deals without losing control of the assumptions.”", initial: "M", name: "Marcus R.", role: "Real Estate Investor", location: "Miami, FL", color: "from-cyan-400 to-blue-600" },
+      { quote: "“Operitron helps us review more deals without losing control of the assumptions.”", initial: "C", name: "Camila S.", role: "Housing Developer", location: "Phoenix, AZ", color: "from-cyan-400 to-blue-600" },
       { quote: "“The underwriting plus construction workflow is exactly what our team needed.”", initial: "A", name: "Alyssa V.", role: "Residential Builder", location: "Austin, TX", color: "from-purple-400 to-indigo-600" },
       { quote: "“Reports and punch lists make contractor conversations cleaner.”", initial: "D", name: "Daniel L.", role: "BRRR Portfolio Operator", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
     ];
