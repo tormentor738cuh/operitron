@@ -551,7 +551,7 @@ function AppShell() {
     }
     let active = true;
     setSubscriptionLoading(true);
-    supabase.from("profiles").select("subscription_status, subscription_plan, trial_ends_at, current_period_end, is_admin").eq("id", user.id).maybeSingle().then(({ data }) => {
+    supabase.from("profiles").select("subscription_status, subscription_plan, trial_ends_at, current_period_end, role").eq("id", user.id).maybeSingle().then(({ data }) => {
       if (active) {
         setSubscription(data || { subscription_status: "inactive", subscription_plan: "No subscription" });
         setSubscriptionLoading(false);
@@ -561,15 +561,15 @@ function AppShell() {
       active = false;
     };
   }, [user]);
-  const isAdmin = Boolean(subscription?.is_admin || (user?.email && adminEmails.includes(user.email.toLowerCase())));
+  const isAdmin = Boolean(subscription?.role === "admin" || (user?.email && adminEmails.includes(user.email.toLowerCase())));
   const hasPremium = ["active", "trialing"].includes(subscription?.subscription_status);
   const hasProductAccess = hasPremium || isAdmin;
 
   useEffect(() => {
     if (!supabase || !user || !hasProductAccess) return;
     let active = true;
-    supabase.from("projects").select("*").order("created_at", { ascending: false }).then(({ data, error }) => {
-      if (active && !error) setProjects(data || []);
+    supabase.from("projects").select("id, title, address, data, created_at").order("created_at", { ascending: false }).then(({ data, error }) => {
+      if (active && !error) setProjects((data || []).map((row) => ({ ...(row.data || {}), id: row.id, name: row.title, address: row.address })));
     });
     return () => {
       active = false;
@@ -608,8 +608,13 @@ function AppShell() {
   async function saveProject(project) {
     setProjects((current) => [project, ...current]);
     if (!supabase || !user) return;
-    const { id, ...values } = project;
-    await supabase.from("projects").insert({ id, user_id: user.id, ...values });
+    await supabase.from("projects").insert({
+      id: project.id,
+      user_id: user.id,
+      title: project.name,
+      address: project.address,
+      data: project,
+    });
   }
 
   const page = useMemo(() => {

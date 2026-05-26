@@ -3,10 +3,10 @@
 -- Replace the email address below with the account you created through OPERITRON.COM.
 
 update public.profiles
-set is_admin = true,
+set role = 'admin',
     updated_at = now()
 where lower(email) = lower('your-admin-email@example.com');
 
-select id, email, is_admin, subscription_status
+select id, email, role, subscription_status
 from public.profiles
-where is_admin = true;
+where role = 'admin';

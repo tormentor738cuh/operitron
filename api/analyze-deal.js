@@ -87,8 +87,8 @@ export default async function handler(request, response) {
   if (authError || !data.user) return response.status(401).json({ error: "Invalid session." });
 
   const email = String(data.user.email || "").toLowerCase();
-  const { data: profile } = await adminClient.from("profiles").select("subscription_status, is_admin").eq("id", data.user.id).maybeSingle();
-  const isAdmin = profile?.is_admin === true || adminEmails().includes(email);
+  const { data: profile } = await adminClient.from("profiles").select("subscription_status, role").eq("id", data.user.id).maybeSingle();
+  const isAdmin = profile?.role === "admin" || adminEmails().includes(email);
   if (!isAdmin && !allowedStatuses.has(profile?.subscription_status)) {
     return response.status(403).json({ error: "Start your 3-day free trial to access AI analysis." });
   }
@@ -139,7 +139,7 @@ export default async function handler(request, response) {
       user_id: data.user.id,
       project_id: input.projectId,
       inputs: input,
-      output: analysis,
+      analysis,
     }).select("id").single();
     if (saveError) return response.status(500).json({ error: "Analysis generated but could not be saved." });
     return response.status(200).json({ id: saved.id, analysis });

@@ -31,6 +31,7 @@ async function syncSubscription(subscription) {
     user_id: userId,
     stripe_customer_id: String(subscription.customer),
     stripe_subscription_id: subscription.id,
+    price_id: subscription.items?.data?.[0]?.price?.id || null,
     plan: subscription.metadata?.plan || "Subscribed",
     status: subscription.status,
     trial_ends_at: details.trial_ends_at,
