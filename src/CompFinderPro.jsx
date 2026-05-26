@@ -1159,6 +1159,7 @@ function ToolBody({ t, language, toolId, project }) {
 
 function ConstructionWizard({ language = "en", project }) {
   const [step, setStep] = useState(1);
+  const [generatedPlan, setGeneratedPlan] = useState(null);
   const [operator, setOperator] = useState({
     type: "Builder / Remodeler",
     company: "Silva Construction",
@@ -1204,6 +1205,33 @@ function ConstructionWizard({ language = "en", project }) {
     `Bathrooms/extras: ${answers.bathrooms}, patio: ${answers.patio}, landscaping: ${answers.landscaping}`,
     `Permits: ${answers.permit}, square footage: ${formatNumber(answers.sqft, 0)} sqft`,
   ];
+  function generateChecklist() {
+    const sqft = Math.max(500, cleanNumber(answers.sqft));
+    const weeksFactor = sqft / 2000;
+    const highFinish = answers.finish === "Luxury" ? 1.22 : answers.finish === "Semi-Luxury" ? 1.1 : 1;
+    const permitWeeks = answers.permit === "Standard Permits" ? 0 : 2;
+    const phases = [
+      ["Contracts & permits", 2 + permitWeeks, ["Confirm survey and title", `Submit ${answers.permit}`, "Approve lender draw schedule"]],
+      ["Site preparation", answers.lot === "Flat Lot" ? 1 : 2, [`Prepare ${answers.lot}`, `Install ${answers.driveway} access`, "Verify erosion controls"]],
+      ["Foundation", answers.foundation.includes("Slab") ? 2 : 3, [`Build ${answers.foundation}`, "Foundation inspection", "Record concrete receipts"]],
+      ["Framing & dry-in", Math.ceil(3 * weeksFactor), [`Frame ${answers.structure}`, `Install ${answers.roof}`, "Window and weather barrier check"]],
+      ["MEP rough-in", 3, [`Connect ${answers.water}`, `Install ${answers.sewer}`, `${answers.heating} rough-in inspection`]],
+      ["Insulation & drywall", Math.ceil(2 * weeksFactor), ["Insulation inspection", "Hang and finish drywall", "Moisture review"]],
+      ["Interior finishes", Math.ceil(3 * weeksFactor * highFinish), [`Install ${answers.finish} finishes`, `${answers.bathrooms} fit-out`, "Cabinet and trim punch"]],
+      ["Exterior & site closeout", 2, [`Complete ${answers.driveway}`, `${answers.landscaping} landscaping`, "Final exterior inspection"]],
+      ["Final inspections & turnover", 1, ["Punch list resolution", "Certificate of occupancy", "Investor closeout packet"]],
+    ].map(([name, weeks, tasks], index) => ({ name, weeks, tasks, complete: index < 2 }));
+    const totalWeeks = phases.reduce((sum, phase) => sum + phase.weeks, 0);
+    const baseCost = sqft * (answers.finish === "Luxury" ? 245 : answers.finish === "Semi-Luxury" ? 194 : 158);
+    const extras = (answers.fireplace ? 6500 : 0) + (answers.gas ? 4800 : 0) + (answers.carpet ? 3200 : 0);
+    setGeneratedPlan({
+      phases,
+      totalWeeks,
+      estimatedCost: baseCost + extras,
+      contingency: (baseCost + extras) * 0.1,
+      risk: answers.permit !== "Standard Permits" || answers.lot !== "Flat Lot" ? "Moderate" : "Controlled",
+    });
+  }
 
   return (
     <div className="space-y-6">
@@ -1260,12 +1288,41 @@ function ConstructionWizard({ language = "en", project }) {
 
       <div className="flex flex-wrap justify-between gap-3">
         <button onClick={() => setStep(Math.max(1, step - 1))} className="secondary-button" disabled={step === 1}>Previous</button>
-        {step < 9 ? <button onClick={() => setStep(Math.min(9, step + 1))} className="primary-button">Next</button> : <button onClick={() => setStep(9)} className="primary-button">Generate Checklist</button>}
+        {step < 9 ? <button onClick={() => setStep(Math.min(9, step + 1))} className="primary-button">Next</button> : <button onClick={generateChecklist} className="primary-button">Generate Checklist</button>}
       </div>
 
-      {step === 9 && <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><h4 className="text-2xl font-black text-white">Generated Construction Checklist</h4><div className="mt-4 grid gap-3">{checklist.map((item, index) => <Step key={item} done={index < 4} label={item} detail="Add scope, budget, permit notes, owner approval, and draw schedule before kickoff." />)}</div></div>}
+      {step === 9 && !generatedPlan && <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><h4 className="text-xl font-black text-white">Ready to Generate</h4><p className="mt-2 text-slate-300">Your checklist will be built from the selections above, including schedule duration, estimated construction cost, contingency, and risk flags.</p></div>}
+      {generatedPlan && <GeneratedConstructionChecklist plan={generatedPlan} assumptions={checklist} language={language} />}
     </div>
   );
+}
+
+function GeneratedConstructionChecklist({ plan, assumptions, language }) {
+  const isEs = language === "es";
+  const maxWeeks = Math.max(...plan.phases.map((phase) => phase.weeks), 1);
+  return <section className="space-y-5 rounded-3xl border border-cyan-300/25 bg-slate-950/70 p-5 sm:p-6">
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? "Plan Generado" : "Generated Plan"}</p>
+        <h4 className="mt-2 text-2xl font-black text-white">{isEs ? "Tu Lista de Construcción" : "Your Construction Checklist"}</h4>
+        <p className="mt-2 text-sm text-slate-400">{isEs ? "Fases y tareas creadas desde las especificaciones de tu proyecto." : "Phases and tasks created from your project specifications."}</p>
+      </div>
+      <button className="secondary-button">{isEs ? "Guardar en Proyecto" : "Save to Project"}</button>
+    </div>
+    <div className="grid gap-3 sm:grid-cols-4">
+      <MiniMetric label={isEs ? "Duración Estimada" : "Estimated Duration"} value={`${plan.totalWeeks} ${isEs ? "semanas" : "weeks"}`} />
+      <MiniMetric label={isEs ? "Costo Construcción" : "Construction Cost"} value={formatMoney(plan.estimatedCost)} />
+      <MiniMetric label={isEs ? "Contingencia 10%" : "10% Contingency"} value={formatMoney(plan.contingency)} />
+      <MiniMetric label={isEs ? "Riesgo de Programa" : "Schedule Risk"} value={plan.risk} />
+    </div>
+    <div className="grid gap-5 xl:grid-cols-[1fr_300px]">
+      <div className="space-y-3">{plan.phases.map((phase, index) => <details key={phase.name} className="rounded-2xl border border-white/10 bg-white/[.03] p-4" open={index < 2}><summary className="flex cursor-pointer list-none items-center gap-3"><span className={`grid h-7 w-7 place-items-center rounded-full text-xs font-black ${phase.complete ? "bg-emerald-400 text-slate-950" : "bg-slate-800 text-slate-300"}`}>{index + 1}</span><span className="flex-1 font-black text-white">{phase.name}</span><span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">{phase.weeks} wk</span><span className="h-2 w-20 rounded-full bg-slate-800"><span className="block h-full rounded-full bg-cyan-300" style={{ width: `${phase.weeks / maxWeeks * 100}%` }} /></span></summary><div className="ml-10 mt-4 grid gap-2">{phase.tasks.map((task) => <label key={task} className="flex items-center gap-3 text-sm text-slate-300"><input type="checkbox" className="accent-cyan-300" defaultChecked={phase.complete} />{task}</label>)}</div></details>)}</div>
+      <div className="space-y-4">
+        <Info title={isEs ? "Recomendación de IA" : "AI Recommendation"} text={plan.risk === "Moderate" ? (isEs ? "Confirma permisos y condiciones del terreno antes de comprometer cuadrillas." : "Confirm permitting and site conditions before committing crews.") : (isEs ? "El alcance está preparado para programación inicial y cotizaciones." : "Scope is ready for initial scheduling and quote collection.")} />
+        <Info title={isEs ? "Supuestos Registrados" : "Recorded Assumptions"} text={assumptions.slice(1, 4).join(" | ")} />
+      </div>
+    </div>
+  </section>;
 }
 
 function WizardStep({ title, detail, children }) {
@@ -1478,7 +1535,8 @@ function PropertySearch({ t }) {
   );
 }
 
-function AITakeoff() {
+function AITakeoff({ language = "en", project }) {
+  const isEs = language === "es";
   const [sqft, setSqft] = useState(510);
   const [drywallPrice, setDrywallPrice] = useState(14);
   const [flooringPrice, setFlooringPrice] = useState(3.25);
@@ -1502,7 +1560,12 @@ function AITakeoff() {
   }
 
   return (
-    <ToolShell title="AI Material Takeoff" subtitle="Upload plans, enter dimensions and unit prices, then export a polished material takeoff report.">
+    <ToolShell title={isEs ? "Cálculo de Materiales con IA" : "AI Material Takeoff"} subtitle={isEs ? "Sube planos, ingresa medidas y precios, y exporta un informe profesional." : "Upload plans, enter dimensions and unit prices, then export a polished material takeoff report."}>
+      <ProjectContext project={project} language={language} />
+      <div className="mb-6 mt-5 flex flex-wrap items-start justify-between gap-4">
+        <div><span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs font-black text-cyan-200">BETA</span><p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">{isEs ? "Las mediciones asistidas son estimaciones. Verifica dimensiones y factores de desperdicio antes de ordenar materiales." : "AI-assisted measurements are estimates. Verify dimensions and waste factors before ordering materials or awarding bids."}</p></div>
+        <div className="flex gap-3"><MiniMetric label={isEs ? "Planos" : "Sheets"} value={fileName ? "1" : "0"} /><MiniMetric label={isEs ? "Cálculos" : "Runs"} value={fileName ? "1" : "0"} /></div>
+      </div>
       <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
         <div className="space-y-5">
           <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-amber-400/40 bg-amber-400/5 p-6 text-center hover:bg-amber-400/10">
@@ -1522,6 +1585,9 @@ function AITakeoff() {
         </div>
         <ResultBox items={[["Drywall 4x8 Sheets", `${drywall} sheets +10% waste`, true], ["LVP Flooring", `${flooring} sq ft +8% waste`, true], ["Electrical Outlets", `${outlets} pcs +0% waste`], ["Baseboard Trim", `${baseboard} lin ft +10% waste`, true], ["Estimated Material Cost", formatMoney(total), true]]} />
       </div>
+      <div className="mt-7 grid gap-4 lg:grid-cols-3">
+        {[[isEs ? "Hojas de Planos" : "Plan Sheets", fileName || (isEs ? "No se han subido planos" : "No plan sheets uploaded yet"), FileText], [isEs ? "Takeoffs de IA" : "AI Takeoffs", fileName ? (isEs ? "Resumen listo para revisar" : "Summary ready for review") : (isEs ? "Carga un plano para comenzar" : "Upload a plan to begin"), Sparkles], [isEs ? "Takeoffs Manuales" : "Manual Takeoffs", isEs ? "Añade mediciones verificadas" : "Add verified measurements", Layers]].map(([title, text, Icon]) => <div key={title} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Icon className="text-cyan-300" /><h4 className="mt-4 text-lg font-black text-white">{title}</h4><p className="mt-2 text-sm text-slate-400">{text}</p></div>)}
+      </div>
       <div ref={reportRef} className="fixed -left-[9999px] top-0 w-[794px] bg-white p-10 text-slate-950">
         <div className="flex justify-between border-b border-slate-300 pb-5"><h1 className="text-3xl font-black">Takeoff Report</h1><p>Apr 12, 2026</p></div>
         {[["Drywall 4x8 Sheets", `${drywall} sheets`, "+10% waste"], ["LVP Flooring", `${flooring} sq ft`, "+8% waste"], ["Electrical Outlets", `${outlets} pcs`, "+0% waste"], ["Baseboard Trim", `${baseboard} lin ft`, "+10% waste"]].map(([label, qty, waste]) => <div key={label} className="flex justify-between border-b border-slate-200 py-4"><span className="font-bold">{label}</span><span>{qty}<br /><small>{waste}</small></span></div>)}
@@ -1532,11 +1598,18 @@ function AITakeoff() {
   );
 }
 
-function Checklist({ title, items }) {
-  return <div className="space-y-3">{items.map((item, index) => <Step key={item} done={index === 1} label={item} detail={index % 2 ? "High priority · Due this week" : "Assigned to project team"} />)}</div>;
+function Checklist({ items, project, language = "en" }) {
+  const isEs = language === "es";
+  const [tasks, setTasks] = useState(items.map((item, index) => ({ title: item, done: index === 1, priority: index % 2 ? "High" : "Normal", due: index % 2 ? "Friday" : "Next week" })));
+  const [newTask, setNewTask] = useState("");
+  const addTask = () => { if (newTask.trim()) { setTasks([...tasks, { title: newTask.trim(), done: false, priority: "Normal", due: "Unscheduled" }]); setNewTask(""); } };
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Lista de Tareas" : "To Do List"}</h3><p className="text-slate-400">{isEs ? "Coordina próximos pasos de inversión y obra." : "Coordinate investment and construction next steps."}</p></div><span className="rounded-full bg-cyan-300/10 px-4 py-2 text-sm font-black text-cyan-200">{tasks.filter((task) => !task.done).length} {isEs ? "abiertas" : "open"}</span></div><div className="flex gap-3"><input value={newTask} onChange={(event) => setNewTask(event.target.value)} className="field" placeholder={isEs ? "Nueva tarea..." : "New task..."} /><button onClick={addTask} className="primary-button shrink-0"><Plus size={18} /> {isEs ? "Agregar" : "Add"}</button></div><div className="space-y-3">{tasks.map((task, index) => <button key={`${task.title}-${index}`} onClick={() => setTasks(tasks.map((item, itemIndex) => itemIndex === index ? { ...item, done: !item.done } : item))} className="flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left hover:border-cyan-300/30"><CheckCircle2 className={task.done ? "text-emerald-300" : "text-slate-600"} /><div className="flex-1"><p className={`font-black text-white ${task.done ? "line-through opacity-60" : ""}`}>{task.title}</p><p className="text-sm text-slate-400">{task.priority} · {task.due}</p></div></button>)}</div></div>;
 }
 
-function PunchListApp() {
+function PunchListApp({ language = "en", project }) {
+  const isEs = language === "es";
+  const [guideStep, setGuideStep] = useState(0);
+  const guide = isEs ? [["Crear Lista", "Crea una lista por recorrido o fase de cierre."], ["Agregar Problemas", "Registra descripción, oficio, responsable y fotos."], ["Filtrar por Oficio", "Comparte solo los pendientes de cada subcontratista."], ["Entrada por Voz", "Registra pendientes en el sitio con manos libres."], ["Exportar y Compartir", "Entrega un PDF profesional al equipo."]] : [["Create a Punch List", "Create a list for each walkthrough or closeout phase."], ["Add Issues", "Capture description, trade, assignee, and photos."], ["Filter by Trade", "Share each contractor's relevant open items."], ["Voice Input", "Log site observations hands-free."], ["Export & Share", "Deliver a professional PDF to the team."]];
   const [items, setItems] = useState([
     { title: "Leaking Kitchen Sink", trade: "Plumbing", location: "Unit B", status: "Open", color: "red", done: false },
     { title: "Non-Functional Lighting", trade: "Electrical", location: "Hallway 2F", status: "Open", color: "yellow", done: false },
@@ -1555,6 +1628,12 @@ function PunchListApp() {
   }
   return (
     <ToolShell title="Construction Punch List App" subtitle="Close out projects faster with mobile-first issue tracking, photos, voice input, trade assignments, and PDF reports.">
+      <ProjectContext project={project} language={language} />
+      <div className="mb-6 mt-5 flex flex-wrap items-center justify-between gap-3"><h3 className="text-2xl font-black text-white">{isEs ? "Recorrido de Cierre" : "Closeout Walkthrough"}</h3><button className="primary-button"><Plus size={18} />{isEs ? "Crear Lista" : "Create List"}</button></div>
+      <div className="mb-7 rounded-3xl border border-cyan-300/20 bg-cyan-300/[.06] p-5">
+        <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? `Paso ${guideStep + 1} de ${guide.length}` : `Step ${guideStep + 1} of ${guide.length}`}</p><h4 className="mt-2 text-lg font-black text-white">{guide[guideStep][0]}</h4><p className="mt-2 text-sm text-slate-300">{guide[guideStep][1]}</p></div></div>
+        <div className="mt-5 flex items-center justify-between"><div className="flex gap-2">{guide.map((_, index) => <span key={index} className={`h-2 w-2 rounded-full ${index === guideStep ? "bg-cyan-300" : "bg-slate-700"}`} />)}</div><div className="flex gap-2"><button onClick={() => setGuideStep(Math.max(0, guideStep - 1))} className="secondary-button">{isEs ? "Anterior" : "Previous"}</button><button onClick={() => setGuideStep(Math.min(guide.length - 1, guideStep + 1))} className="primary-button">{guideStep === guide.length - 1 ? (isEs ? "Comenzar" : "Get Started") : (isEs ? "Siguiente" : "Next")}</button></div></div>
+      </div>
       <div className="grid gap-7 xl:grid-cols-[390px_1fr]">
         <div className="rounded-[2rem] border border-white/10 bg-slate-950 p-4 shadow-2xl">
           <div className="rounded-[1.6rem] bg-[#0b1225] p-4">
@@ -1575,14 +1654,55 @@ function PunchListApp() {
   );
 }
 
-function ConstructionProgress() {
-  return <ResultBox items={[["Overall Progress", "38%", true], ["Current Phase", "Framing"], ["Next Inspection", "MEP rough-in"], ["Schedule Risk", "Medium"]]} />;
+function ConstructionProgress({ language = "en", project }) {
+  const isEs = language === "es";
+  const phases = [["Contracts", 2, 100], ["Site Preparation", 2, 100], ["Foundation", 2, 85], ["Wood Framing", 3, 42], ["Roofing", 1.5, 0], ["MEP Rough-In", 2.5, 0], ["Insulation", 1, 0], ["Drywall", 2, 0], ["Interior Trim", 3.5, 0], ["Final Finishes", 2, 0]];
+  const progress = Math.round(phases.reduce((sum, phase) => sum + phase[2], 0) / phases.length);
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="grid gap-4 sm:grid-cols-4"><MiniMetric label={isEs ? "Progreso Total" : "Overall Progress"} value={`${progress}%`} /><MiniMetric label={isEs ? "Duración Estimada" : "Estimated Duration"} value="21.5 weeks" /><MiniMetric label={isEs ? "Próxima Inspección" : "Next Inspection"} value="MEP Rough-In" /><MiniMetric label={isEs ? "Riesgo" : "Risk"} value={isEs ? "Moderado" : "Moderate"} /></div><div className="grid gap-5 xl:grid-cols-[330px_1fr]"><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><h3 className="text-xl font-black text-white">{isEs ? "Recomendaciones" : "Recommendations"}</h3><div className="mt-4 space-y-3"><Info title={isEs ? "Preparar inspección" : "Prepare inspection"} text={isEs ? "Confirma rough-in eléctrico, plomería y HVAC antes de cubrir paredes." : "Confirm electrical, plumbing, and HVAC rough-ins before walls close."} /><Info title={isEs ? "Riesgo de suministro" : "Supply risk"} text={isEs ? "Ordena ventanas y puertas antes de cerrar el enmarcado." : "Order windows and exterior doors before framing completion."} /></div></section><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><h3 className="text-xl font-black text-white">{isEs ? "Cronograma del Proyecto" : "Project Timeline"}</h3><div className="mt-5 space-y-3">{phases.map(([name, weeks, completion], index) => <div key={name} className="grid grid-cols-[8rem_1fr_4rem] items-center gap-3 text-sm"><span className="truncate font-bold text-slate-300">{name}</span><div className="h-7 rounded-lg bg-slate-800 p-1"><div className={`h-full rounded-md ${completion === 100 ? "bg-emerald-400" : completion ? "bg-cyan-300" : "bg-indigo-400/40"}`} style={{ width: `${Math.max(completion, 12 + index * 4)}%` }} /></div><span className="text-right text-xs font-bold text-slate-400">{weeks} wk</span></div>)}</div></section></div></div>;
 }
 
-function SubsQuotes({ language }) {
+function BudgetEstimator({ language = "en", project }) {
+  const isEs = language === "es";
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [specStep, setSpecStep] = useState(1);
+  const [spec, setSpec] = useState({ type: "New Construction", city: "Santa Rosa Beach", sqft: 2000, foundation: "Slab", finish: "Standard" });
+  const [rows, setRows] = useState([
+    { category: "Pre-Construction & Acquisition", item: "Plans and permits", qty: 1, unit: "allowance", price: 8500 },
+    { category: "Site Prep & Foundation", item: "Slab foundation", qty: 2000, unit: "sq ft", price: 12.5 },
+    { category: "Shell / Exterior", item: "Framing and dry-in", qty: 2000, unit: "sq ft", price: 39 },
+    { category: "MEP Systems", item: "Electrical, plumbing, HVAC", qty: 2000, unit: "sq ft", price: 29 },
+    { category: "Interiors", item: "Finishes and cabinetry", qty: 2000, unit: "sq ft", price: 42 },
+  ]);
+  const updateRow = (index, key, value) => setRows(rows.map((row, itemIndex) => itemIndex === index ? { ...row, [key]: value } : row));
+  const direct = rows.reduce((sum, row) => sum + cleanNumber(row.qty) * cleanNumber(row.price), 0);
+  const contingency = direct * 0.1;
+  const total = direct + contingency;
+  function generateEstimate() {
+    const sqft = Math.max(500, cleanNumber(spec.sqft));
+    const premium = spec.finish === "Luxury" ? 1.35 : spec.finish === "Upgraded" ? 1.15 : 1;
+    setRows([
+      { category: "Pre-Construction & Acquisition", item: "Design, engineering, permits", qty: 1, unit: "allowance", price: 11200 },
+      { category: "Site Prep & Foundation", item: `${spec.foundation} foundation package`, qty: sqft, unit: "sq ft", price: spec.foundation === "Basement" ? 34 : 14 },
+      { category: "Shell / Exterior", item: "Framing, roofing and exterior", qty: sqft, unit: "sq ft", price: 45 * premium },
+      { category: "MEP Systems", item: "Mechanical, electrical and plumbing", qty: sqft, unit: "sq ft", price: 31 * premium },
+      { category: "Interiors", item: `${spec.finish} interiors`, qty: sqft, unit: "sq ft", price: 46 * premium },
+      { category: "Exterior Completion", item: "Driveway and landscape allowance", qty: 1, unit: "allowance", price: 12800 },
+    ]);
+    setWizardOpen(false);
+    setSpecStep(1);
+  }
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Estimador de Presupuesto" : "Budget Estimator"}</h3><p className="mt-2 text-slate-400">{isEs ? "Presupuesto editable por rubro, cantidades y precios unitarios." : "Editable construction budget by scope, quantity, and unit price."}</p></div><button onClick={() => setWizardOpen(true)} className="primary-button"><Sparkles size={18} />{isEs ? "Generar desde Especificaciones" : "Generate From Specs"}</button></div><div className="grid gap-3 sm:grid-cols-4"><MiniMetric label={isEs ? "Costo Directo" : "Direct Cost"} value={formatMoney(direct)} /><MiniMetric label={isEs ? "Contingencia" : "Contingency"} value={formatMoney(contingency)} /><MiniMetric label={isEs ? "Total Proyecto" : "Total Project Cost"} value={formatMoney(total)} /><MiniMetric label={isEs ? "Costo / Pie2" : "Cost / Sq Ft"} value={formatMoney(total / Math.max(cleanNumber(spec.sqft), 1))} /></div><div className="overflow-x-auto rounded-3xl border border-white/10 bg-slate-950/60 p-4"><table className="min-w-[720px] w-full text-left"><thead className="text-xs uppercase tracking-widest text-slate-500"><tr><th className="pb-4">Category</th><th className="pb-4">Line Item</th><th className="pb-4">Qty</th><th className="pb-4">Unit</th><th className="pb-4">Unit Price</th><th className="pb-4 text-right">Total</th></tr></thead><tbody>{rows.map((row, index) => <tr key={`${row.category}-${index}`} className="border-t border-white/10"><td className="py-3 pr-3 text-sm font-bold text-cyan-200">{row.category}</td><td className="py-3 pr-3"><input className="field py-2" value={row.item} onChange={(event) => updateRow(index, "item", event.target.value)} /></td><td className="py-3 pr-3"><input className="field w-24 py-2" value={row.qty} onChange={(event) => updateRow(index, "qty", event.target.value)} /></td><td className="py-3 pr-3 text-sm text-slate-400">{row.unit}</td><td className="py-3 pr-3"><input className="field w-28 py-2" value={row.price} onChange={(event) => updateRow(index, "price", event.target.value)} /></td><td className="py-3 text-right font-black text-emerald-300">{formatMoney(cleanNumber(row.qty) * cleanNumber(row.price))}</td></tr>)}</tbody></table></div>{wizardOpen && <div className="rounded-3xl border border-cyan-300/25 bg-cyan-300/[.05] p-5"><div className="flex justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? `Paso ${specStep} de 3` : `Step ${specStep} of 3`}</p><h4 className="mt-2 text-xl font-black text-white">{isEs ? "Generar Estimación desde Especificaciones" : "Generate Estimate from Specs"}</h4></div><button onClick={() => setWizardOpen(false)}><X /></button></div><div className="mt-5 grid gap-3 sm:grid-cols-3">{specStep === 1 && <><select className="field" value={spec.type} onChange={(event) => setSpec({ ...spec, type: event.target.value })}><option>New Construction</option><option>Remodel</option><option>Addition</option></select><input className="field" value={spec.city} onChange={(event) => setSpec({ ...spec, city: event.target.value })} placeholder="City / State" /><NumberInput label="Living Sq Ft" value={spec.sqft} setValue={(value) => setSpec({ ...spec, sqft: value })} /></>}{specStep === 2 && <><select className="field" value={spec.foundation} onChange={(event) => setSpec({ ...spec, foundation: event.target.value })}><option>Slab</option><option>Crawlspace</option><option>Basement</option><option>Pier / Raised</option></select><select className="field" value={spec.finish} onChange={(event) => setSpec({ ...spec, finish: event.target.value })}><option>Standard</option><option>Upgraded</option><option>Luxury</option></select></>}{specStep === 3 && <Info title={isEs ? "Listo para Calcular" : "Ready to Calculate"} text={`${spec.type} | ${spec.city} | ${formatNumber(spec.sqft, 0)} sq ft | ${spec.foundation} | ${spec.finish}`} />}</div><div className="mt-5 flex justify-between"><button onClick={() => setSpecStep(Math.max(1, specStep - 1))} className="secondary-button">{isEs ? "Anterior" : "Previous"}</button>{specStep < 3 ? <button onClick={() => setSpecStep(specStep + 1)} className="primary-button">{isEs ? "Siguiente" : "Next"}</button> : <button onClick={generateEstimate} className="primary-button">{isEs ? "Generar Presupuesto" : "Generate Budget"}</button>}</div></div>}</div>;
+}
+
+function SubsQuotes({ language, project }) {
   const label = language === "es"
     ? { review: "Revisar Cotización", trade: "Oficio", vendor: "Proveedor", bid: "Monto de Oferta", scope: "Alcance", status: "Estado", quoteStatus: "Estado de cotización", pending: "Pendiente", approved: "Aprobada", rejected: "Rechazada", total: "Total de Ofertas", contingency: "Contingencia 10%", budget: "Presupuesto con Contingencia", selected: "Oferta Seleccionada" }
     : { review: "Review Quote", trade: "Trade", vendor: "Vendor", bid: "Bid Amount", scope: "Scope", status: "Status", quoteStatus: "Quote status", pending: "Pending", approved: "Approved", rejected: "Rejected", total: "Bid Total", contingency: "10% Contingency", budget: "Budget With Contingency", selected: "Selected Bid" };
+  const isEs = language === "es";
+  const [subcontractors, setSubcontractors] = useState([]);
+  const [search, setSearch] = useState("");
+  const [addSubOpen, setAddSubOpen] = useState(false);
+  const [newSub, setNewSub] = useState({ name: "", trade: "Other", customTrade: "", email: "", phone: "", notes: "" });
   const [quotes, setQuotes] = useState([
     { trade: "Foundation", vendor: "Gulf Coast Concrete", price: 18500, scope: "Slab, footings, vapor barrier", status: "Pending" },
     { trade: "Framing", vendor: "Walton Framing Co.", price: 42000, scope: "Labor and lumber package", status: "Approved" },
@@ -1593,7 +1713,9 @@ function SubsQuotes({ language }) {
   const quote = quotes[active];
   const total = quotes.reduce((sum, item) => sum + cleanNumber(item.price), 0);
   const updateQuote = (field, value) => setQuotes(quotes.map((item, index) => index === active ? { ...item, [field]: value } : item));
-  return <div className="grid gap-5 xl:grid-cols-[1fr_390px]"><div className="space-y-3">{quotes.map((item, index) => <button key={item.trade} onClick={() => setActive(index)} className={`glow-card flex w-full items-center justify-between rounded-3xl border p-5 text-left transition ${active === index ? "border-amber-400/50 bg-amber-400/10" : "border-white/10 bg-slate-950/60 hover:border-amber-400/30"}`}><div><p className="font-black text-white">{item.trade}</p><p className="text-sm text-slate-500">{item.vendor} · {label.quoteStatus}: {item.status}</p></div><p className="text-xl font-black text-amber-300">{formatMoney(item.price)}</p></button>)}</div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><h3 className="text-xl font-black text-white">{label.review}</h3><div className="mt-4 space-y-3"><label className="block"><span className="label">{label.trade}</span><input className="field" value={quote.trade} onChange={(e) => updateQuote("trade", e.target.value)} /></label><label className="block"><span className="label">{label.vendor}</span><input className="field" value={quote.vendor} onChange={(e) => updateQuote("vendor", e.target.value)} /></label><MoneyInput label={label.bid} value={quote.price} setValue={(value) => updateQuote("price", value)} /><label className="block"><span className="label">{label.scope}</span><textarea className="field min-h-24" value={quote.scope} onChange={(e) => updateQuote("scope", e.target.value)} /></label><label className="block"><span className="label">{label.status}</span><select className="field" value={quote.status} onChange={(e) => updateQuote("status", e.target.value)}><option>{label.pending}</option><option>Review</option><option>{label.approved}</option><option>{label.rejected}</option></select></label></div><ResultBox items={[[label.total, formatMoney(total), true], [label.contingency, formatMoney(total * 0.1)], [label.budget, formatMoney(total * 1.1), true], [label.selected, formatMoney(quote.price)]]} /></div></div>;
+  const addSub = () => { if (!newSub.name.trim()) return; setSubcontractors([...subcontractors, { ...newSub, id: Date.now() }]); setAddSubOpen(false); setNewSub({ name: "", trade: "Other", customTrade: "", email: "", phone: "", notes: "" }); };
+  const filtered = subcontractors.filter((sub) => `${sub.name} ${sub.email} ${sub.phone}`.toLowerCase().includes(search.toLowerCase()));
+  return <div className="space-y-6"><ProjectContext project={project} language={language} /><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Subcontratistas" : "Subcontractors"}</h3><p className="text-sm text-slate-400">{subcontractors.length} {isEs ? "subcontratistas" : "subcontractors"}</p></div><button onClick={() => setAddSubOpen(true)} className="primary-button"><Plus size={18} />{isEs ? "Agregar Subcontratista" : "Add Subcontractor"}</button></div><input className="field mt-5" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={isEs ? "Buscar por nombre, correo o teléfono..." : "Search by name, email, phone..."} />{filtered.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{filtered.map((sub) => <div key={sub.id} className="rounded-2xl border border-white/10 p-4"><p className="font-black text-white">{sub.name}</p><p className="text-sm text-cyan-200">{sub.customTrade || sub.trade}</p><p className="mt-2 text-sm text-slate-400">{sub.email} {sub.phone}</p></div>)}</div> : <div className="py-10 text-center"><Users className="mx-auto text-slate-600" size={42} /><p className="mt-4 font-black text-white">{isEs ? "No se encontraron subcontratistas" : "No subcontractors found"}</p><p className="mt-2 text-sm text-slate-400">{isEs ? "Agrega tu primer subcontratista para comenzar." : "Add your first subcontractor to get started."}</p></div>}</section><div className="grid gap-5 xl:grid-cols-[1fr_390px]"><div className="space-y-3"><h3 className="mb-4 text-xl font-black text-white">{isEs ? "Ofertas / Comparación" : "Bids / Comparison"}</h3>{quotes.map((item, index) => <button key={item.trade} onClick={() => setActive(index)} className={`glow-card flex w-full items-center justify-between rounded-3xl border p-5 text-left transition ${active === index ? "border-cyan-300/50 bg-cyan-300/10" : "border-white/10 bg-slate-950/60 hover:border-cyan-300/30"}`}><div><p className="font-black text-white">{item.trade}</p><p className="text-sm text-slate-500">{item.vendor} · {label.quoteStatus}: {item.status}</p></div><p className="text-xl font-black text-cyan-200">{formatMoney(item.price)}</p></button>)}</div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><h3 className="text-xl font-black text-white">{label.review}</h3><div className="mt-4 space-y-3"><label className="block"><span className="label">{label.trade}</span><input className="field" value={quote.trade} onChange={(e) => updateQuote("trade", e.target.value)} /></label><label className="block"><span className="label">{label.vendor}</span><input className="field" value={quote.vendor} onChange={(e) => updateQuote("vendor", e.target.value)} /></label><MoneyInput label={label.bid} value={quote.price} setValue={(value) => updateQuote("price", value)} /><label className="block"><span className="label">{label.scope}</span><textarea className="field min-h-24" value={quote.scope} onChange={(e) => updateQuote("scope", e.target.value)} /></label><label className="block"><span className="label">{label.status}</span><select className="field" value={quote.status} onChange={(e) => updateQuote("status", e.target.value)}><option>{label.pending}</option><option>Review</option><option>{label.approved}</option><option>{label.rejected}</option></select></label></div><ResultBox items={[[label.total, formatMoney(total), true], [label.contingency, formatMoney(total * 0.1)], [label.budget, formatMoney(total * 1.1), true], [label.selected, formatMoney(quote.price)]]} /></div></div>{addSubOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4"><div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#10182b] p-6"><div className="flex justify-between"><h3 className="text-xl font-black text-white">{isEs ? "Agregar Subcontratista" : "Add Subcontractor"}</h3><button onClick={() => setAddSubOpen(false)}><X /></button></div><div className="mt-5 grid gap-4"><input className="field" value={newSub.name} onChange={(event) => setNewSub({ ...newSub, name: event.target.value })} placeholder={isEs ? "Nombre de empresa o persona" : "Company or person name"} /><select className="field" value={newSub.trade} onChange={(event) => setNewSub({ ...newSub, trade: event.target.value })}><option>Other</option><option>Electrical</option><option>Plumbing</option><option>Concrete</option><option>Framing</option><option>Roofing</option></select>{newSub.trade === "Other" && <input className="field" value={newSub.customTrade} onChange={(event) => setNewSub({ ...newSub, customTrade: event.target.value })} placeholder={isEs ? "Oficio personalizado" : "Custom trade"} />}<div className="grid gap-3 sm:grid-cols-2"><input className="field" value={newSub.email} onChange={(event) => setNewSub({ ...newSub, email: event.target.value })} placeholder="Email" /><input className="field" value={newSub.phone} onChange={(event) => setNewSub({ ...newSub, phone: event.target.value })} placeholder={isEs ? "Teléfono" : "Phone"} /></div><textarea className="field min-h-24" value={newSub.notes} onChange={(event) => setNewSub({ ...newSub, notes: event.target.value })} placeholder={isEs ? "Notas" : "Notes"} /></div><div className="mt-5 flex justify-end gap-3"><button onClick={() => setAddSubOpen(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={addSub} className="primary-button">{isEs ? "Agregar" : "Add"}</button></div></div></div>}</div>;
 }
 
 function LinkedItems({ language }) {
