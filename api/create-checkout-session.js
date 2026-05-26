@@ -15,14 +15,12 @@ function serverConfig(plan) {
     !stripeSecretKey && "STRIPE_SECRET_KEY",
     !supabaseUrl && "VITE_SUPABASE_URL",
     !supabaseAnonKey && "VITE_SUPABASE_ANON_KEY",
+    !supabaseServiceKey && "SUPABASE_SERVICE_ROLE_KEY",
     !priceId && `${plan === "annual" ? "STRIPE_ANNUAL_PRICE_ID" : "STRIPE_MONTHLY_PRICE_ID"}`,
   ].filter(Boolean);
   if (missing.length) {
     console.error("[checkout] Missing server configuration:", missing.join(", "));
     return { error: "Billing setup is incomplete. Please contact support@operitron.com." };
-  }
-  if (!supabaseServiceKey) {
-    console.warn("[checkout] SUPABASE_SERVICE_ROLE_KEY is not configured; customer persistence requires webhook synchronization.");
   }
   return { stripeSecretKey, supabaseUrl, supabaseAnonKey, supabaseServiceKey, priceId };
 }
@@ -67,35 +65,33 @@ export default async function handler(request, response) {
 
   try {
     const stripe = new Stripe(config.stripeSecretKey);
-    let customerId = null;
-    if (config.supabaseServiceKey) {
-      try {
-        const adminClient = getAdminSupabase(config);
-        await ensureProfile(adminClient, data.user);
-        const { data: profile, error: profileError } = await adminClient.from("profiles").select("stripe_customer_id").eq("id", data.user.id).maybeSingle();
-        if (profileError) throw profileError;
-        customerId = profile?.stripe_customer_id;
-        if (!customerId) {
-          const matchingCustomers = await stripe.customers.list({ email: data.user.email, limit: 1 });
-          const customer = matchingCustomers.data[0] || await stripe.customers.create({
-            email: data.user.email,
-            metadata: { user_id: data.user.id },
-          });
-          customerId = customer.id;
-          const { error: customerSaveError } = await adminClient.from("profiles").update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq("id", data.user.id);
-          if (customerSaveError) throw customerSaveError;
-        }
-      } catch (profileError) {
-        console.error("[checkout] Customer persistence unavailable; proceeding with authenticated email.", {
-          message: profileError?.message,
-          userId: data.user.id,
-        });
-        customerId = null;
-      }
+    const adminClient = getAdminSupabase(config);
+    await ensureProfile(adminClient, data.user);
+    const { data: profile, error: profileError } = await adminClient
+      .from("profiles")
+      .select("stripe_customer_id")
+      .eq("id", data.user.id)
+      .maybeSingle();
+    if (profileError) throw profileError;
+
+    let customerId = profile?.stripe_customer_id;
+    if (!customerId) {
+      const matchingCustomers = await stripe.customers.list({ email: data.user.email, limit: 1 });
+      const customer = matchingCustomers.data[0] || await stripe.customers.create({
+        email: data.user.email,
+        metadata: { user_id: data.user.id },
+      });
+      customerId = customer.id;
+      const { error: customerSaveError } = await adminClient
+        .from("profiles")
+        .update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() })
+        .eq("id", data.user.id);
+      if (customerSaveError) throw customerSaveError;
     }
+
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      ...(customerId ? { customer: customerId } : { customer_email: data.user.email }),
+      customer: customerId,
       client_reference_id: data.user.id,
       line_items: [{ price: config.priceId, quantity: 1 }],
       allow_promotion_codes: true,

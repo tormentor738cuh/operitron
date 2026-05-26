@@ -12,13 +12,44 @@ async function ensureProfile(adminClient, user) {
   }
 }
 
+async function getOrCreateCustomer(stripe, adminClient, user, existingCustomerId) {
+  if (existingCustomerId) return existingCustomerId;
+  const matchingCustomers = await stripe.customers.list({ email: user.email, limit: 1 });
+  const customer = matchingCustomers.data[0] || await stripe.customers.create({
+    email: user.email,
+    metadata: { user_id: user.id },
+  });
+  if (adminClient) {
+    const { error } = await adminClient
+      .from("profiles")
+      .update({ stripe_customer_id: customer.id, updated_at: new Date().toISOString() })
+      .eq("id", user.id);
+    if (error) console.error("[portal] Unable to persist Stripe customer ID.", { message: error.message, userId: user.id });
+  }
+  return customer.id;
+}
+
+async function hasAnySubscription(stripe, customerId) {
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customerId,
+    status: "all",
+    limit: 10,
+  });
+  const supportedStatuses = new Set(["active", "trialing", "canceled", "past_due", "unpaid"]);
+  return subscriptions.data.some((subscription) => supportedStatuses.has(subscription.status));
+}
+
+function appUrl() {
+  return (process.env.APP_URL || "https://operitron.com").replace(/\/+$/, "");
+}
+
 export default async function handler(request, response) {
   if (request.method !== "POST") return response.status(405).json({ error: "Method not allowed." });
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!stripeSecretKey || !supabaseUrl || !anonKey) {
+  if (!stripeSecretKey || !supabaseUrl || !anonKey || !serviceKey) {
     console.error("[portal] Missing server configuration.");
     return response.status(503).json({ error: "Billing setup is incomplete. Please contact support@operitron.com." });
   }
@@ -30,36 +61,18 @@ export default async function handler(request, response) {
   if (authError || !data.user) return response.status(401).json({ error: "Invalid session." });
 
   try {
-    let adminClient = null;
+    const adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
     let customerId = null;
-    if (serviceKey) {
-      try {
-        adminClient = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } });
-        await ensureProfile(adminClient, data.user);
-        const { data: profile, error: profileError } = await adminClient.from("profiles").select("stripe_customer_id").eq("id", data.user.id).maybeSingle();
-        if (profileError) throw profileError;
-        customerId = profile?.stripe_customer_id;
-      } catch (profileError) {
-        console.error("[portal] Profile lookup unavailable; resolving customer by email.", {
-          message: profileError?.message,
-          userId: data.user.id,
-        });
-      }
-    } else {
-      console.warn("[portal] SUPABASE_SERVICE_ROLE_KEY is not configured; resolving customer by email.");
+    await ensureProfile(adminClient, data.user);
+    const { data: profile, error: profileError } = await adminClient.from("profiles").select("stripe_customer_id").eq("id", data.user.id).maybeSingle();
+    if (profileError) throw profileError;
+    customerId = await getOrCreateCustomer(stripe, adminClient, data.user, profile?.stripe_customer_id);
+    if (!await hasAnySubscription(stripe, customerId)) {
+      return response.status(400).json({ error: "Start a subscription first." });
     }
-    if (!customerId) {
-      const matchingCustomers = await stripe.customers.list({ email: data.user.email, limit: 1 });
-      customerId = matchingCustomers.data[0]?.id;
-      if (customerId && adminClient) {
-        const { error: customerSaveError } = await adminClient.from("profiles").update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() }).eq("id", data.user.id);
-        if (customerSaveError) console.error("[portal] Unable to persist Stripe customer ID.", { message: customerSaveError.message, userId: data.user.id });
-      }
-    }
-    if (!customerId) return response.status(400).json({ error: "Start a subscription first." });
     const portal = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${process.env.APP_URL || "https://operitron.com"}/profile`,
+      return_url: `${appUrl()}/profile`,
     });
     return response.status(200).json({ url: portal.url });
   } catch (error) {

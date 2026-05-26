@@ -19,15 +19,56 @@ async function ensureProfile(adminClient, userId) {
   if (error) throw error;
 }
 
-async function syncSubscription(adminClient, subscription) {
-  const userId = subscription.metadata?.user_id;
-  if (!userId) return;
+async function resolveUserId(adminClient, stripe, subscription) {
+  const metadataUserId = subscription.metadata?.user_id;
+  if (metadataUserId) return metadataUserId;
+
+  const customerId = String(subscription.customer || "");
+  if (!customerId) return "";
+  const { data: profile, error: profileError } = await adminClient
+    .from("profiles")
+    .select("id")
+    .eq("stripe_customer_id", customerId)
+    .maybeSingle();
+  if (profileError) throw profileError;
+  if (profile?.id) return profile.id;
+
+  const customer = await stripe.customers.retrieve(customerId);
+  const customerUserId = customer?.metadata?.user_id;
+  if (customerUserId) return customerUserId;
+  if (customer?.email) {
+    const { data: emailProfile, error: emailProfileError } = await adminClient
+      .from("profiles")
+      .select("id")
+      .eq("email", customer.email)
+      .maybeSingle();
+    if (emailProfileError) throw emailProfileError;
+    if (emailProfile?.id) return emailProfile.id;
+  }
+  return "";
+}
+
+function normalizedStatus(subscription) {
+  if (subscription.status) return subscription.status;
+  if (subscription.cancel_at_period_end) return "canceled";
+  return "inactive";
+}
+
+async function syncSubscription(adminClient, stripe, subscription) {
+  const userId = await resolveUserId(adminClient, stripe, subscription);
+  if (!userId) {
+    console.warn("[webhook] Could not resolve user for subscription.", { subscriptionId: subscription.id, customer: subscription.customer });
+    return;
+  }
   await ensureProfile(adminClient, userId);
+  const status = normalizedStatus(subscription);
+  const price = subscription.items?.data?.[0]?.price;
+  const plan = subscription.metadata?.plan || (price?.id === (process.env.STRIPE_ANNUAL_PRICE_ID || process.env.VITE_STRIPE_ANNUAL_PRICE_ID) ? "annual" : price?.id === (process.env.STRIPE_MONTHLY_PRICE_ID || process.env.VITE_STRIPE_MONTHLY_PRICE_ID) ? "monthly" : "Subscribed");
   const details = {
     stripe_customer_id: String(subscription.customer),
     subscription_id: subscription.id,
-    subscription_status: subscription.status,
-    subscription_plan: subscription.metadata?.plan || "Subscribed",
+    subscription_status: status,
+    subscription_plan: plan,
     trial_ends_at: subscription.trial_end ? new Date(subscription.trial_end * 1000).toISOString() : null,
     current_period_end: subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toISOString() : null,
     updated_at: new Date().toISOString(),
@@ -38,9 +79,9 @@ async function syncSubscription(adminClient, subscription) {
     user_id: userId,
     stripe_customer_id: String(subscription.customer),
     stripe_subscription_id: subscription.id,
-    price_id: subscription.items?.data?.[0]?.price?.id || null,
-    plan: subscription.metadata?.plan || "Subscribed",
-    status: subscription.status,
+    price_id: price?.id || null,
+    plan,
+    status,
     trial_ends_at: details.trial_ends_at,
     current_period_end: details.current_period_end,
     updated_at: details.updated_at,
@@ -64,7 +105,9 @@ export default async function handler(request, response) {
   });
   let event;
   try {
-    event = stripe.webhooks.constructEvent(await readBody(request), request.headers["stripe-signature"], process.env.STRIPE_WEBHOOK_SECRET);
+    const signature = request.headers["stripe-signature"];
+    if (!signature) return response.status(400).json({ error: "Missing Stripe signature." });
+    event = stripe.webhooks.constructEvent(await readBody(request), signature, webhookSecret);
   } catch (error) {
     console.error("[webhook] Invalid Stripe signature", { message: error?.message });
     return response.status(400).json({ error: "Invalid webhook signature." });
@@ -82,9 +125,13 @@ export default async function handler(request, response) {
         }).eq("id", userId);
         if (error) throw error;
       }
+      if (session.subscription) {
+        const subscription = await stripe.subscriptions.retrieve(String(session.subscription));
+        await syncSubscription(adminClient, stripe, subscription);
+      }
     }
     if (["customer.subscription.created", "customer.subscription.updated", "customer.subscription.deleted"].includes(event.type)) {
-      await syncSubscription(adminClient, event.data.object);
+      await syncSubscription(adminClient, stripe, event.data.object);
     }
   } catch (error) {
     console.error("[webhook] Failed to store event", { type: event.type, message: error?.message });
