@@ -93,6 +93,7 @@ const pagePaths = {
   knowledge: "/knowledge-base",
   tutorials: "/tutorials",
   tours: "/tours",
+  admin: "/owner-console",
   privacy: "/privacy-policy",
   terms: "/terms-of-service",
   refund: "/refund-policy",
@@ -570,6 +571,14 @@ function AppShell() {
   const hasProductAccess = hasPremium || isAdmin;
 
   useEffect(() => {
+    if (!supabase || !user || !isAdmin) return;
+    supabase.auth.getSession().then(({ data }) => {
+      const token = data.session?.access_token;
+      if (token) fetch("/api/admin-health", { headers: { Authorization: `Bearer ${token}` } }).catch(() => {});
+    });
+  }, [user, isAdmin]);
+
+  useEffect(() => {
     if (!supabase || !user || !hasProductAccess) return;
     let active = true;
     supabase.from("projects").select("id, title, address, data, created_at").order("created_at", { ascending: false }).then(({ data, error }) => {
@@ -611,14 +620,15 @@ function AppShell() {
 
   async function saveProject(project) {
     setProjects((current) => [project, ...current]);
-    if (!supabase || !user) return;
-    await supabase.from("projects").insert({
+    if (!supabase || !user) return { error: "Account storage is unavailable." };
+    const { error } = await supabase.from("projects").insert({
       id: project.id,
       user_id: user.id,
       title: project.name,
       address: project.address,
       data: project,
     });
+    return error ? { error: error.message } : { error: "" };
   }
 
   const page = useMemo(() => {
@@ -633,9 +643,10 @@ function AppShell() {
     if (activePage === "tutorials") return hasProductAccess ? <Tutorials t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
     if (activePage === "tours") return hasProductAccess ? <Tours t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
     if (activePage === "dropbox") return hasProductAccess ? <DropboxPage t={t} /> : <PremiumPaywall language={language} user={user} go={go} />;
+    if (activePage === "admin") return isAdmin ? <OwnerConsole language={language} user={user} go={go} setActiveTool={setActiveTool} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "pricing") return <PricingPlans language={language} user={user} go={go} />;
     if (activePage === "settings") return <SettingsPage {...props} />;
-    if (activePage === "profile") return <ProfilePage t={t} language={language} user={user} back={back} />;
+    if (activePage === "profile") return <ProfilePage t={t} language={language} user={user} back={back} isAdmin={isAdmin} go={go} />;
     if (["privacy", "terms", "refund", "disclaimer"].includes(activePage)) return <LegalPage type={activePage} language={language} />;
     return <Dashboard {...props} />;
   }, [activePage, language, projects, user, subscription, passwordRecovery, hasProductAccess, isAdmin]);
@@ -651,7 +662,7 @@ function AppShell() {
       </div>
       {user && hasProductAccess && <Sidebar t={t} user={user} activePage={activePage} go={go} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} isAdmin={isAdmin} />}
       {user && hasProductAccess && mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/70 lg:hidden" />}
-      <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} hasProductAccess={hasProductAccess} collapsed={sidebarCollapsed} />
+      <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} hasProductAccess={hasProductAccess} isAdmin={isAdmin} collapsed={sidebarCollapsed} />
       <main className={`relative z-10 p-4 pb-28 sm:p-5 sm:pb-28 lg:p-8 lg:pb-8 ${user && hasProductAccess ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-72") : "mx-auto max-w-7xl"}`}>
         {user && hasProductAccess && history.length > 0 && activePage !== "dashboard" && <button onClick={back} className="mb-5 inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 hover:border-amber-400/50 hover:text-white">
           ← {t.back}
@@ -684,6 +695,7 @@ function Sidebar({ t, user, activePage, go, mobileOpen, setMobileOpen, collapsed
     ["pricing", DollarSign, t.pricing],
     ["settings", Settings, t.settings],
   ];
+  if (isAdmin) items.splice(1, 0, ["admin", Sparkles, "Owner Console"]);
 
   return (
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-slate-950/90 p-5 backdrop-blur-xl transition-all duration-300 lg:translate-x-0 ${collapsed ? "lg:w-20 lg:p-3" : "lg:w-72"} ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
@@ -715,7 +727,7 @@ function Sidebar({ t, user, activePage, go, mobileOpen, setMobileOpen, collapsed
   );
 }
 
-function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, hasProductAccess, collapsed }) {
+function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, hasProductAccess, isAdmin, collapsed }) {
   const [accountOpen, setAccountOpen] = useState(false);
   return (
     <header className={`sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 px-3 py-3 backdrop-blur-xl transition-[margin] duration-300 sm:px-5 ${user && hasProductAccess ? (collapsed ? "lg:ml-20" : "lg:ml-72") : ""}`}>
@@ -735,6 +747,7 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
             {accountOpen && <div className="absolute right-0 top-[calc(100%+0.65rem)] z-50 w-64 rounded-2xl border border-white/10 bg-slate-950 p-2 shadow-2xl shadow-black/50">
               <p className="truncate px-3 py-2 text-xs font-bold text-slate-500">{user.email}</p>
               {hasProductAccess && <button onClick={() => { setAccountOpen(false); go("dashboard"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.dashboard}</button>}
+              {isAdmin && <button onClick={() => { setAccountOpen(false); go("admin"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-cyan-200 hover:bg-cyan-300/10">Owner Console</button>}
               <button onClick={() => { setAccountOpen(false); go("profile"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.profile}</button>
               <button onClick={() => { setAccountOpen(false); go("pricing"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.pricing}</button>
               <div className="my-2 border-t border-white/10" />
@@ -779,15 +792,19 @@ function BrandLogo({ onClick, compact = false, size = "default" }) {
   );
 }
 
-function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAddProject }) {
+function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAddProject, isAdmin }) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
+  const [saveStatus, setSaveStatus] = useState("");
   const totalProfit = projects.reduce((sum, p) => sum + p.profit, 0);
 
-  function addProject() {
+  async function addProject() {
     if (!name.trim()) return;
     const project = { id: Date.now(), name, type: t.newAnalysis, address: address || t.propertyAddress, arv: 0, profit: 0, purchase: 0, repairs: 0, expenses: 0, progress: 0, status: t.earlyAccess };
-    if (onAddProject) onAddProject(project);
+    if (onAddProject) {
+      const result = await onAddProject(project);
+      setSaveStatus(result?.error ? (language === "es" ? "Proyecto visible en esta sesión, pero no se pudo guardar. Revisa Owner Console." : "Project is visible this session, but could not be saved. Review Owner Console.") : (language === "es" ? "Proyecto guardado." : "Project saved."));
+    }
     else setProjects([project, ...projects]);
     setName("");
     setAddress("");
@@ -796,6 +813,10 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
   return (
     <div className="space-y-6 sm:space-y-8">
       <Hero t={t} go={go} />
+      {isAdmin && <section className="flex flex-col justify-between gap-4 rounded-3xl border border-cyan-300/25 bg-cyan-300/[.07] p-5 sm:flex-row sm:items-center">
+        <div><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">{language === "es" ? "Acceso del Propietario" : "Owner Access"}</p><p className="mt-2 font-bold text-white">{language === "es" ? "Todas las herramientas están habilitadas para tu cuenta administrativa." : "All paid workspace tools are enabled for your administrator account."}</p></div>
+        <button onClick={() => go("admin")} className="secondary-button whitespace-nowrap">{language === "es" ? "Abrir Control" : "Open Owner Console"}</button>
+      </section>}
 
       <section className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3">
         <Stat onClick={() => go("projectTools")} title={t.savedProjects} value={projects.length} icon={FolderOpen} help={t.savedProjectsHelp || "Number of saved property analyses in your workspace."} />
@@ -830,6 +851,7 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t.projectName} className="field mt-5" />
             <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={t.propertyAddress} className="field mt-3" />
             <button onClick={addProject} className="primary-button mt-4 flex w-full items-center justify-center gap-2"><Plus size={18} /> {t.addProject}</button>
+            {saveStatus && <p className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-300/[.06] p-3 text-sm leading-6 text-slate-300">{saveStatus}</p>}
           </GlassPanel>
         </div>
       </section>
@@ -867,6 +889,7 @@ function PublicHome({ t, go }) {
           </GlassPanel>
         ))}
       </section>
+      <VisitorWorkflow isEs={isEs} />
       <LandingCTA isEs={isEs} t={t} go={go} />
       <LandingStats isEs={isEs} />
       <LandingFeatureSections isEs={isEs} />
@@ -879,6 +902,23 @@ function PublicHome({ t, go }) {
       <PublicFooter isEs={isEs} go={go} />
     </div>
   );
+}
+
+function VisitorWorkflow({ isEs }) {
+  const steps = isEs
+    ? [
+      ["1", "Filtra oportunidades", "Captura precio, ARV, renta, deuda y gastos para probar la viabilidad inicial."],
+      ["2", "Valida el activo", "Revisa comps, impuestos, datos públicos, historial y riesgos antes de comprometer capital."],
+      ["3", "Planifica la ejecución", "Convierte el alcance en presupuesto, cronograma, takeoff, cotizaciones y punch list."],
+      ["4", "Comparte decisiones", "Exporta reportes, colabora con tu equipo y conserva supuestos en el proyecto."],
+    ]
+    : [
+      ["1", "Screen opportunities", "Capture price, ARV, rent, debt, and costs to test initial feasibility."],
+      ["2", "Validate the asset", "Review comps, taxes, public data, history, and risk before committing capital."],
+      ["3", "Plan execution", "Turn scope into budget, schedule, takeoff, quotes, and closeout tracking."],
+      ["4", "Share decisions", "Export reports, collaborate with your team, and preserve assumptions by project."],
+    ];
+  return <section className="rounded-[2rem] border border-white/10 bg-slate-950/55 p-5 sm:p-7"><SectionHeader title={isEs ? "Del análisis a la ejecución" : "From analysis to execution"} detail={isEs ? "Un flujo claro para inversionistas, constructores y operadores que necesitan verificar antes de actuar." : "A clear operating path for investors and builders who need to verify before they act."} /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{steps.map(([number, title, text]) => <article key={title} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><span className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-300/10 font-black text-cyan-300">{number}</span><h3 className="mt-4 text-lg font-black text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{text}</p></article>)}</div><p className="mt-5 rounded-2xl border border-amber-300/15 bg-amber-300/[.05] p-4 text-sm leading-6 text-slate-300">{isEs ? "Operitron apoya decisiones; valida comparables, presupuestos, permisos, financiamiento y asesoría profesional antes de invertir o construir." : "Operitron supports decisions; verify comps, budgets, permits, financing, and professional advice before investing or building."}</p></section>;
 }
 
 function LandingCTA({ isEs, t, go }) {
@@ -1141,6 +1181,81 @@ function ToolModalFrame({ children, onClose }) {
 function SubscriptionGate({ language, go }) {
   const isEs = language === "es";
   return <section className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 to-purple-500/10 p-7"><DollarSign className="text-cyan-300" size={32} /><h2 className="mt-5 pr-8 text-2xl font-black text-white">{isEs ? "Activa tu prueba de 3 días" : "Activate your 3-day trial"}</h2><p className="mt-3 leading-7 text-slate-300">{isEs ? "Las herramientas profesionales se habilitan con un plan Mensual o Anual activo. Comienza de forma segura con Stripe Checkout." : "Professional tools unlock with an active Monthly or Annual plan. Start securely through Stripe Checkout."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{isEs ? "Ver planes" : "View plans"}</button></section>;
+}
+
+function OwnerConsole({ language, user, go, setActiveTool }) {
+  const isEs = language === "es";
+  const [report, setReport] = useState(null);
+  const [status, setStatus] = useState("");
+  const [checking, setChecking] = useState(false);
+  const toolsForOwner = getTools(language);
+
+  async function checkProduction() {
+    setChecking(true);
+    setStatus("");
+    try {
+      if (!supabase) throw new Error(isEs ? "La autenticación no está configurada." : "Authentication is not configured.");
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error(isEs ? "Inicia sesión para continuar." : "Sign in to continue.");
+      const response = await fetch("/api/admin-health", { headers: { Authorization: `Bearer ${token}` } });
+      const result = await readApiJson(response);
+      if (!response.ok) throw new Error(result.error || (isEs ? "No se pudo verificar producción." : "Production check could not be completed."));
+      setReport(result);
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  useEffect(() => {
+    checkProduction();
+  }, []);
+
+  const visibleChecks = report?.checks || [];
+  const issues = visibleChecks.filter((check) => !check.ok);
+  return <div className="space-y-6">
+    <section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/[.12] via-slate-950 to-purple-500/[.12] p-6 shadow-[0_0_48px_rgba(34,211,238,.1)] sm:p-8">
+      <div className="absolute -right-20 -top-16 h-56 w-56 rounded-full bg-cyan-400/15 blur-3xl" />
+      <div className="relative flex flex-col justify-between gap-5 lg:flex-row lg:items-center">
+        <div>
+          <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{isEs ? "Control del Propietario" : "Owner Console"}</p>
+          <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">{isEs ? "Acceso total de Operitron" : "Operitron full-access control"}</h1>
+          <p className="mt-3 max-w-2xl leading-7 text-slate-300">{isEs ? "Tu identidad administrativa omite el cobro para desarrollo, revisión y control de todas las herramientas del producto." : "Your administrator identity bypasses billing for product development, review, and control across every workspace tool."}</p>
+          <p className="mt-3 inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-black text-cyan-200">{user?.email} · {isEs ? "Administrador" : "Administrator"}</p>
+        </div>
+        <button onClick={checkProduction} disabled={checking} className="primary-button whitespace-nowrap disabled:opacity-60">{checking ? (isEs ? "Verificando..." : "Checking...") : (isEs ? "Verificar sistema" : "Run system check")}</button>
+      </div>
+    </section>
+
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
+      <GlassPanel>
+        <SectionHeader title={isEs ? "Acceso a Herramientas" : "Tool Access"} detail={isEs ? "Las ocho áreas profesionales están desbloqueadas para tu cuenta administrativa." : "All eight professional work areas are unlocked for your administrator account."} />
+        <div className="grid gap-3 sm:grid-cols-2">
+          {toolsForOwner.map(([id, title, detail, Icon]) => <button key={id} onClick={() => setActiveTool(id)} className="glow-card flex gap-3 rounded-2xl border border-white/10 bg-slate-950/55 p-4 text-left transition hover:border-cyan-300/35"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-cyan-300/10 text-cyan-300"><Icon size={19} /></span><span><span className="block font-black text-white">{title}</span><span className="mt-1 block text-xs leading-5 text-slate-400">{detail}</span></span></button>)}
+        </div>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <button onClick={() => go("dashboard")} className="secondary-button">{isEs ? "Abrir panel" : "Open dashboard"}</button>
+          <button onClick={() => go("projectTools")} className="secondary-button">{isEs ? "Abrir proyectos" : "Open project tools"}</button>
+          <button onClick={() => go("propertySearch")} className="secondary-button">{isEs ? "Abrir propiedad" : "Open property search"}</button>
+        </div>
+      </GlassPanel>
+
+      <GlassPanel>
+        <SectionHeader title={isEs ? "Estado de Producción" : "Production Readiness"} detail={isEs ? "Comprobaciones privadas para detectar configuración faltante." : "Private checks to surface missing configuration."} />
+        {status && <p className="rounded-xl border border-red-300/25 bg-red-400/10 p-3 text-sm leading-6 text-red-200">{status}</p>}
+        {!status && !report && <p className="text-sm text-slate-400">{isEs ? "Cargando verificaciones..." : "Loading checks..."}</p>}
+        <div className="space-y-3">
+          {visibleChecks.map((check) => <div key={check.name} className={`rounded-2xl border p-3 ${check.ok ? "border-emerald-300/15 bg-emerald-300/[.06]" : "border-amber-300/20 bg-amber-300/[.07]"}`}>
+            <p className={`flex items-center gap-2 text-sm font-black ${check.ok ? "text-emerald-300" : "text-amber-300"}`}>{check.ok ? <CheckCircle2 size={16} /> : <HelpCircle size={16} />}{check.name}</p>
+            <p className="mt-1 text-xs leading-5 text-slate-400">{check.detail}</p>
+          </div>)}
+        </div>
+        {issues.length > 0 && <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-3 text-sm leading-6 text-amber-100">{isEs ? "Los elementos en amarillo requieren configuración antes de guardar datos o procesar servicios conectados." : "Yellow items require configuration before related data can save or connected services can run."}</p>}
+      </GlassPanel>
+    </div>
+  </div>;
 }
 
 function PremiumPaywall({ language, user, go }) {
@@ -2048,7 +2163,7 @@ function ProfileMini({ t, user, go }) {
   return <button onClick={() => go("profile")} className="mt-5 flex w-full shrink-0 items-center gap-3 rounded-3xl border border-white/10 bg-white/[.04] p-4 text-left hover:border-cyan-300/40"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-300 text-slate-950"><UserCircle /></div><div className="min-w-0"><p className="truncate font-black text-white">{displayName}</p><p className="truncate text-xs font-bold text-slate-500">{user?.email}</p></div></button>;
 }
 
-function ProfilePage({ t, language, user, back }) {
+function ProfilePage({ t, language, user, isAdmin, go }) {
   const [name, setName] = useState(user?.user_metadata?.full_name || "");
   const [email] = useState(user?.email || "");
   const [plan, setPlan] = useState("No subscription");
@@ -2084,8 +2199,8 @@ function ProfilePage({ t, language, user, back }) {
       setStatus(error.message === "Start a subscription first." ? ui.billingError : (error.message === "A server error occurred. Please try again or contact support@operitron.com." ? ui.serverError : (error.message || ui.billingError)));
     }
   }
-  const displayPlan = subscriptionPlanLabel(plan, language);
-  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} /><div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={displayPlan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={displayPlan} green /><MiniMetric label={t.trial} value={ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button><button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button><p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
+  const displayPlan = isAdmin ? (language === "es" ? "Administrador · Acceso total" : "Administrator · Full Access") : subscriptionPlanLabel(plan, language);
+  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} />{isAdmin && <div className="mb-6 flex flex-col justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-300/[.07] p-4 sm:flex-row sm:items-center"><p className="font-bold text-cyan-100">{language === "es" ? "Acceso administrativo activo: herramientas premium y control de producción habilitados." : "Administrator access active: premium tools and production control are enabled."}</p><button onClick={() => go("admin")} className="secondary-button whitespace-nowrap">{language === "es" ? "Control del Propietario" : "Owner Console"}</button></div>}<div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={displayPlan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={displayPlan} green /><MiniMetric label={t.trial} value={isAdmin ? (language === "es" ? "Omitida para administrador" : "Bypassed for administrator") : ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button>{!isAdmin && <button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button>}<p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
 }
 
 function LegalPage({ type, language }) {

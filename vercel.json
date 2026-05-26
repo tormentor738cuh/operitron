@@ -10,6 +10,7 @@
     { "source": "/property-search", "destination": "/" },
     { "source": "/dropbox", "destination": "/" },
     { "source": "/profile", "destination": "/" },
+    { "source": "/owner-console", "destination": "/" },
     { "source": "/pricing", "destination": "/" },
     { "source": "/learning-center", "destination": "/" },
     { "source": "/knowledge-base", "destination": "/" },

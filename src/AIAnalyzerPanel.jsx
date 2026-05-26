@@ -78,7 +78,9 @@ export default function AIAnalyzerPanel({ language = "en", getAccessToken, large
       const result = await readApiJson(response);
       if (!response.ok) throw new Error(result.error || (isEs ? "No se pudo generar el análisis." : "Analysis could not be generated."));
       setAnalysis(result.analysis);
-      setStatus(isEs ? "Análisis guardado en tu espacio de trabajo." : "Analysis saved to your workspace.");
+      setStatus(result.warning
+        ? (isEs ? "El análisis se generó, pero aún no puede guardarse. Revisa Control del Propietario para completar la configuración." : result.warning)
+        : (isEs ? "Análisis guardado en tu espacio de trabajo." : "Analysis saved to your workspace."));
     } catch (error) {
       setStatus(isEs && error.message === "A server error occurred. Please try again or contact support@operitron.com." ? "Ocurrió un error del servidor. Intenta de nuevo o escribe a support@operitron.com." : error.message);
     } finally {

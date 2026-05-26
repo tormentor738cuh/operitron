@@ -1,11 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
 
-const authClient = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
-const adminClient = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY, {
-  auth: { persistSession: false, autoRefreshToken: false },
-});
 const allowedStatuses = new Set(["active", "trialing"]);
 const ownerAdminEmails = ["tormentor738@gmail.com"];
 const recentRequests = new Map();
@@ -26,15 +20,31 @@ function adminEmails() {
   ])];
 }
 
-async function ensureProfile(user) {
+function serverClients() {
+  const url = process.env.VITE_SUPABASE_URL;
+  const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !anonKey) return {};
+  return {
+    authClient: createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } }),
+    adminClient: serviceKey ? createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }) : null,
+  };
+}
+
+async function ensureProfile(adminClient, user) {
   const { error } = await adminClient.from("profiles").upsert({
     id: user.id,
     email: user.email || "",
   }, { onConflict: "id", ignoreDuplicates: true });
-  if (error) {
-    console.error("[analysis] Profile setup failed", { code: error.code, message: error.message, userId: user.id });
-    throw new Error("profile_setup_failed");
-  }
+  if (error) throw error;
+}
+
+async function grantOwnerRole(adminClient, user) {
+  const { error } = await adminClient.from("profiles").update({
+    role: "admin",
+    updated_at: new Date().toISOString(),
+  }).eq("id", user.id);
+  if (error) throw error;
 }
 
 function rateLimited(key) {
@@ -94,7 +104,12 @@ const schema = {
 
 export default async function handler(request, response) {
   if (request.method !== "POST") return response.status(405).json({ error: "Method not allowed." });
-  if (!process.env.OPENAI_API_KEY) return response.status(503).json({ error: "AI analysis is temporarily unavailable." });
+
+  const { authClient, adminClient } = serverClients();
+  if (!authClient) {
+    console.error("[analysis] Missing Supabase authentication configuration.");
+    return response.status(503).json({ error: "Account services are not configured. Please contact support@operitron.com." });
+  }
 
   const token = request.headers.authorization?.replace(/^Bearer\s+/i, "");
   if (!token) return response.status(401).json({ error: "Sign in required." });
@@ -102,16 +117,34 @@ export default async function handler(request, response) {
   if (authError || !data.user) return response.status(401).json({ error: "Invalid session." });
 
   const email = String(data.user.email || "").toLowerCase();
-  try {
-    await ensureProfile(data.user);
-  } catch (_error) {
+  const ownerOverride = adminEmails().includes(email);
+  let profile = null;
+  let persistenceWarning = "";
+
+  if (adminClient) {
+    try {
+      await ensureProfile(adminClient, data.user);
+      if (ownerOverride) await grantOwnerRole(adminClient, data.user);
+      const result = await adminClient.from("profiles").select("subscription_status, role").eq("id", data.user.id).maybeSingle();
+      if (result.error) throw result.error;
+      profile = result.data;
+    } catch (error) {
+      console.error("[analysis] Profile lookup unavailable", { code: error?.code, message: error?.message, userId: data.user.id });
+      if (!ownerOverride) return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
+      persistenceWarning = "AI is available with owner access, but database saving is not ready. Apply the Supabase admin migration.";
+    }
+  } else if (!ownerOverride) {
     return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
+  } else {
+    persistenceWarning = "AI is available with owner access, but saved analyses require SUPABASE_SERVICE_ROLE_KEY in Vercel.";
   }
-  const { data: profile, error: profileError } = await adminClient.from("profiles").select("subscription_status, role").eq("id", data.user.id).maybeSingle();
-  if (profileError) return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
-  const isAdmin = profile?.role === "admin" || adminEmails().includes(email);
+
+  const isAdmin = ownerOverride || profile?.role === "admin";
   if (!isAdmin && !allowedStatuses.has(profile?.subscription_status)) {
     return response.status(403).json({ error: "Start your 3-day free trial to access AI analysis." });
+  }
+  if (!process.env.OPENAI_API_KEY) {
+    return response.status(503).json({ error: isAdmin ? "AI needs OPENAI_API_KEY configured in Vercel before analysis can run." : "AI analysis is temporarily unavailable." });
   }
   if (rateLimited(data.user.id)) return response.status(429).json({ error: "Too many requests. Please wait a minute and try again." });
 
@@ -121,7 +154,7 @@ export default async function handler(request, response) {
   } catch (error) {
     return response.status(400).json({ error: error.message });
   }
-  if (input.projectId) {
+  if (input.projectId && adminClient) {
     const { data: ownedProject } = await adminClient.from("projects").select("id").eq("id", input.projectId).eq("user_id", data.user.id).maybeSingle();
     if (!ownedProject) return response.status(400).json({ error: "Project not found." });
   }
@@ -153,18 +186,43 @@ export default async function handler(request, response) {
         },
       }),
     });
-    const payload = await aiResponse.json();
-    if (!aiResponse.ok) return response.status(502).json({ error: "AI analysis could not be generated." });
-    const analysis = JSON.parse(outputText(payload));
-    const { data: saved, error: saveError } = await adminClient.from("analyses").insert({
-      user_id: data.user.id,
-      project_id: input.projectId,
-      inputs: input,
-      analysis,
-    }).select("id").single();
-    if (saveError) return response.status(500).json({ error: "Analysis generated but could not be saved." });
-    return response.status(200).json({ id: saved.id, analysis });
-  } catch (_error) {
-    return response.status(500).json({ error: "AI analysis could not be generated." });
+    const raw = await aiResponse.text();
+    let payload = {};
+    try {
+      payload = raw ? JSON.parse(raw) : {};
+    } catch (_error) {
+      console.error("[analysis] OpenAI returned non-JSON output.", { status: aiResponse.status });
+      return response.status(502).json({ error: "AI service returned an unexpected response. Please try again." });
+    }
+    if (!aiResponse.ok) {
+      console.error("[analysis] OpenAI request failed.", { status: aiResponse.status, requestId: aiResponse.headers.get("x-request-id") });
+      return response.status(502).json({ error: "AI analysis could not be generated. Check the OpenAI configuration in Owner Console." });
+    }
+    let analysis;
+    try {
+      analysis = JSON.parse(outputText(payload));
+    } catch (_error) {
+      return response.status(502).json({ error: "AI analysis returned an invalid format. Please try again." });
+    }
+
+    let savedId = null;
+    if (adminClient && !persistenceWarning) {
+      const { data: saved, error: saveError } = await adminClient.from("analyses").insert({
+        user_id: data.user.id,
+        project_id: input.projectId,
+        inputs: input,
+        analysis,
+      }).select("id").single();
+      if (saveError) {
+        console.error("[analysis] Unable to save generated analysis.", { code: saveError.code, message: saveError.message, userId: data.user.id });
+        persistenceWarning = "Analysis completed, but saving failed. Apply the Supabase schema and owner-admin migration.";
+      } else {
+        savedId = saved.id;
+      }
+    }
+    return response.status(200).json({ id: savedId, analysis, warning: persistenceWarning || undefined });
+  } catch (error) {
+    console.error("[analysis] Request failed.", { message: error?.message, userId: data.user.id });
+    return response.status(500).json({ error: "AI analysis could not be generated. Please review Owner Console configuration." });
   }
 }
