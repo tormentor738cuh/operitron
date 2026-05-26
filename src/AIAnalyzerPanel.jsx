@@ -127,7 +127,7 @@ export default function AIAnalyzerPanel({ language = "en", getAccessToken, large
       {analysis && <div className="flex gap-2"><button onClick={copyAnalysis} className="secondary-button !px-3" aria-label="Copy analysis"><Clipboard size={17} /></button><button onClick={exportAnalysis} className="secondary-button !px-3" aria-label="Export analysis"><Download size={17} /></button></div>}
     </div>
 
-    <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(300px,1fr)_minmax(300px,1fr)]">
+    <div className={`mt-6 grid min-w-0 gap-6 ${large ? "xl:grid-cols-[minmax(300px,1fr)_minmax(300px,1fr)]" : ""}`}>
       <div>
         <div className="grid gap-3 sm:grid-cols-2">
           {fields.map(([key, enLabel, esLabel]) => <label key={key} className="block"><span className="label">{isEs ? esLabel : enLabel}</span><input className="field" type="number" step={key === "interestRate" ? "0.01" : "1"} value={values[key]} onChange={(event) => update(key, event.target.value)} /></label>)}

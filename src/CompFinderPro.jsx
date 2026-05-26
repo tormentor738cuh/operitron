@@ -452,12 +452,8 @@ const tools = [
   ["todo", "To Do List", "Track investor, lender, and contractor next steps.", ListChecks, "Live"],
   ["punch", "Punch List", "Log final inspection items before closeout.", ClipboardCheck, "Trades"],
   ["takeoff", "Material Takeoff Beta", "Estimate quantities from room and scope assumptions.", Layers, "Beta"],
-  ["budget", "Budget Estimator", "Build a detailed construction budget from specifications.", DollarSign, "New"],
   ["subs", "Subs / Quotes New", "Compare bids and assign subcontractor packages.", Users, "New"],
-  ["progress", "Construction Progress", "Track schedule, budget, photos, and completion.", BarChart3, "Field"],
-  ["linked", "Linked Items", "Connect reports, comps, quotes, permits, and files.", FolderOpen, "Vault"],
-  ["loanCalcs", "Loan Calculations", "Keep lender assumptions beside the project.", WalletCards, "Finance"],
-  ["collab", "Collaborators", "Invite partners, lenders, assistants, and contractors.", Users, "Team"],
+  ["budget", "Budget Estimator", "Build detailed construction cost estimates.", DollarSign, "New"],
 ];
 
 const toolsEs = [
@@ -467,12 +463,8 @@ const toolsEs = [
   ["todo", "Lista de Tareas", "Rastrea próximos pasos de inversionistas, prestamistas y contratistas.", ListChecks, "Live"],
   ["punch", "Lista de Pendientes", "Registra detalles de inspección final antes del cierre.", ClipboardCheck, "Oficios"],
   ["takeoff", "Cálculo de Materiales Beta", "Estima cantidades desde áreas, habitaciones y alcance.", Layers, "Beta"],
-  ["budget", "Estimador de Presupuesto", "Crea un presupuesto detallado desde las especificaciones.", DollarSign, "Nuevo"],
   ["subs", "Subcontratistas / Cotizaciones Nuevo", "Compara ofertas y asigna paquetes de trabajo.", Users, "Nuevo"],
-  ["progress", "Progreso de Construcción", "Rastrea cronograma, presupuesto, fotos y avance.", BarChart3, "Campo"],
-  ["linked", "Elementos Vinculados", "Conecta reportes, comps, cotizaciones, permisos y archivos.", FolderOpen, "Archivo"],
-  ["loanCalcs", "Cálculos de Préstamo", "Mantén supuestos del prestamista junto al proyecto.", WalletCards, "Finanzas"],
-  ["collab", "Colaboradores", "Invita socios, prestamistas, asistentes y contratistas.", Users, "Equipo"],
+  ["budget", "Estimador de Presupuesto", "Construye estimaciones detalladas de costos.", DollarSign, "Nuevo"],
 ];
 
 const getTools = (language) => (language === "es" ? toolsEs : tools);
@@ -807,8 +799,8 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
         <div className="col-span-2 md:col-span-1"><Stat onClick={() => setActiveTool("reports")} title={t.reportsReady} value="8" icon={FileText} help={t.reportsReadyHelp || "Reports available for PDF export or partner review."} /></div>
       </section>
 
-      <section className="grid gap-6 xl:grid-cols-[1fr_390px]">
-        <GlassPanel>
+      <section className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,390px)]">
+        <GlassPanel className="self-start">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <div>
               <h3 className="text-2xl font-black text-white sm:text-3xl">{t.myProjects}</h3>
@@ -816,11 +808,15 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
             </div>
             <button onClick={() => setActiveTool("underwriter")} className="primary-button">{t.newAnalysis}</button>
           </div>
-          <div className="grid gap-5 lg:grid-cols-2">
+          {projects.length ? <div className="grid gap-5 lg:grid-cols-2">
             {projects.map((project) => (
               <ProjectCard key={project.id} project={project} open={() => go("projectTools")} t={t} />
             ))}
-          </div>
+          </div> : <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/35 px-5 py-10 text-center">
+            <FolderOpen className="mx-auto text-cyan-300" />
+            <p className="mt-3 font-black text-white">{language === "es" ? "Aún no hay proyectos guardados" : "No saved projects yet"}</p>
+            <p className="mt-1 text-sm text-slate-400">{language === "es" ? "Crea un proyecto o inicia un nuevo análisis." : "Create a project or begin a new analysis."}</p>
+          </div>}
         </GlassPanel>
 
         <div className="space-y-6">
@@ -1055,6 +1051,7 @@ function ProjectTools({ t, language, setActiveTool }) {
       </GlassPanel>
       <SectionHeader title={t.projectTools} detail={t.projectToolsDetail} />
       <ToolGrid language={language} setActiveTool={setActiveTool} />
+      <ConstructionProgressLauncher language={language} onStart={() => setActiveTool("wizard")} />
     </div>
   );
 }
@@ -1079,6 +1076,22 @@ function ToolGrid({ setActiveTool, language = "en" }) {
         </motion.button>
       ))}
     </div>
+  );
+}
+
+function ConstructionProgressLauncher({ language, onStart }) {
+  const isEs = language === "es";
+  return (
+    <section className="glow-card rounded-3xl border border-white/10 bg-white/[.045] p-5 shadow-2xl shadow-black/20 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <div className="grid h-12 w-12 place-items-center rounded-2xl bg-amber-400 text-slate-950 shadow-[0_0_24px_rgba(251,191,36,.28)]"><Hammer /></div>
+          <h3 className="text-xl font-black text-white">{isEs ? "Progreso de Construcción" : "Construction Progress"}</h3>
+        </div>
+        <button type="button" onClick={onStart} className="primary-button">{isEs ? "Iniciar Asistente" : "Start Wizard"}</button>
+      </div>
+      <p className="py-10 text-center text-sm text-slate-500">{isEs ? "Todavía no se ha iniciado una lista de construcción." : "No construction checklist started yet."}</p>
+    </section>
   );
 }
 
@@ -1279,7 +1292,7 @@ function ConstructionWizard({ language = "en", project }) {
       {step === 1 && <WizardStep title="Foundation Type" detail="Select the type of foundation for your project"><OptionGrid options={[["Slab (Losa)", "Concrete poured directly on ground level"], ["Basement (Sótano)", "Full basement below ground level"], ["Crawlspace (Espacio de Acceso)", "Elevated foundation with access space"]]} value={answers.foundation} onChange={(value) => update("foundation", value)} /></WizardStep>}
       {step === 2 && <WizardStep title="Finish Level" detail="Select the quality level of finishes"><OptionGrid options={[["Basic", "Standard finishes, cost-effective"], ["Semi-Luxury", "Upgraded finishes, mid-range quality"], ["Luxury", "High-end finishes, premium quality"]]} value={answers.finish} onChange={(value) => update("finish", value)} /></WizardStep>}
       {step === 3 && <WizardStep title="Building Structure" detail="Configure the structure type, building size and garage"><WizardGroup title="Structure Type"><OptionGrid compact options={[["Wood Framing", "Traditional wood stud framing"], ["Concrete Block", "CMU / concrete block walls"]]} value={answers.structure} onChange={(value) => update("structure", value)} /></WizardGroup><WizardGroup title="Number of Stories"><OptionGrid compact options={[["1 Story", "Single-level home"], ["2 Stories", "Two-level home"], ["3+ Stories", "Three or more levels"]]} value={answers.stories} onChange={(value) => update("stories", value)} /></WizardGroup><WizardGroup title="Garage Size"><Segmented options={["No Garage", "1-Car Garage", "2-Car Garage", "3-Car Garage"]} value={answers.garage} onChange={(value) => update("garage", value)} /></WizardGroup></WizardStep>}
-      {step === 4 && <WizardStep title="Exterior Siding" detail="Select one or more siding materials and set the % of each"><div className="mb-4 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/70 p-4"><span className="font-black text-white">Total: {sidingTotal}%</span><span className={sidingTotal === 100 ? "font-black text-emerald-300" : "font-black text-amber-300"}>{sidingTotal === 100 ? "Ready" : "Adjust to 100%"}</span></div><div className="grid gap-3 md:grid-cols-2">{Object.entries(siding).map(([name, pct]) => <div key={name} className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-white">{name}</p><p className="text-sm text-slate-400">{sidingDescription(name)}</p></div><input value={pct} onChange={(e) => setSidingPct(name, e.target.value)} className="w-20 rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-right font-black text-white outline-none focus:border-cyan-300" />%</div></div>)}</div></WizardStep>}
+      {step === 4 && <WizardStep title="Exterior Siding" detail="Select one or more siding materials and drag each share to total 100%."><div className="mb-4 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/70 p-4"><span className="font-black text-white">Total: {sidingTotal}%</span><span className={sidingTotal === 100 ? "font-black text-emerald-300" : "font-black text-amber-300"}>{sidingTotal === 100 ? "Ready" : "Adjust to 100%"}</span></div><div className="grid gap-3 md:grid-cols-2">{Object.entries(siding).map(([name, pct]) => <div key={name} className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-white">{name}</p><p className="text-sm text-slate-400">{sidingDescription(name)}</p></div><span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-sm font-black text-cyan-200">{pct}%</span></div><label className="mt-4 block"><span className="sr-only">{name} percentage</span><input type="range" min="0" max="100" step="1" value={pct} onChange={(e) => setSidingPct(name, e.target.value)} className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-cyan-300" /></label></div>)}</div></WizardStep>}
       {step === 5 && <WizardStep title="Roof Type" detail="Select the roofing material"><Segmented options={["Asphalt Shingles", "Metal Roof", "Tile Roof"]} value={answers.roof} onChange={(value) => update("roof", value)} /></WizardStep>}
       {step === 6 && <WizardStep title="Site Conditions" detail="Describe your lot and driveway preferences"><WizardGroup title="Lot Condition"><OptionGrid options={[["Flat Lot", "Level ground, minimal grading needed"], ["Sloped Lot", "Requires grading and retaining walls"], ["Heavily Wooded", "Tree removal and clearing needed"], ["Requires Fill", "Low area requiring fill dirt"]]} value={answers.lot} onChange={(value) => update("lot", value)} /></WizardGroup><WizardGroup title="Driveway Type"><Segmented options={["No Driveway", "Gravel", "Asphalt", "Concrete", "Pavers"]} value={answers.driveway} onChange={(value) => update("driveway", value)} /></WizardGroup></WizardStep>}
       {step === 7 && <WizardStep title="Utilities & Systems" detail="Configure water source and heating system"><WizardGroup title="Water Source"><OptionGrid compact options={[["City Water", "Municipal water connection"], ["Well Water", "Private well drilling required"]]} value={answers.water} onChange={(value) => update("water", value)} /></WizardGroup><WizardGroup title="Sewer System"><OptionGrid options={[["City Sewer", "Connected to municipal sewer line"], ["Septic System", "Private on-site septic tank and drain field"], ["Engineered Septic System", "Engineered system for challenging soils (mound, drip, etc.)"]]} value={answers.sewer} onChange={(value) => update("sewer", value)} /></WizardGroup><WizardGroup title="Heating System"><OptionGrid options={[["Forced Air", "Standard HVAC system"], ["Radiant Floor", "In-floor heating system"], ["Heat Pump", "Energy-efficient heating and cooling"]]} value={answers.heating} onChange={(value) => update("heating", value)} /></WizardGroup></WizardStep>}
@@ -2048,8 +2061,8 @@ function Stat({ title, value, icon: Icon, help, onClick }) {
   return <motion.div whileHover={{ y: -5 }} className="glow-card rounded-2xl border border-white/10 bg-white/[.055] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:rounded-3xl sm:p-6">{content}</motion.div>;
 }
 
-function GlassPanel({ children }) {
-  return <section className="glow-card rounded-[1.5rem] border border-white/10 bg-white/[.055] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:rounded-[2rem] sm:p-6">{children}</section>;
+function GlassPanel({ children, className = "" }) {
+  return <section className={`glow-card rounded-[1.5rem] border border-white/10 bg-white/[.055] p-4 shadow-2xl shadow-black/20 backdrop-blur-xl sm:rounded-[2rem] sm:p-6 ${className}`}>{children}</section>;
 }
 
 function GlowIcon({ children }) {
