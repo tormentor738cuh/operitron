@@ -883,8 +883,8 @@ function LandingCTA({ isEs, t, go }) {
 
 function LandingStats({ isEs }) {
   const stats = isEs
-    ? [["500+", "Inversionistas Activos"], ["10,000+", "Análisis Realizados"], ["$2B+", "Valor de Proyectos Revisados"], ["4.9x", "Velocidad de Análisis"]]
-    : [["500+", "Active Investors"], ["10,000+", "Analyses Run"], ["$2B+", "Project Value Reviewed"], ["4.9x", "Analysis Speed"]];
+    ? [["8", "Herramientas de Proyecto"], ["14", "Fases de Construcción"], ["2", "Planes Transparentes"], ["3 Días", "Prueba de Acceso Completo"]]
+    : [["8", "Project Tools"], ["14", "Construction Phases"], ["2", "Transparent Plans"], ["3 Days", "Full-Access Trial"]];
   return <section className="grid gap-4 border-y border-white/10 py-8 md:grid-cols-4">{stats.map(([value, label]) => <div key={label} className="text-center"><p className="text-3xl font-black text-amber-300">{value}</p><p className="mt-1 text-sm font-bold text-slate-500">{label}</p></div>)}</section>;
 }
 
