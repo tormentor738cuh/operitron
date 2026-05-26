@@ -49,7 +49,6 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, {
   auth: { detectSessionInUrl: true, persistSession: true, autoRefreshToken: true },
 }) : null;
-const rentcastApiKey = import.meta.env.VITE_RENTCAST_API_KEY;
 const checkoutEndpoint = import.meta.env.VITE_STRIPE_CHECKOUT_ENDPOINT || "/api/create-checkout-session";
 const portalEndpoint = import.meta.env.VITE_STRIPE_PORTAL_ENDPOINT || "/api/create-billing-portal";
 const productionUrl = (import.meta.env.VITE_APP_URL || "https://operitron.com").replace(/\/+$/, "");
@@ -247,7 +246,7 @@ const enhancedCopy = {
     creatingAccount: "Creating account...",
     sessionConfirmed: "Account confirmed. You can now sign in.",
     propertyReady: "Ready to search.",
-    rentcastKeyRequired: "RentCast key required. Add VITE_RENTCAST_API_KEY to activate live records.",
+    rentcastKeyRequired: "Property records are temporarily unavailable. Contact support@operitron.com.",
     searchingRecords: "Searching property records...",
     propertyLoaded: "Property intelligence loaded.",
     search: "Search",
@@ -364,7 +363,7 @@ const enhancedCopy = {
     creatingAccount: "Creando cuenta...",
     sessionConfirmed: "Cuenta confirmada. Ya puedes iniciar sesión.",
     propertyReady: "Listo para buscar.",
-    rentcastKeyRequired: "Se requiere llave de RentCast. Agrega VITE_RENTCAST_API_KEY para activar registros reales.",
+    rentcastKeyRequired: "Los registros de propiedad no están disponibles temporalmente. Contacta support@operitron.com.",
     searchingRecords: "Buscando registros de propiedad...",
     propertyLoaded: "Inteligencia de propiedad cargada.",
     search: "Buscar",
@@ -631,13 +630,19 @@ function AppShell() {
     return error ? { error: error.message } : { error: "" };
   }
 
+  async function getAccessToken() {
+    if (!supabase) return "";
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || "";
+  }
+
   const page = useMemo(() => {
-    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery, isAdmin, hasProductAccess };
+    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery, isAdmin, hasProductAccess, getAccessToken };
     if (activePage === "home") return user ? (hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />) : <PublicHome t={t} go={go} />;
     if (activePage === "dashboard" && !user) return <SettingsPage {...props} />;
     if (activePage === "dashboard") return hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "projectTools") return hasProductAccess ? <ProjectTools {...props} /> : <PremiumPaywall language={language} user={user} go={go} />;
-    if (activePage === "propertySearch") return hasProductAccess ? <PropertySearch t={t} /> : <PremiumPaywall language={language} user={user} go={go} />;
+    if (activePage === "propertySearch") return hasProductAccess ? <PropertySearch t={t} language={language} getAccessToken={getAccessToken} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "learning") return hasProductAccess ? <LearningCenter t={t} language={language} go={go} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
     if (activePage === "knowledge") return hasProductAccess ? <KnowledgeBase t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
     if (activePage === "tutorials") return hasProductAccess ? <Tutorials t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
@@ -783,7 +788,7 @@ function BrandLogo({ onClick, compact = false, size = "default" }) {
   const imageClass = isFull ? "rounded-2xl object-contain shadow-[0_0_45px_rgba(37,99,235,.15)]" : "shrink-0 rounded-2xl object-contain shadow-[0_0_28px_rgba(37,99,235,.18)] transition duration-300 group-hover:shadow-[0_0_40px_rgba(34,211,238,.35)]";
   return (
     <button type="button" onClick={onClick} className={wrapperClass} aria-label="Operitron home">
-      <img src={isFull ? "/operitron-logo.png" : "/operitron-mark.png"} alt={isFull ? "OPERITRON.COM" : ""} width={isFull ? "768" : "256"} height={isFull ? "512" : "256"} decoding="async" loading="eager" fetchpriority={compact ? "high" : "auto"} className={`${logoSize} ${imageClass}`} />
+      <img src={isFull ? "/operitron-logo.png" : "/operitron-mark.png"} alt={isFull ? "OPERITRON.COM" : ""} width={isFull ? "768" : "256"} height={isFull ? "512" : "256"} decoding="async" loading="eager" className={`${logoSize} ${imageClass}`} />
       {!isFull && <span className={`${compact ? "hidden lg:block" : "block"} min-w-0`}>
         <span className="block truncate text-lg font-black tracking-wide text-white xl:text-xl">OPERITRON.COM</span>
         <span className="block truncate text-[0.58rem] font-bold uppercase tracking-[0.18em] text-cyan-300 xl:text-[0.62rem] xl:tracking-[0.24em]">AI Real Estate Operating System</span>
@@ -1672,82 +1677,177 @@ function InterestTimeline({ balances, constructionMonths, saleMonths, language }
   return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "Cronología de Acumulación de Interés" : "Interest Accumulation Timeline"}</p><div className="flex h-44 items-end gap-1.5 rounded-2xl border border-white/5 bg-slate-900/40 p-3 sm:gap-2">{balances.map((balance, index) => <div key={index} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"><div className={`w-full rounded-t-md ${index < constructionMonths ? "bg-gradient-to-t from-cyan-500/45 to-cyan-300" : "bg-gradient-to-t from-indigo-500/45 to-indigo-300"}`} style={{ height: `${Math.max(8, balance / max * 100)}%` }} title={formatMoney(balance)} /><span className="text-center text-[0.62rem] font-bold text-slate-500">{index + 1}</span></div>)}</div><div className="mt-4 flex flex-wrap justify-center gap-5 text-xs font-bold text-slate-400"><span className="text-cyan-300">{language === "es" ? `Construcción: 1-${constructionMonths} meses` : `Construction: 1-${constructionMonths} mo`}</span>{saleMonths > 0 && <span className="text-indigo-300">{language === "es" ? `Venta: ${constructionMonths + 1}-${constructionMonths + saleMonths} meses` : `Sale: ${constructionMonths + 1}-${constructionMonths + saleMonths} mo`}</span>}</div></div>;
 }
 
-function PropertySearch({ t }) {
+function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
+  const isEs = language === "es";
   const [address, setAddress] = useState("5500 Grand Lake Dr, San Antonio, TX 78244");
   const [mortgage, setMortgage] = useState(225000);
-  const [property, setProperty] = useState(null);
-  const [valuation, setValuation] = useState(null);
-  const [status, setStatus] = useState(rentcastApiKey ? t.propertyReady : t.rentcastKeyRequired);
+  const [result, setResult] = useState(null);
+  const [status, setStatus] = useState(isEs ? "Listo para buscar registros reales de propiedad." : "Ready to search live property intelligence.");
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const property = result?.property || null;
+  const valuation = result?.valueEstimate || null;
+  const rentEstimate = result?.rentEstimate || null;
+  const comps = asArray(result?.saleComps);
+  const rentalComps = asArray(result?.rentalComps);
+  const saleMarket = asArray(result?.saleMarket);
+  const rentalMarket = asArray(result?.rentalMarket);
 
   async function search() {
-    if (!rentcastApiKey) return setStatus(t.rentcastKeyRequired);
-    setStatus(t.searchingRecords);
-    const headers = { "X-Api-Key": rentcastApiKey, Accept: "application/json" };
-    const encoded = encodeURIComponent(address);
+    setLoading(true);
+    setStatus(isEs ? "Buscando RentCast de forma segura..." : "Searching RentCast securely...");
     try {
-      const propRes = await fetch(`https://api.rentcast.io/v1/properties?address=${encoded}&limit=1`, { headers });
-      if (!propRes.ok) throw new Error(`Property search failed (${propRes.status})`);
-      const propJson = await propRes.json();
-      const record = Array.isArray(propJson) ? propJson[0] : propJson;
-      setProperty(record);
-      const valueRes = await fetch(`https://api.rentcast.io/v1/avm/value?address=${encoded}&compCount=10&lookupSubjectAttributes=true`, { headers });
-      if (valueRes.ok) setValuation(await valueRes.json());
-      setStatus(t.propertyLoaded);
+      const token = await getAccessToken?.();
+      if (!token) throw new Error(isEs ? "Inicia sesión para continuar." : "Sign in to continue.");
+      const response = await fetch("/api/rentcast-search", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ address }),
+      });
+      const payload = await readApiJson(response);
+      if (!response.ok) throw new Error(payload.error || (isEs ? "No se pudo cargar la propiedad." : "Property intelligence could not be loaded."));
+      setResult(payload);
+      setStatus(payload.warnings?.length
+        ? (isEs ? "Propiedad cargada. Algunos conjuntos de datos no estuvieron disponibles." : "Property loaded. Some provider datasets were not available.")
+        : (isEs ? "Propiedad cargada con datos de RentCast." : "Property loaded with RentCast intelligence."));
     } catch (error) {
+      setResult(null);
       setStatus(error.message);
+    } finally {
+      setLoading(false);
     }
   }
 
-  const comps = asArray(valuation?.comparables || valuation?.comps);
-  const compPrices = comps.map((c) => cleanNumber(pick(c.price, c.salePrice, c.soldPrice))).filter(Boolean);
-  const estimatedValue = cleanNumber(pick(valuation?.price, valuation?.value, property?.estimatedValue, property?.lastSalePrice));
+  async function savePropertyProject() {
+    if (!property || !onAddProject) return;
+    setSaving(true);
+    const project = {
+      id: Date.now(),
+      name: pick(property.formattedAddress, property.addressLine1, address),
+      type: "Property Intelligence",
+      address: pick(property.formattedAddress, property.addressLine1, address),
+      arv,
+      profit: equity,
+      roi: arv ? (equity / arv) * 100 : 0,
+      progress: 0,
+      status: "Research",
+      dataSource: "RentCast",
+      rentcast: result,
+    };
+    const saved = await onAddProject(project);
+    setSaving(false);
+    setStatus(saved?.error
+      ? saved.error
+      : (isEs ? "Propiedad guardada en Mis Proyectos." : "Property saved to My Projects."));
+  }
+
+  const compPrices = comps.map((comp) => cleanNumber(comp.price)).filter(Boolean);
+  const estimatedValue = cleanNumber(pick(valuation?.price, valuation?.value, valuation?.valueEstimate, property?.estimatedValue, property?.lastSalePrice));
   const arv = compPrices.length ? formulas.arv(compPrices) : estimatedValue;
   const sqft = cleanNumber(pick(property?.squareFootage, property?.livingArea, property?.features?.squareFootage));
-  const salePrice = cleanNumber(pick(property?.lastSalePrice, property?.salePrice));
-  const assessed = cleanNumber(pick(property?.taxAssessments?.value, property?.taxAssessment?.value));
-  const taxes = cleanNumber(pick(property?.propertyTaxes?.total, property?.taxes?.amount));
+  const salePrice = cleanNumber(pick(property?.lastSalePrice, property?.salePrice, valuation?.price, valuation?.value));
+  const assessed = cleanNumber(pick(property?.taxAssessments?.[new Date().getFullYear()]?.value, property?.taxAssessments?.value, property?.taxAssessment?.value, property?.assessedValue));
+  const taxes = cleanNumber(pick(property?.propertyTaxes?.[new Date().getFullYear()]?.total, property?.propertyTaxes?.total, property?.taxes?.amount, property?.taxAmount));
+  const rent = cleanNumber(pick(rentEstimate?.rent, rentEstimate?.price, rentEstimate?.rentEstimate));
   const equity = estimatedValue - cleanNumber(mortgage);
   const ppsf = sqft ? salePrice / sqft : 0;
   const taxRate = assessed ? (taxes / assessed) * 100 : 0;
+  const coords = `${pick(property?.latitude, property?.location?.latitude, "-")}, ${pick(property?.longitude, property?.location?.longitude, "-")}`;
+  const features = property?.features && typeof property.features === "object"
+    ? Object.entries(property.features).slice(0, 10).map(([key, value]) => [key.replace(/([A-Z])/g, " $1"), String(value)])
+    : [];
 
   return (
     <div className="space-y-6">
       <GlassPanel>
-        <h2 className="text-3xl font-black text-white">RentCast {t.propertySearch}</h2>
-        <p className="mt-2 text-slate-400">{t.propertySearchDetail || "Search property records, comps, owner information, taxes, sale history, features, coordinates, and investor math."}</p>
-        <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_260px_160px]">
-          <input value={address} onChange={(e) => setAddress(e.target.value)} className="field" />
-          <MoneyInput label={t.mortgageBalance} value={mortgage} setValue={setMortgage} />
-          <button onClick={search} className="primary-button self-end">{t.search}</button>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">RentCast</p>
+            <h2 className="mt-2 text-3xl font-black text-white">{t.propertySearch}</h2>
+            <p className="mt-2 max-w-4xl text-slate-400">{t.propertySearchDetail || "Search property records, owner information, value estimates, rent estimates, comparable sales, rental comps, market context, and investor calculations."}</p>
+          </div>
+          {property && <button onClick={savePropertyProject} disabled={saving} className="primary-button">{saving ? (isEs ? "Guardando..." : "Saving...") : (isEs ? "Guardar Propiedad" : "Save Property")}</button>}
         </div>
-        <p className="mt-4 rounded-2xl border border-white/10 bg-slate-950/70 p-4 text-sm text-slate-400">{status}</p>
+        <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px_170px]">
+          <label className="block">
+            <span className="label">{isEs ? "Dirección" : "Address"}</span>
+            <input value={address} onChange={(event) => setAddress(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") search(); }} className="field" placeholder="123 Main St, City, ST" />
+          </label>
+          <MoneyInput label={t.mortgageBalance} value={mortgage} setValue={setMortgage} />
+          <button onClick={search} disabled={loading} className="primary-button self-end">{loading ? (isEs ? "Buscando..." : "Searching...") : t.search}</button>
+        </div>
+        <p className={`mt-4 rounded-2xl border p-4 text-sm ${result ? "border-emerald-300/20 bg-emerald-300/[.06] text-emerald-100" : "border-white/10 bg-slate-950/70 text-slate-400"}`}>{status}</p>
+        {!!result?.warnings?.length && <div className="mt-3 rounded-2xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-sm leading-6 text-amber-100">{result.warnings.map((warning) => <p key={warning}>{warning}</p>)}</div>}
       </GlassPanel>
-      {property && (
+
+      {property ? (
         <>
-          <div className="grid gap-5 md:grid-cols-4">
+          <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
             <Stat title="ARV" value={formatMoney(arv)} icon={BarChart3} help={t.arvHelp || "Average comparable sale price when comps are available."} />
             <Stat title={t.equity || "Equity"} value={formatMoney(equity)} icon={WalletCards} help={t.equityHelp || "Estimated value minus mortgage balance."} />
             <Stat title={t.pricePerSqft || "Price / Sqft"} value={formatMoney(ppsf)} icon={Calculator} help={t.pricePerSqftHelp || "Sale price divided by square footage."} />
-            <Stat title={t.taxRate || "Tax Rate"} value={`${taxRate.toFixed(2)}%`} icon={FileText} help={t.taxRateHelp || "Yearly taxes divided by assessed value."} />
+            <Stat title={isEs ? "Renta Estimada" : "Rent Estimate"} value={rent ? formatMoney(rent) : t.unavailable} icon={Home} help={isEs ? "Estimación mensual de renta de RentCast." : "Monthly rent estimate from RentCast."} />
           </div>
+
           <GlassPanel>
             <SectionHeader title={t.propertySummary} detail={pick(property.formattedAddress, property.addressLine1, address)} />
             <div className="grid gap-4 md:grid-cols-3">
-              <MiniMetric label={t.owner} value={pick(property.ownerName, property.ownerNames, property.owner?.names, t.availableAfterSearch)} />
+              <MiniMetric label={t.owner} value={pick(property.ownerName, property.ownerNames?.join?.(", "), property.owner?.names?.join?.(", "), t.availableAfterSearch)} />
               <MiniMetric label={t.bedsBaths} value={`${pick(property.bedrooms, property.beds, "-")} / ${pick(property.bathrooms, property.baths, "-")}`} />
               <MiniMetric label={t.squareFeet} value={sqft ? formatNumber(sqft, 0) : t.unavailable} />
               <MiniMetric label={t.lotSize} value={pick(property.lotSize, property.lotSizeSquareFeet, t.unavailable)} />
               <MiniMetric label={t.yearBuilt} value={pick(property.yearBuilt, t.unavailable)} />
-              <MiniMetric label={t.lastSale} value={`${formatMoney(salePrice)} ${pick(property.lastSaleDate, "")}`} />
-              <MiniMetric label={t.coordinates} value={`${pick(property.latitude, property.location?.latitude, "-")}, ${pick(property.longitude, property.location?.longitude, "-")}`} />
+              <MiniMetric label={t.lastSale} value={`${salePrice ? formatMoney(salePrice) : t.unavailable} ${pick(property.lastSaleDate, "")}`} />
+              <MiniMetric label={t.coordinates} value={coords} />
               <MiniMetric label={t.assessments} value={assessed ? formatMoney(assessed) : t.unavailable} />
               <MiniMetric label={t.propertyTaxes} value={taxes ? formatMoney(taxes) : t.unavailable} />
+              <MiniMetric label={t.taxRate || "Tax Rate"} value={`${taxRate.toFixed(2)}%`} />
+              <MiniMetric label={isEs ? "Valor Estimado" : "Value Estimate"} value={estimatedValue ? formatMoney(estimatedValue) : t.unavailable} />
+              <MiniMetric label={isEs ? "Registros de Mercado" : "Market Records"} value={`${saleMarket.length + rentalMarket.length}`} />
+            </div>
+          </GlassPanel>
+
+          <div className="grid gap-6 xl:grid-cols-2">
+            <CompList title={isEs ? "Ventas Comparables" : "Comparable Sales"} items={comps} empty={isEs ? "No se encontraron comps de venta." : "No sale comps returned."} mode="sale" />
+            <CompList title={isEs ? "Rentas Comparables" : "Rental Comps"} items={rentalComps} empty={isEs ? "No se encontraron comps de renta." : "No rental comps returned."} mode="rent" />
+            <CompList title={isEs ? "Mercado de Venta" : "Sale Market Data"} items={saleMarket} empty={isEs ? "Sin listados activos disponibles." : "No active sale listings returned."} mode="sale" />
+            <CompList title={isEs ? "Mercado de Renta" : "Rental Market Data"} items={rentalMarket} empty={isEs ? "Sin rentas activas disponibles." : "No active rental listings returned."} mode="rent" />
+          </div>
+
+          <GlassPanel>
+            <SectionHeader title={isEs ? "Características y Registros" : "Features & Records"} detail={isEs ? "Datos estructurados del registro de propiedad devuelto por RentCast." : "Structured property record details returned by RentCast."} />
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {features.length ? features.map(([label, value]) => <MiniMetric key={label} label={label} value={value} />) : <MiniMetric label={isEs ? "Características" : "Features"} value={t.unavailable} />}
             </div>
           </GlassPanel>
         </>
+      ) : (
+        <div className="rounded-[2rem] border border-dashed border-white/10 bg-white/[.035] p-10 text-center">
+          <Search className="mx-auto text-cyan-300" size={34} />
+          <h3 className="mt-4 text-xl font-black text-white">{isEs ? "Busca una propiedad para comenzar" : "Search a property to begin"}</h3>
+          <p className="mx-auto mt-2 max-w-2xl text-slate-400">{isEs ? "Los datos de RentCast se consultan en el servidor para mantener la llave segura y se muestran aquí para análisis de inversión." : "RentCast data is requested on the server to keep the key secure, then displayed here for investor-grade review."}</p>
+        </div>
       )}
     </div>
   );
+}
+
+function CompList({ title, items, empty, mode }) {
+  return <GlassPanel>
+    <h3 className="text-xl font-black text-white">{title}</h3>
+    <div className="mt-4 space-y-3">
+      {items.length ? items.slice(0, 8).map((item, index) => (
+        <div key={`${item.address}-${index}`} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
+          <div>
+            <p className="font-black text-white">{item.address || "Address unavailable"}</p>
+            <p className="text-sm text-slate-400">{[item.date, item.distance && `${item.distance} mi`, item.sqft && `${formatNumber(item.sqft, 0)} sqft`, item.beds && `${item.beds} bd`].filter(Boolean).join(" · ")}</p>
+          </div>
+          <p className={`text-lg font-black ${mode === "rent" ? "text-cyan-300" : "text-emerald-300"}`}>{formatMoney(mode === "rent" ? item.rent : item.price)}</p>
+        </div>
+      )) : <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-sm text-slate-400">{empty}</p>}
+    </div>
+  </GlassPanel>;
 }
 
 function AITakeoff({ language = "en", project }) {
