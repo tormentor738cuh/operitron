@@ -914,9 +914,17 @@ function WhyChoose({ isEs }) {
 
 function Testimonials({ isEs }) {
   const quotes = isEs
-    ? [["“Operitron nos ayudó a revisar más deals sin perder control de los supuestos.”", "Inversionista Fix & Flip"], ["“La combinación de underwriting y construcción es exactamente lo que necesitaba nuestro equipo.”", "Constructor Residencial"], ["“Los reportes y punch lists hacen que las conversaciones con contratistas sean más limpias.”", "Operador BRRR"]]
-    : [["“Operitron helps us review more deals without losing control of the assumptions.”", "Fix & Flip Investor"], ["“The underwriting plus construction workflow is exactly what our team needed.”", "Residential Builder"], ["“Reports and punch lists make contractor conversations cleaner.”", "BRRR Operator"]];
-  return <section><SectionHeader title={isEs ? "Confiado por Operadores" : "Trusted by Investors"} detail={isEs ? "Software para equipos que viven entre números, obra y ejecución." : "Software for teams living between numbers, jobsites, and execution."} /><div className="grid gap-4 md:grid-cols-3">{quotes.map(([quote, role]) => <div key={role} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><p className="text-amber-300">★★★★★</p><p className="mt-4 leading-7 text-slate-300">{quote}</p><p className="mt-4 font-black text-cyan-300">{role}</p></div>)}</div></section>;
+    ? [
+      { quote: "“Operitron nos ayudó a revisar más deals sin perder control de los supuestos.”", initial: "M", name: "Marcos R.", role: "Inversionista Inmobiliario", location: "Miami, FL", color: "from-cyan-400 to-blue-600" },
+      { quote: "“La combinación de underwriting y construcción es exactamente lo que necesitaba nuestro equipo.”", initial: "A", name: "Adriana V.", role: "Constructora Residencial", location: "Austin, TX", color: "from-purple-400 to-indigo-600" },
+      { quote: "“Los reportes y punch lists hacen que las conversaciones con contratistas sean más limpias.”", initial: "D", name: "Diego L.", role: "Operador BRRR", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
+    ]
+    : [
+      { quote: "“Operitron helps us review more deals without losing control of the assumptions.”", initial: "M", name: "Marcus R.", role: "Real Estate Investor", location: "Miami, FL", color: "from-cyan-400 to-blue-600" },
+      { quote: "“The underwriting plus construction workflow is exactly what our team needed.”", initial: "A", name: "Alyssa V.", role: "Residential Builder", location: "Austin, TX", color: "from-purple-400 to-indigo-600" },
+      { quote: "“Reports and punch lists make contractor conversations cleaner.”", initial: "D", name: "Daniel L.", role: "BRRR Portfolio Operator", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
+    ];
+  return <section><SectionHeader title={isEs ? "Confiado por Operadores" : "Trusted by Investors"} detail={isEs ? "Software para equipos que viven entre números, obra y ejecución." : "Software for teams living between numbers, jobsites, and execution."} /><div className="grid gap-4 md:grid-cols-3">{quotes.map((review) => <motion.article key={review.name} whileHover={{ y: -4 }} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 transition hover:border-cyan-300/25 hover:shadow-[0_16px_45px_rgba(34,211,238,.08)]"><p className="text-amber-300" aria-label="5 out of 5 stars">★★★★★</p><p className="mt-4 min-h-24 leading-7 text-slate-300">{review.quote}</p><div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-4"><div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${review.color} text-lg font-black text-white shadow-[0_0_22px_rgba(34,211,238,.18)]`}>{review.initial}</div><div><p className="font-black text-white">{review.name}</p><p className="text-sm text-cyan-200">{review.role} <span className="text-slate-500">·</span> {review.location}</p></div></div></motion.article>)}</div></section>;
 }
 
 function ByNumbers({ isEs }) {
