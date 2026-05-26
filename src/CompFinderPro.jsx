@@ -452,6 +452,7 @@ const tools = [
   ["todo", "To Do List", "Track investor, lender, and contractor next steps.", ListChecks, "Live"],
   ["punch", "Punch List", "Log final inspection items before closeout.", ClipboardCheck, "Trades"],
   ["takeoff", "Material Takeoff Beta", "Estimate quantities from room and scope assumptions.", Layers, "Beta"],
+  ["budget", "Budget Estimator", "Build a detailed construction budget from specifications.", DollarSign, "New"],
   ["subs", "Subs / Quotes New", "Compare bids and assign subcontractor packages.", Users, "New"],
   ["progress", "Construction Progress", "Track schedule, budget, photos, and completion.", BarChart3, "Field"],
   ["linked", "Linked Items", "Connect reports, comps, quotes, permits, and files.", FolderOpen, "Vault"],
@@ -466,6 +467,7 @@ const toolsEs = [
   ["todo", "Lista de Tareas", "Rastrea próximos pasos de inversionistas, prestamistas y contratistas.", ListChecks, "Live"],
   ["punch", "Lista de Pendientes", "Registra detalles de inspección final antes del cierre.", ClipboardCheck, "Oficios"],
   ["takeoff", "Cálculo de Materiales Beta", "Estima cantidades desde áreas, habitaciones y alcance.", Layers, "Beta"],
+  ["budget", "Estimador de Presupuesto", "Crea un presupuesto detallado desde las especificaciones.", DollarSign, "Nuevo"],
   ["subs", "Subcontratistas / Cotizaciones Nuevo", "Compara ofertas y asigna paquetes de trabajo.", Users, "Nuevo"],
   ["progress", "Progreso de Construcción", "Rastrea cronograma, presupuesto, fotos y avance.", BarChart3, "Campo"],
   ["linked", "Elementos Vinculados", "Conecta reportes, comps, cotizaciones, permisos y archivos.", FolderOpen, "Archivo"],
@@ -1083,7 +1085,7 @@ function ToolGrid({ setActiveTool, language = "en" }) {
 function ToolModal({ t, language, toolId, projects, onClose }) {
   const tool = getTools(language).find(([id]) => id === toolId) || getTools(language)[0];
   const [, title, desc, Icon] = tool;
-  const requiresProject = ["underwriter", "loan", "loanCalcs"].includes(toolId);
+  const requiresProject = ["wizard", "underwriter", "loan", "loanCalcs", "todo", "punch", "takeoff", "budget", "subs", "progress", "linked", "collab"].includes(toolId);
   const [projectReady, setProjectReady] = useState(!requiresProject);
   const [showExisting, setShowExisting] = useState(false);
   const [selectedProject, setSelectedProject] = useState(null);
@@ -1141,20 +1143,21 @@ function PremiumPaywall({ language, user, go }) {
 }
 
 function ToolBody({ t, language, toolId, project }) {
-  if (toolId === "wizard") return <ConstructionWizard language={language} />;
+  if (toolId === "wizard") return <ConstructionWizard language={language} project={project} />;
   if (toolId === "underwriter") return <DealUnderwriter language={language} project={project} />;
   if (toolId === "loan" || toolId === "loanCalcs") return <InvestmentLoanCalculator language={language} project={project} />;
-  if (toolId === "todo") return <Checklist items={language === "es" ? ["Ordenar armaduras", "Confirmar inspección de cimentación", "Recopilar tres ofertas de HVAC", "Programar cuadrilla de drywall"] : ["Order trusses", "Confirm foundation inspection", "Collect three HVAC bids", "Schedule drywall crew"]} language={language} />;
-  if (toolId === "punch") return <PunchListApp />;
-  if (toolId === "takeoff") return <AITakeoff language={language} />;
-  if (toolId === "subs") return <SubsQuotes language={language} />;
-  if (toolId === "progress") return <ConstructionProgress language={language} />;
-  if (toolId === "linked") return <LinkedItems language={language} />;
-  if (toolId === "collab") return <Collaborators language={language} />;
+  if (toolId === "todo") return <Checklist project={project} items={language === "es" ? ["Ordenar armaduras", "Confirmar inspección de cimentación", "Recopilar tres ofertas de HVAC", "Programar cuadrilla de drywall"] : ["Order trusses", "Confirm foundation inspection", "Collect three HVAC bids", "Schedule drywall crew"]} language={language} />;
+  if (toolId === "punch") return <PunchListApp language={language} project={project} />;
+  if (toolId === "takeoff") return <AITakeoff language={language} project={project} />;
+  if (toolId === "budget") return <BudgetEstimator language={language} project={project} />;
+  if (toolId === "subs") return <SubsQuotes language={language} project={project} />;
+  if (toolId === "progress") return <ConstructionProgress language={language} project={project} />;
+  if (toolId === "linked") return <LinkedItems language={language} project={project} />;
+  if (toolId === "collab") return <Collaborators language={language} project={project} />;
   return <AIAssistant t={t} large />;
 }
 
-function ConstructionWizard() {
+function ConstructionWizard({ language = "en", project }) {
   const [step, setStep] = useState(1);
   const [operator, setOperator] = useState({
     type: "Builder / Remodeler",
@@ -1204,6 +1207,7 @@ function ConstructionWizard() {
 
   return (
     <div className="space-y-6">
+      <ProjectContext project={project} language={language} />
       <div className="rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 via-purple-500/10 to-amber-400/5 p-5 shadow-[0_0_40px_rgba(34,211,238,.10)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
