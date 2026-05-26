@@ -53,7 +53,11 @@ const rentcastApiKey = import.meta.env.VITE_RENTCAST_API_KEY;
 const checkoutEndpoint = import.meta.env.VITE_STRIPE_CHECKOUT_ENDPOINT || "/api/create-checkout-session";
 const portalEndpoint = import.meta.env.VITE_STRIPE_PORTAL_ENDPOINT || "/api/create-billing-portal";
 const productionUrl = (import.meta.env.VITE_APP_URL || "https://operitron.com").replace(/\/+$/, "");
-const adminEmails = String(import.meta.env.VITE_ADMIN_EMAILS || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean);
+const ownerAdminEmails = ["tormentor738@gmail.com"];
+const adminEmails = [...new Set([
+  ...ownerAdminEmails,
+  ...String(import.meta.env.VITE_ADMIN_EMAILS || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean),
+])];
 const LazyAIAnalyzerPanel = lazy(() => import("./AIAnalyzerPanel.jsx"));
 
 async function readApiJson(response) {

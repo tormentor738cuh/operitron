@@ -7,6 +7,7 @@ const adminClient = createClient(process.env.VITE_SUPABASE_URL, process.env.SUPA
   auth: { persistSession: false, autoRefreshToken: false },
 });
 const allowedStatuses = new Set(["active", "trialing"]);
+const ownerAdminEmails = ["tormentor738@gmail.com"];
 const recentRequests = new Map();
 
 const numericFields = [
@@ -16,10 +17,13 @@ const numericFields = [
 ];
 
 function adminEmails() {
-  return String(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
+  return [...new Set([
+    ...ownerAdminEmails,
+    ...String(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  ])];
 }
 
 async function ensureProfile(user) {
