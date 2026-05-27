@@ -96,7 +96,7 @@ async function rentcast(path, params, warnings) {
   const response = await fetch(url, {
     headers: {
       Accept: "application/json",
-      "X-Api-Key": process.env.RENTCAST_API_KEY || process.env.VITE_RENTCAST_API_KEY,
+      "X-Api-Key": process.env.RENTCAST_API_KEY,
     },
   });
   const text = await response.text();
@@ -117,7 +117,7 @@ async function rentcast(path, params, warnings) {
 export default async function handler(request, response) {
   if (request.method !== "POST") return json(response, 405, { error: "Method not allowed." });
 
-  const apiKey = process.env.RENTCAST_API_KEY || process.env.VITE_RENTCAST_API_KEY;
+  const apiKey = process.env.RENTCAST_API_KEY;
   if (!apiKey) return json(response, 503, { error: "Property data is temporarily unavailable. Please contact support@operitron.com." });
 
   const { authClient, adminClient } = serverClients();

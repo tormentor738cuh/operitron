@@ -59,6 +59,20 @@ const adminEmails = [...new Set([
 ])];
 const LazyAIAnalyzerPanel = lazy(() => import("./AIAnalyzerPanel.jsx"));
 
+const googleAdsId = import.meta.env.VITE_GOOGLE_ADS_ID;
+const googleAdsLabels = {
+  signup: import.meta.env.VITE_GOOGLE_ADS_SIGNUP_LABEL,
+  trialStarted: import.meta.env.VITE_GOOGLE_ADS_TRIAL_LABEL,
+  subscriptionStarted: import.meta.env.VITE_GOOGLE_ADS_SUBSCRIPTION_LABEL,
+  checkoutCompleted: import.meta.env.VITE_GOOGLE_ADS_CHECKOUT_LABEL,
+};
+
+function trackGoogleAdsConversion(name) {
+  const label = googleAdsLabels[name];
+  if (!googleAdsId || !label || typeof window === "undefined" || typeof window.gtag !== "function") return;
+  window.gtag("event", "conversion", { send_to: `${googleAdsId}/${label}` });
+}
+
 async function readApiJson(response) {
   const text = await response.text();
   if (!text) return {};
@@ -667,6 +681,7 @@ function AppShell() {
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const checkoutTrackedRef = useRef(false);
   const t = enhancedCopy[language];
 
   useEffect(() => {
@@ -678,6 +693,18 @@ function AppShell() {
     const handleNavigation = () => setActivePage(getPageFromPath());
     window.addEventListener("popstate", handleNavigation);
     return () => window.removeEventListener("popstate", handleNavigation);
+  }, []);
+
+  useEffect(() => {
+    if (checkoutTrackedRef.current) return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("checkout") !== "success") return;
+    checkoutTrackedRef.current = true;
+    trackGoogleAdsConversion("checkoutCompleted");
+    trackGoogleAdsConversion("trialStarted");
+    trackGoogleAdsConversion("subscriptionStarted");
+    window.history.replaceState({}, "", pagePaths.dashboard);
+    setActivePage("dashboard");
   }, []);
 
   useEffect(() => {
@@ -1208,6 +1235,11 @@ function SEOArticlePage({ page, go }) {
   }, [article]);
 
   const related = Object.entries(seoArticles).filter(([key]) => key !== page).slice(0, 3);
+  const faqs = article.faqs || [
+    [`How should I use this ${article.category.toLowerCase()} guide?`, "Use it as a screening framework first, then verify every assumption with current local data, lender requirements, contractor bids, and professional advice."],
+    ["Can OPERITRON.COM calculate these numbers?", "Yes. Operitron includes deal analysis, loan calculations, construction budgeting, takeoffs, project tools, and AI-assisted review for paid, trialing, and administrator users."],
+    ["Do these formulas guarantee a profitable investment?", "No. These formulas organize decision-making. Returns depend on market conditions, execution, financing, taxes, insurance, timelines, and your own assumptions."],
+  ];
   return (
     <article className="mx-auto max-w-6xl space-y-8">
       <section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/[.12] via-slate-950 to-purple-500/[.12] p-6 shadow-2xl shadow-black/25 sm:p-10">
@@ -1258,6 +1290,13 @@ function SEOArticlePage({ page, go }) {
             </ul>
           </div>
         </aside>
+      </section>
+
+      <section className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-6 sm:p-8">
+        <h2 className="text-2xl font-black text-white">Frequently Asked Questions</h2>
+        <div className="mt-5 space-y-3">
+          {faqs.map(([question, answer]) => <details key={question} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><summary className="cursor-pointer font-black text-white">{question}</summary><p className="mt-3 leading-7 text-slate-300">{answer}</p></details>)}
+        </div>
       </section>
 
       <section className="rounded-[2rem] border border-amber-300/20 bg-amber-300/[.06] p-6 sm:p-8">
@@ -1566,7 +1605,7 @@ function ToolBody({ t, language, toolId, project }) {
   if (toolId === "punch") return <PunchListApp language={language} project={project} />;
   if (toolId === "takeoff") return <AITakeoff language={language} project={project} />;
   if (toolId === "budget") return <BudgetEstimator language={language} project={project} />;
-  if (toolId === "subs") return <SubsQuotes language={language} project={project} />;
+  if (toolId === "subs") return <div className="space-y-6"><SubsQuotes language={language} project={project} /><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Collaborators language={language} project={project} embedded /></section></div>;
   if (toolId === "linked") return <LinkedItems language={language} project={project} />;
   if (toolId === "collab") return <Collaborators language={language} project={project} />;
   return <AIAssistant t={t} large />;
@@ -1713,10 +1752,41 @@ function ConstructionWizard({ language = "en", project }) {
         {step < 9 ? <button onClick={() => setStep(Math.min(9, step + 1))} className="primary-button">Next</button> : <button onClick={generateChecklist} className="primary-button">Generate Checklist</button>}
       </div>
 
+      <EmbeddedConstructionProgress plan={generatedPlan} language={language} />
       {step === 9 && !generatedPlan && <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><h4 className="text-xl font-black text-white">Ready to Generate</h4><p className="mt-2 text-slate-300">Your checklist will be built from the selections above, including schedule duration, estimated construction cost, contingency, and risk flags.</p></div>}
       {generatedPlan && <SmartConstructionChecklist plan={generatedPlan} assumptions={checklist} language={language} />}
     </div>
   );
+}
+
+function EmbeddedConstructionProgress({ plan, language }) {
+  const isEs = language === "es";
+  const phases = plan?.phases || [
+    { name: "Contracts", weeks: 2 },
+    { name: "Pre-Construction", weeks: 2 },
+    { name: "Foundation", weeks: 2 },
+    { name: "Framing", weeks: 3 },
+    { name: "Rough-In", weeks: 2.5 },
+    { name: "Final Finishes", weeks: 2 },
+  ];
+  const totalWeeks = plan?.totalWeeks || phases.reduce((sum, phase) => sum + phase.weeks, 0);
+  const completed = plan ? Math.min(35, Math.round((phases.filter((phase) => phase.complete).length / Math.max(phases.length, 1)) * 100)) : 0;
+  return <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div className="flex items-center gap-3">
+        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan-300/10 text-cyan-300"><BarChart3 /></div>
+        <div>
+          <h4 className="text-xl font-black text-white">{isEs ? "Progreso de Construcción" : "Construction Progress"}</h4>
+          <p className="text-sm text-slate-400">{isEs ? "Integrado dentro del asistente: cronograma, presupuesto, fotos y avance." : "Built into the wizard: schedule, budget, photos, and completion tracking."}</p>
+        </div>
+      </div>
+      <MiniMetric label={isEs ? "Duración" : "Duration"} value={`${totalWeeks} ${isEs ? "sem" : "wks"}`} />
+    </div>
+    <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-800"><motion.div initial={false} animate={{ width: `${completed || 8}%` }} className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-amber-300" /></div>
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {phases.slice(0, 6).map((phase, index) => <div key={phase.name} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><p className="text-xs font-black text-cyan-300">0{index + 1}</p><p className="mt-1 font-black text-white">{phase.name}</p><p className="mt-1 text-sm text-slate-400">~{phase.weeks} {isEs ? "semanas" : "weeks"}</p></div>)}
+    </div>
+  </section>;
 }
 
 function GeneratedConstructionChecklist({ plan, assumptions, language }) {
@@ -1935,8 +2005,42 @@ function InvestmentLoanCalculator({ language = "en", project }) {
           {mode === "ground" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Costo Total de Interés" : "Total Interest Cost"} value={formatMoneyCents(constructionInterest)} accent /><CalculatorMetric label={isEs ? "Interés Mensual Promedio" : "Average Monthly Interest"} value={formatMoneyCents(constructionInterest / duration)} /><CalculatorMetric label={isEs ? "Reserva de Interés Necesaria" : "Interest Reserve Needed"} value={formatMoneyCents(reserve)} positive /><CalculatorMetric label={isEs ? "Tasa Anual Efectiva" : "Effective Annual Rate"} value={`${effectiveRate.toFixed(2)}%`} /></div><InterestTimeline balances={balances} constructionMonths={constructionMonths} saleMonths={saleMonths} language={language} /></>}
         </section>
       </div>
+      <EmbeddedLoanCalculations language={language} mode={mode} metrics={{
+        dscrPayment,
+        dscrRatio,
+        dscrLtv,
+        cashLoan,
+        cashPayment,
+        cashReceived,
+        cashLtv,
+        constructionInterest,
+        reserve,
+        effectiveRate,
+      }} />
     </div>
   );
+}
+
+function EmbeddedLoanCalculations({ language, mode, metrics }) {
+  const isEs = language === "es";
+  const rows = mode === "dscr"
+    ? [["Monthly P&I + Escrows", formatMoneyCents(metrics.dscrPayment)], ["DSCR", metrics.dscrRatio.toFixed(2)], ["Loan-to-Value", `${metrics.dscrLtv.toFixed(1)}%`]]
+    : mode === "cashout"
+      ? [["New Loan", formatMoneyCents(metrics.cashLoan)], ["New Payment", formatMoneyCents(metrics.cashPayment)], ["Cash Received", formatMoneyCents(metrics.cashReceived)], ["New LTV", `${metrics.cashLtv.toFixed(1)}%`]]
+      : [["Interest Cost", formatMoneyCents(metrics.constructionInterest)], ["Interest Reserve", formatMoneyCents(metrics.reserve)], ["Effective Rate", `${metrics.effectiveRate.toFixed(2)}%`]];
+  return <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
+    <div className="flex flex-wrap items-start justify-between gap-4">
+      <div>
+        <p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? "Cálculos de Préstamo" : "Loan Calculations"}</p>
+        <h4 className="mt-2 text-xl font-black text-white">{isEs ? "Supuestos guardables junto al proyecto" : "Project-ready loan assumption vault"}</h4>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{isEs ? "Esta sección integra los cálculos de préstamo dentro de la calculadora principal para mantener DSCR, cash-out y construcción en un solo lugar." : "This folds the old loan-calculations tool into the main calculator so DSCR, cash-out, and construction debt assumptions stay together."}</p>
+      </div>
+      <button className="secondary-button"><FileText size={18} /> {isEs ? "Guardar Resumen" : "Save Summary"}</button>
+    </div>
+    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {rows.map(([label, value]) => <MiniMetric key={label} label={label} value={value} green={label.includes("Cash") || label.includes("DSCR")} />)}
+    </div>
+  </section>;
 }
 
 function ProjectContext({ project, language }) {
@@ -2190,6 +2294,9 @@ function AITakeoff({ language = "en", project }) {
       <div className="mt-7 grid gap-4 lg:grid-cols-3">
         {[[isEs ? "Hojas de Planos" : "Plan Sheets", fileName || (isEs ? "No se han subido planos" : "No plan sheets uploaded yet"), FileText], [isEs ? "Takeoffs de IA" : "AI Takeoffs", fileName ? (isEs ? "Resumen listo para revisar" : "Summary ready for review") : (isEs ? "Carga un plano para comenzar" : "Upload a plan to begin"), Sparkles], [isEs ? "Takeoffs Manuales" : "Manual Takeoffs", isEs ? "Añade mediciones verificadas" : "Add verified measurements", Layers]].map(([title, text, Icon]) => <div key={title} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Icon className="text-cyan-300" /><h4 className="mt-4 text-lg font-black text-white">{title}</h4><p className="mt-2 text-sm text-slate-400">{text}</p></div>)}
       </div>
+      <div className="mt-7">
+        <LinkedItems language={language} project={project} embedded />
+      </div>
       <div ref={reportRef} className="fixed -left-[9999px] top-0 w-[794px] bg-white p-10 text-slate-950">
         <div className="flex justify-between border-b border-slate-300 pb-5"><h1 className="text-3xl font-black">Takeoff Report</h1><p>Apr 12, 2026</p></div>
         {[["Drywall 4x8 Sheets", `${drywall} sheets`, "+10% waste"], ["LVP Flooring", `${flooring} sq ft`, "+8% waste"], ["Electrical Outlets", `${outlets} pcs`, "+0% waste"], ["Baseboard Trim", `${baseboard} lin ft`, "+10% waste"]].map(([label, qty, waste]) => <div key={label} className="flex justify-between border-b border-slate-200 py-4"><span className="font-bold">{label}</span><span>{qty}<br /><small>{waste}</small></span></div>)}
@@ -2313,15 +2420,15 @@ function SubsQuotes({ language, project }) {
   return <div className="space-y-6"><ProjectContext project={project} language={language} /><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Subcontratistas" : "Subcontractors"}</h3><p className="text-sm text-slate-400">{subcontractors.length} {isEs ? "subcontratistas" : "subcontractors"}</p></div><button onClick={() => setAddSubOpen(true)} className="primary-button"><Plus size={18} />{isEs ? "Agregar Subcontratista" : "Add Subcontractor"}</button></div><input className="field mt-5" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={isEs ? "Buscar por nombre, correo o teléfono..." : "Search by name, email, phone..."} />{filtered.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{filtered.map((sub) => <div key={sub.id} className="rounded-2xl border border-white/10 p-4"><p className="font-black text-white">{sub.name}</p><p className="text-sm text-cyan-200">{sub.customTrade || sub.trade}</p><p className="mt-2 text-sm text-slate-400">{sub.email} {sub.phone}</p></div>)}</div> : <div className="py-10 text-center"><Users className="mx-auto text-slate-600" size={42} /><p className="mt-4 font-black text-white">{isEs ? "No se encontraron subcontratistas" : "No subcontractors found"}</p><p className="mt-2 text-sm text-slate-400">{isEs ? "Agrega tu primer subcontratista para comenzar." : "Add your first subcontractor to get started."}</p></div>}</section><div className="grid gap-5 xl:grid-cols-[1fr_390px]"><div className="space-y-3"><h3 className="mb-4 text-xl font-black text-white">{isEs ? "Ofertas / Comparación" : "Bids / Comparison"}</h3>{quotes.map((item, index) => <button key={item.trade} onClick={() => setActive(index)} className={`glow-card flex w-full items-center justify-between rounded-3xl border p-5 text-left transition ${active === index ? "border-cyan-300/50 bg-cyan-300/10" : "border-white/10 bg-slate-950/60 hover:border-cyan-300/30"}`}><div><p className="font-black text-white">{item.trade}</p><p className="text-sm text-slate-500">{item.vendor} · {label.quoteStatus}: {item.status}</p></div><p className="text-xl font-black text-cyan-200">{formatMoney(item.price)}</p></button>)}</div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><h3 className="text-xl font-black text-white">{label.review}</h3><div className="mt-4 space-y-3"><label className="block"><span className="label">{label.trade}</span><input className="field" value={quote.trade} onChange={(e) => updateQuote("trade", e.target.value)} /></label><label className="block"><span className="label">{label.vendor}</span><input className="field" value={quote.vendor} onChange={(e) => updateQuote("vendor", e.target.value)} /></label><MoneyInput label={label.bid} value={quote.price} setValue={(value) => updateQuote("price", value)} /><label className="block"><span className="label">{label.scope}</span><textarea className="field min-h-24" value={quote.scope} onChange={(e) => updateQuote("scope", e.target.value)} /></label><label className="block"><span className="label">{label.status}</span><select className="field" value={quote.status} onChange={(e) => updateQuote("status", e.target.value)}><option>{label.pending}</option><option>Review</option><option>{label.approved}</option><option>{label.rejected}</option></select></label></div><ResultBox items={[[label.total, formatMoney(total), true], [label.contingency, formatMoney(total * 0.1)], [label.budget, formatMoney(total * 1.1), true], [label.selected, formatMoney(quote.price)]]} /></div></div>{addSubOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4"><div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#10182b] p-6"><div className="flex justify-between"><h3 className="text-xl font-black text-white">{isEs ? "Agregar Subcontratista" : "Add Subcontractor"}</h3><button onClick={() => setAddSubOpen(false)}><X /></button></div><div className="mt-5 grid gap-4"><input className="field" value={newSub.name} onChange={(event) => setNewSub({ ...newSub, name: event.target.value })} placeholder={isEs ? "Nombre de empresa o persona" : "Company or person name"} /><select className="field" value={newSub.trade} onChange={(event) => setNewSub({ ...newSub, trade: event.target.value })}><option>Other</option><option>Electrical</option><option>Plumbing</option><option>Concrete</option><option>Framing</option><option>Roofing</option></select>{newSub.trade === "Other" && <input className="field" value={newSub.customTrade} onChange={(event) => setNewSub({ ...newSub, customTrade: event.target.value })} placeholder={isEs ? "Oficio personalizado" : "Custom trade"} />}<div className="grid gap-3 sm:grid-cols-2"><input className="field" value={newSub.email} onChange={(event) => setNewSub({ ...newSub, email: event.target.value })} placeholder="Email" /><input className="field" value={newSub.phone} onChange={(event) => setNewSub({ ...newSub, phone: event.target.value })} placeholder={isEs ? "Teléfono" : "Phone"} /></div><textarea className="field min-h-24" value={newSub.notes} onChange={(event) => setNewSub({ ...newSub, notes: event.target.value })} placeholder={isEs ? "Notas" : "Notes"} /></div><div className="mt-5 flex justify-end gap-3"><button onClick={() => setAddSubOpen(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={addSub} className="primary-button">{isEs ? "Agregar" : "Add"}</button></div></div></div>}</div>;
 }
 
-function LinkedItems({ language, project }) {
+function LinkedItems({ language, project, embedded = false }) {
   const ui = language === "es" ? { linked: "Registro Vinculado", review: "Revisión de Inversionista", linkedText: "Adjunta documentos, cálculos, contactos o notas del proyecto para mantener el espacio organizado.", reviewText: "Usa elementos vinculados para preparar paquetes para prestamistas, actualizaciones de inversionistas o revisiones de alcance.", attach: "Adjuntar Elemento" } : { linked: "Linked Record", review: "Investor Review", linkedText: "Attach documents, calculations, contacts, or project notes to keep the workspace organized.", reviewText: "Use linked items when preparing a lender packet, investor update, or contractor scope review.", attach: "Attach Item" };
   const items = [["Reports", "CMA PDF, lender summary, takeoff report", FileText], ["Comps", "Comparable sales, ARV range, price per sqft", Search], ["Quotes", "Subcontractor bids and awarded scopes", Users], ["Permits", "Permit numbers, inspection milestones, notes", ClipboardCheck], ["Dropbox Files", "Plans, photos, contracts, draw packets", Cloud], ["Loan Docs", "Term sheets, DSCR assumptions, payoff letters", WalletCards]];
   const [active, setActive] = useState(items[0]);
   const Icon = active[2];
-  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="grid gap-5 xl:grid-cols-[1fr_380px]"><div className="grid gap-4 md:grid-cols-2">{items.map(([title, detail, CardIcon]) => <button key={title} onClick={() => setActive([title, detail, CardIcon])} className="glow-card rounded-3xl border border-white/10 bg-slate-950/60 p-5 text-left hover:border-cyan-300/40"><CardIcon className="text-cyan-300" /><p className="mt-4 font-black text-white">{title}</p><p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p></button>)}</div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6"><Icon className="text-cyan-300" /><h3 className="mt-4 text-2xl font-black text-white">{active[0]}</h3><p className="mt-2 leading-7 text-slate-400">{active[1]}</p><div className="mt-5 space-y-3"><Info title={ui.linked} text={ui.linkedText} /><Info title={ui.review} text={ui.reviewText} /></div><button className="primary-button mt-5">{ui.attach}</button></div></div></div>;
+  return <div className="space-y-5">{!embedded && <ProjectContext project={project} language={language} />}{embedded && <SectionHeader title={language === "es" ? "Elementos Vinculados" : "Linked Items"} detail={language === "es" ? "Integrado en el takeoff para conectar planos, reportes, cotizaciones, permisos y documentos." : "Integrated into takeoff so plans, reports, quotes, permits, and documents stay connected."} />}<div className="grid gap-5 xl:grid-cols-[1fr_380px]"><div className="grid gap-4 md:grid-cols-2">{items.map(([title, detail, CardIcon]) => <button key={title} onClick={() => setActive([title, detail, CardIcon])} className="glow-card rounded-3xl border border-white/10 bg-slate-950/60 p-5 text-left hover:border-cyan-300/40"><CardIcon className="text-cyan-300" /><p className="mt-4 font-black text-white">{title}</p><p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p></button>)}</div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-6"><Icon className="text-cyan-300" /><h3 className="mt-4 text-2xl font-black text-white">{active[0]}</h3><p className="mt-2 leading-7 text-slate-400">{active[1]}</p><div className="mt-5 space-y-3"><Info title={ui.linked} text={ui.linkedText} /><Info title={ui.review} text={ui.reviewText} /></div><button className="primary-button mt-5">{ui.attach}</button></div></div></div>;
 }
 
-function Collaborators({ language, project }) {
+function Collaborators({ language, project, embedded = false }) {
   const ui = language === "es" ? { invite: "Invitar Colaborador", text: "Invita socios, prestamistas, contratistas o gerentes de proyecto con un rol claro.", owner: "Propietario", manager: "Gerente de Proyecto", finance: "Finanzas", construction: "Construcción", viewer: "Solo Lectura" } : { invite: "Invite Collaborator", text: "Invite partners, lenders, contractors, or project managers with a clear role.", owner: "Owner", manager: "Project Manager", finance: "Finance", construction: "Construction", viewer: "Viewer" };
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Project Manager");
@@ -2330,7 +2437,7 @@ function Collaborators({ language, project }) {
   const [people, setPeople] = useState([]);
   const invite = () => { if (!email.trim()) return; setPeople([{ name: email.split("@")[0], email, role }, ...people]); setEmail(""); };
   const isEs = language === "es";
-  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-3xl font-black text-white">{isEs ? "Gestionar Equipo" : "Manage Team"}</h3><p className="mt-2 text-slate-400">{ui.text}</p></div><button onClick={() => setModalOpen(true)} className="primary-button"><Plus size={18} />{ui.invite}</button></div><div className="inline-flex rounded-2xl bg-slate-900 p-1"><button onClick={() => setTab("members")} className={`rounded-xl px-5 py-3 font-black ${tab === "members" ? "bg-cyan-300 text-slate-950" : "text-slate-400"}`}>{isEs ? "Miembros" : "Members"}</button><button onClick={() => setTab("access")} className={`rounded-xl px-5 py-3 font-black ${tab === "access" ? "bg-cyan-300 text-slate-950" : "text-slate-400"}`}>{isEs ? "Acceso a Proyectos" : "Project Access"}</button></div>{tab === "members" && (people.length ? <div className="grid gap-4 md:grid-cols-2">{people.map((person) => <div key={person.email} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Users className="text-cyan-300" /><p className="mt-4 text-lg font-black text-white">{person.name}</p><p className="text-sm text-slate-400">{person.email}</p><p className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-black text-cyan-200">{person.role}</p></div>)}</div> : <div className="rounded-3xl border border-dashed border-white/10 py-16 text-center"><Users className="mx-auto text-slate-600" size={42} /><p className="mt-4 font-black text-white">{isEs ? "Todavía no hay miembros" : "No team members yet"}</p><button onClick={() => setModalOpen(true)} className="primary-button mt-5"><Plus size={18} />{ui.invite}</button></div>)}{tab === "access" && <div className="rounded-3xl border border-dashed border-white/10 p-8"><p className="font-black text-white">{isEs ? "Permisos por Proyecto" : "Project Permissions"}</p><p className="mt-2 text-slate-400">{isEs ? "Invita miembros para asignar permisos de lectura, edición, finanzas y campo." : "Invite members to assign viewer, editor, finance, and field access."}</p></div>}{modalOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4"><div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#10182b] p-6"><div className="flex justify-between"><h3 className="text-xl font-black text-white">{ui.invite}</h3><button onClick={() => setModalOpen(false)}><X /></button></div><input className="field mt-5" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@company.com" /><select className="field mt-3" value={role} onChange={(e) => setRole(e.target.value)}><option>{ui.owner}</option><option>{ui.manager}</option><option>{ui.finance}</option><option>{ui.construction}</option><option>{ui.viewer}</option></select><div className="mt-5 flex justify-end gap-3"><button onClick={() => setModalOpen(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={() => { invite(); setModalOpen(false); }} className="primary-button">{ui.invite}</button></div></div></div>}</div>;
+  return <div className="space-y-5">{!embedded && <ProjectContext project={project} language={language} />}<div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className={`${embedded ? "text-2xl" : "text-3xl"} font-black text-white`}>{isEs ? "Colaboradores" : "Collaborators"}</h3><p className="mt-2 text-slate-400">{embedded ? (isEs ? "Integrado con subcontratistas y cotizaciones para controlar quién ve cada paquete." : "Integrated with subs and quotes so each package has the right people attached.") : ui.text}</p></div><button onClick={() => setModalOpen(true)} className="primary-button"><Plus size={18} />{ui.invite}</button></div><div className="inline-flex rounded-2xl bg-slate-900 p-1"><button onClick={() => setTab("members")} className={`rounded-xl px-5 py-3 font-black ${tab === "members" ? "bg-cyan-300 text-slate-950" : "text-slate-400"}`}>{isEs ? "Miembros" : "Members"}</button><button onClick={() => setTab("access")} className={`rounded-xl px-5 py-3 font-black ${tab === "access" ? "bg-cyan-300 text-slate-950" : "text-slate-400"}`}>{isEs ? "Acceso a Proyectos" : "Project Access"}</button></div>{tab === "members" && (people.length ? <div className="grid gap-4 md:grid-cols-2">{people.map((person) => <div key={person.email} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Users className="text-cyan-300" /><p className="mt-4 text-lg font-black text-white">{person.name}</p><p className="text-sm text-slate-400">{person.email}</p><p className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-black text-cyan-200">{person.role}</p></div>)}</div> : <div className="rounded-3xl border border-dashed border-white/10 py-16 text-center"><Users className="mx-auto text-slate-600" size={42} /><p className="mt-4 font-black text-white">{isEs ? "Todavía no hay miembros" : "No team members yet"}</p><button onClick={() => setModalOpen(true)} className="primary-button mt-5"><Plus size={18} />{ui.invite}</button></div>)}{tab === "access" && <div className="rounded-3xl border border-dashed border-white/10 p-8"><p className="font-black text-white">{isEs ? "Permisos por Proyecto" : "Project Permissions"}</p><p className="mt-2 text-slate-400">{isEs ? "Invita miembros para asignar permisos de lectura, edición, finanzas y campo." : "Invite members to assign viewer, editor, finance, and field access."}</p></div>}{modalOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4"><div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#10182b] p-6"><div className="flex justify-between"><h3 className="text-xl font-black text-white">{ui.invite}</h3><button onClick={() => setModalOpen(false)}><X /></button></div><input className="field mt-5" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@company.com" /><select className="field mt-3" value={role} onChange={(e) => setRole(e.target.value)}><option>{ui.owner}</option><option>{ui.manager}</option><option>{ui.finance}</option><option>{ui.construction}</option><option>{ui.viewer}</option></select><div className="mt-5 flex justify-end gap-3"><button onClick={() => setModalOpen(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={() => { invite(); setModalOpen(false); }} className="primary-button">{ui.invite}</button></div></div></div>}</div>;
 }
 
 function DropboxPage({ t }) {
@@ -2417,7 +2524,28 @@ function PricingPlans({ language, user, go }) {
 }
 
 function PasswordField({ value, onChange, placeholder, autoComplete, visible, onToggle, language }) {
-  return <div className="relative"><input value={value} onChange={onChange} className="field pr-14" autoComplete={autoComplete} type={visible ? "text" : "password"} placeholder={placeholder} /><button type="button" onClick={onToggle} aria-label={visible ? (language === "es" ? "Ocultar contraseña" : "Hide password") : (language === "es" ? "Mostrar contraseña" : "Show password")} className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-cyan-200">{visible ? <EyeOff size={19} /> : <Eye size={19} />}</button></div>;
+  const [capsLock, setCapsLock] = useState(false);
+  const updateCapsLock = (event) => setCapsLock(Boolean(event.getModifierState?.("CapsLock")));
+  return <div>
+    <div className="relative">
+      <input
+        value={value}
+        onChange={onChange}
+        onKeyDown={updateCapsLock}
+        onKeyUp={updateCapsLock}
+        onBlur={() => setCapsLock(false)}
+        className="field min-h-[3.35rem] pr-14 text-base"
+        autoComplete={autoComplete}
+        type={visible ? "text" : "password"}
+        placeholder={placeholder}
+      />
+      <button type="button" onClick={onToggle} aria-label={visible ? (language === "es" ? "Ocultar contraseña" : "Hide password") : (language === "es" ? "Mostrar contraseña" : "Show password")} className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-cyan-200">{visible ? <EyeOff size={20} /> : <Eye size={20} />}</button>
+    </div>
+    <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold">
+      <span className="text-slate-500">{language === "es" ? "Las contraseñas distinguen mayúsculas y minúsculas." : "Passwords are case-sensitive."}</span>
+      {capsLock && <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-amber-200">{language === "es" ? "Bloq Mayús activado" : "Caps Lock is on"}</span>}
+    </div>
+  </div>;
 }
 
 function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordRecovery, setPasswordRecovery }) {
@@ -2461,8 +2589,10 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
       if (result.error) return setStatus(result.error.message);
       if (action === "signup" && !result.data.session) {
         setMode("login");
+        trackGoogleAdsConversion("signup");
         return setStatus(t.checkEmail);
       }
+      if (action === "signup") trackGoogleAdsConversion("signup");
       setUser(result.data.user);
       go("dashboard", true);
     } finally {

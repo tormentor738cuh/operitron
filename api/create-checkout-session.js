@@ -101,7 +101,7 @@ export default async function handler(request, response) {
         metadata: { user_id: data.user.id, plan },
       },
       metadata: { user_id: data.user.id, plan },
-      success_url: "https://operitron.com/dashboard",
+      success_url: `https://operitron.com/dashboard?checkout=success&plan=${plan}`,
       cancel_url: "https://operitron.com/pricing",
     });
     return response.status(200).json({ url: session.url });
