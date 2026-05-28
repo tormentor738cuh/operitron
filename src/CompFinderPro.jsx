@@ -927,10 +927,10 @@ function Sidebar({ t, user, activePage, go, mobileOpen, setMobileOpen, collapsed
 
   return (
     <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-slate-950/90 p-5 backdrop-blur-xl transition-all duration-300 lg:translate-x-0 ${collapsed ? "lg:w-20 lg:p-3" : "lg:w-72"} ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
-      <div className={`flex gap-3 ${collapsed ? "lg:flex-col lg:items-center" : "items-center justify-between"}`}>
+      <div className="flex items-center justify-between gap-2">
         <div className={collapsed ? "lg:hidden" : ""}><BrandLogo onClick={() => go("dashboard")} size="sidebar" /></div>
-        {collapsed && <button type="button" onClick={() => go("dashboard")} aria-label="OPERITRON.COM" className="hidden h-12 w-12 shrink-0 place-items-center rounded-full border border-cyan-300/25 bg-slate-900/70 p-1 transition hover:scale-105 hover:border-cyan-300/60 hover:shadow-[0_0_24px_rgba(34,211,238,.28)] lg:grid"><img loading="eager" decoding="async" src="/operitron-mark.png" className="h-11 w-11 rounded-full object-cover" alt="" /></button>}
-        <button type="button" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="hidden h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 text-slate-300 transition hover:border-cyan-300/40 hover:text-white lg:grid">
+        {collapsed && <button type="button" onClick={() => go("dashboard")} aria-label="OPERITRON.COM" className="hidden h-12 w-12 place-items-center rounded-2xl border border-cyan-300/20 bg-slate-900/70 transition hover:border-cyan-300/60 hover:shadow-[0_0_22px_rgba(34,211,238,.24)] lg:grid"><img loading="eager" decoding="async" src="/operitron-mark.png" className="h-10 w-10 rounded-xl object-cover" alt="" /></button>}
+        <button type="button" onClick={() => setCollapsed(!collapsed)} aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"} className="hidden h-10 w-10 place-items-center rounded-xl border border-white/10 text-slate-300 transition hover:border-cyan-300/40 hover:text-white lg:grid">
           <ChevronRight size={18} className={`transition-transform ${collapsed ? "" : "rotate-180"}`} />
         </button>
       </div>
@@ -962,7 +962,7 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
       <div className={`mx-auto flex items-center justify-between gap-2 sm:gap-4 ${user ? "" : "max-w-7xl"}`}>
         <div className="flex min-w-0 items-center gap-3">
           {user && hasProductAccess && <button onClick={() => setMobileOpen(true)} className="rounded-xl border border-white/10 p-2 text-white lg:hidden"><Menu /></button>}
-          <div className={user && hasProductAccess ? "lg:hidden" : ""}>
+          <div className={user && hasProductAccess && !collapsed ? "lg:hidden" : ""}>
             <BrandLogo onClick={() => go(user && hasProductAccess ? "dashboard" : "home")} compact />
           </div>
         </div>
