@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   Cloud,
+  Copy,
   DollarSign,
   Eye,
   EyeOff,
@@ -53,9 +54,14 @@ const checkoutEndpoint = import.meta.env.VITE_STRIPE_CHECKOUT_ENDPOINT || "/api/
 const portalEndpoint = import.meta.env.VITE_STRIPE_PORTAL_ENDPOINT || "/api/create-billing-portal";
 const productionUrl = (import.meta.env.VITE_APP_URL || "https://operitron.com").replace(/\/+$/, "");
 const ownerAdminEmails = ["tormentor738@gmail.com"];
+const testCustomerEmails = ["gamuelgotgame@gmail.com"];
 const adminEmails = [...new Set([
   ...ownerAdminEmails,
   ...String(import.meta.env.VITE_ADMIN_EMAILS || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean),
+])];
+const customerBypassEmails = [...new Set([
+  ...testCustomerEmails,
+  ...String(import.meta.env.VITE_TEST_CUSTOMER_EMAILS || "").split(",").map((email) => email.trim().toLowerCase()).filter(Boolean),
 ])];
 const LazyAIAnalyzerPanel = lazy(() => import("./AIAnalyzerPanel.jsx"));
 
@@ -108,6 +114,7 @@ const pagePaths = {
   settings: "/login",
   profile: "/profile",
   projectTools: "/project-tools",
+  projectDetails: "/project",
   propertySearch: "/property-search",
   dropbox: "/dropbox",
   learning: "/learning-center",
@@ -681,6 +688,8 @@ function AppShell() {
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [activeProject, setActiveProject] = useState(null);
+  const [contactOpen, setContactOpen] = useState(false);
   const checkoutTrackedRef = useRef(false);
   const t = enhancedCopy[language];
 
@@ -758,8 +767,9 @@ function AppShell() {
     };
   }, [user]);
   const isAdmin = Boolean(subscription?.role === "admin" || (user?.email && adminEmails.includes(user.email.toLowerCase())));
+  const isTestCustomer = Boolean(user?.email && customerBypassEmails.includes(user.email.toLowerCase()));
   const hasPremium = ["active", "trialing"].includes(subscription?.subscription_status);
-  const hasProductAccess = hasPremium || isAdmin;
+  const hasProductAccess = hasPremium || isAdmin || isTestCustomer;
 
   useEffect(() => {
     if (!supabase || !user || !isAdmin) return;
@@ -822,6 +832,24 @@ function AppShell() {
     return error ? { error: error.message } : { error: "" };
   }
 
+  async function saveOrUpdateProject(project) {
+    const normalized = { ...project, id: project.id || Date.now(), updatedAt: new Date().toISOString() };
+    setProjects((current) => {
+      const exists = current.some((item) => String(item.id) === String(normalized.id));
+      return exists ? current.map((item) => String(item.id) === String(normalized.id) ? { ...item, ...normalized } : item) : [normalized, ...current];
+    });
+    setActiveProject((current) => current && String(current.id) === String(normalized.id) ? { ...current, ...normalized } : current);
+    if (!supabase || !user) return { error: "Account storage is unavailable." };
+    const { error } = await supabase.from("projects").upsert({
+      id: normalized.id,
+      user_id: user.id,
+      title: normalized.name || normalized.title || "Untitled Project",
+      address: normalized.address || "",
+      data: normalized,
+    }, { onConflict: "id" });
+    return error ? { error: error.message } : { error: "" };
+  }
+
   async function getAccessToken() {
     if (!supabase) return "";
     const { data } = await supabase.auth.getSession();
@@ -829,11 +857,12 @@ function AppShell() {
   }
 
   const page = useMemo(() => {
-    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery, isAdmin, hasProductAccess, getAccessToken };
+    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery, isAdmin, isTestCustomer, hasProductAccess, getAccessToken, activeProject, setActiveProject, onSaveProject: saveOrUpdateProject };
     if (activePage === "home") return user ? (hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />) : <PublicHome t={t} go={go} />;
     if (activePage === "dashboard" && !user) return <SettingsPage {...props} />;
     if (activePage === "dashboard") return hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "projectTools") return hasProductAccess ? <ProjectTools {...props} /> : <PremiumPaywall language={language} user={user} go={go} />;
+    if (activePage === "projectDetails") return hasProductAccess ? <ProjectDetails {...props} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "propertySearch") return hasProductAccess ? <PropertySearch t={t} language={language} getAccessToken={getAccessToken} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "learning") return hasProductAccess ? <LearningCenter t={t} language={language} go={go} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
     if (activePage === "knowledge") return hasProductAccess ? <KnowledgeBase t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
@@ -847,7 +876,7 @@ function AppShell() {
     if (articlePages.has(activePage)) return <SEOArticlePage page={activePage} go={go} />;
     if (["privacy", "terms", "refund", "disclaimer"].includes(activePage)) return <LegalPage type={activePage} language={language} />;
     return <Dashboard {...props} />;
-  }, [activePage, language, projects, user, subscription, passwordRecovery, hasProductAccess, isAdmin]);
+  }, [activePage, language, projects, user, subscription, passwordRecovery, hasProductAccess, isAdmin, isTestCustomer, activeProject]);
 
   if (loading || authLoading || (user && subscriptionLoading && !isAdmin)) return <LoadingScreen />;
 
@@ -858,7 +887,7 @@ function AppShell() {
         <div className="absolute right-[-120px] top-20 h-[460px] w-[460px] rounded-full bg-amber-400/18 blur-3xl" />
         <div className="absolute bottom-[-160px] left-[34%] h-[520px] w-[520px] rounded-full bg-fuchsia-500/10 blur-3xl" />
       </div>
-      {user && hasProductAccess && <Sidebar t={t} user={user} activePage={activePage} go={go} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} isAdmin={isAdmin} />}
+      {user && hasProductAccess && <Sidebar t={t} user={user} activePage={activePage} go={go} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} isAdmin={isAdmin} openContact={() => setContactOpen(true)} />}
       {user && hasProductAccess && mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/70 lg:hidden" />}
       <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} hasProductAccess={hasProductAccess} isAdmin={isAdmin} collapsed={sidebarCollapsed} />
       <main className={`relative z-10 p-4 pb-28 sm:p-5 sm:pb-28 lg:p-8 lg:pb-8 ${user && hasProductAccess ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-72") : "mx-auto max-w-7xl"}`}>
@@ -871,7 +900,8 @@ function AppShell() {
       </main>
       {!user && activePage !== "home" && <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 sm:px-5 lg:px-8 lg:pb-8"><PublicFooter isEs={language === "es"} go={go} /></div>}
       <MobileNavigation t={t} language={language} activePage={activePage} go={go} user={user} hasProductAccess={hasProductAccess} />
-      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} projects={projects} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
+      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} projects={projects} onSaveProject={saveOrUpdateProject} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
+      {contactOpen && <ContactModal language={language} user={user} onClose={() => setContactOpen(false)} />}
     </div>
   );
 }
@@ -976,13 +1006,14 @@ function MobileNavigation({ t, language, activePage, go, user, hasProductAccess 
 
 function BrandLogo({ onClick, compact = false, size = "default" }) {
   const isFull = size === "splash";
-  const logoSize = size === "splash" ? "h-auto w-[min(78vw,28rem)]" : size === "sidebar" ? "h-14 w-14" : compact ? "h-11 w-11 sm:h-12 sm:w-12" : "h-14 w-14";
+  const usesWordmark = isFull || compact;
+  const logoSize = size === "splash" ? "h-auto w-[min(78vw,28rem)]" : compact ? "h-12 w-[min(46vw,15rem)] sm:h-14 sm:w-[17rem]" : size === "sidebar" ? "h-14 w-14" : "h-14 w-14";
   const wrapperClass = isFull ? "inline-flex justify-center rounded-3xl p-1" : "group flex min-w-0 shrink-0 items-center gap-3 rounded-2xl px-1 py-1 text-left transition hover:bg-white/[.04]";
   const imageClass = isFull ? "rounded-2xl object-contain shadow-[0_0_45px_rgba(37,99,235,.15)]" : "shrink-0 rounded-2xl object-contain shadow-[0_0_28px_rgba(37,99,235,.18)] transition duration-300 group-hover:shadow-[0_0_40px_rgba(34,211,238,.35)]";
   return (
     <button type="button" onClick={onClick} className={wrapperClass} aria-label="Operitron home">
-      <img src={isFull ? "/operitron-logo.png" : "/operitron-mark.png"} alt={isFull ? "OPERITRON.COM" : ""} width={isFull ? "768" : "256"} height={isFull ? "512" : "256"} decoding="async" loading="eager" className={`${logoSize} ${imageClass}`} />
-      {!isFull && <span className={`${compact ? "hidden lg:block" : "block"} min-w-0`}>
+      <img src={usesWordmark ? "/operitron-logo.png" : "/operitron-mark.png"} alt={usesWordmark ? "OPERITRON.COM" : ""} width={usesWordmark ? "768" : "256"} height={usesWordmark ? "512" : "256"} decoding="async" loading="eager" className={`${logoSize} ${imageClass}`} />
+      {!isFull && !compact && <span className="block min-w-0">
         <span className="block truncate text-lg font-black tracking-wide text-white xl:text-xl">OPERITRON.COM</span>
         <span className="block truncate text-[0.58rem] font-bold uppercase tracking-[0.18em] text-cyan-300 xl:text-[0.62rem] xl:tracking-[0.24em]">AI Real Estate Operating System</span>
       </span>}
