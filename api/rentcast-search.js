@@ -2,11 +2,22 @@ import { createClient } from "@supabase/supabase-js";
 
 const allowedStatuses = new Set(["active", "trialing"]);
 const ownerAdminEmails = ["tormentor738@gmail.com"];
+const testCustomerEmails = ["gamuelgotgame@gmail.com"];
 
 function adminEmails() {
   return [...new Set([
     ...ownerAdminEmails,
     ...String(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  ])];
+}
+
+function bypassCustomerEmails() {
+  return [...new Set([
+    ...testCustomerEmails,
+    ...String(process.env.TEST_CUSTOMER_EMAILS || process.env.VITE_TEST_CUSTOMER_EMAILS || "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -39,7 +50,8 @@ async function ensureProfile(adminClient, user) {
 async function getAccess(adminClient, user) {
   const email = String(user.email || "").toLowerCase();
   const ownerOverride = adminEmails().includes(email);
-  if (!adminClient) return { allowed: ownerOverride, isAdmin: ownerOverride, warning: ownerOverride ? "Owner access active, but project saving requires Supabase service role configuration." : "" };
+  const customerOverride = bypassCustomerEmails().includes(email);
+  if (!adminClient) return { allowed: ownerOverride || customerOverride, isAdmin: ownerOverride, isTestCustomer: customerOverride, warning: ownerOverride || customerOverride ? "Access override active, but project saving requires Supabase service role configuration." : "" };
 
   await ensureProfile(adminClient, user);
   if (ownerOverride) {
@@ -48,7 +60,7 @@ async function getAccess(adminClient, user) {
   const { data: profile, error } = await adminClient.from("profiles").select("subscription_status, role").eq("id", user.id).maybeSingle();
   if (error) throw error;
   const isAdmin = ownerOverride || profile?.role === "admin";
-  return { allowed: isAdmin || allowedStatuses.has(profile?.subscription_status), isAdmin };
+  return { allowed: isAdmin || customerOverride || allowedStatuses.has(profile?.subscription_status), isAdmin, isTestCustomer: customerOverride };
 }
 
 function cleanAddress(address) {
@@ -88,7 +100,16 @@ function compactComp(comp = {}) {
   };
 }
 
-async function rentcast(path, params, warnings) {
+function rentcastMessage(path, status, payload, text) {
+  const rawMessage = payload?.message || payload?.error || payload?.errors?.[0]?.message || text || "No response body.";
+  const message = String(rawMessage).slice(0, 900);
+  if (status === 401) return `${path} returned 401 Unauthorized: ${message}. Verify RENTCAST_API_KEY in Vercel and confirm the key is active.`;
+  if (status === 403) return `${path} returned 403 Forbidden: ${message}. This usually means the RentCast plan or key permissions do not include this endpoint.`;
+  if (status === 402 || /upgrade|plan|permission|quota|limit/i.test(message)) return `${path} returned ${status}: ${message}. RentCast may require a plan upgrade, endpoint permission, or quota increase.`;
+  return `${path} returned ${status}: ${message}`;
+}
+
+async function rentcast(path, params, warnings, debug = []) {
   const url = new URL(`https://api.rentcast.io/v1/${path}`);
   Object.entries(params || {}).forEach(([key, value]) => {
     if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, String(value));
@@ -104,10 +125,22 @@ async function rentcast(path, params, warnings) {
   try {
     payload = text ? JSON.parse(text) : null;
   } catch (_error) {
-    warnings.push(`${path} returned an unexpected response.`);
+    warnings.push(`${path} returned an unexpected non-JSON response.`);
   }
+  debug.push({
+    endpoint: path,
+    status: response.status,
+    url: `${url.origin}${url.pathname}`,
+    body: text.slice(0, 1200),
+  });
   if (!response.ok) {
-    const message = payload?.message || payload?.error || `${path} failed (${response.status})`;
+    const message = rentcastMessage(path, response.status, payload, text);
+    console.error("[rentcast] Endpoint failed.", {
+      path,
+      status: response.status,
+      statusText: response.statusText,
+      body: text.slice(0, 1200),
+    });
     warnings.push(message);
     return null;
   }
@@ -141,19 +174,24 @@ export default async function handler(request, response) {
   if (address.length < 6) return json(response, 400, { error: "Enter a complete property address." });
 
   const warnings = [];
+  const debug = [];
   try {
-    const properties = await rentcast("properties", { address, limit: 1 }, warnings);
+    const properties = await rentcast("properties", { address, limit: 1 }, warnings, debug);
     const property = Array.isArray(properties) ? properties[0] : properties;
-    if (!property) return json(response, 404, { error: "No property record found for that address.", warnings });
+    if (!property) return json(response, 404, {
+      error: access.isAdmin ? `No property record found for that address. ${warnings[0] || ""}`.trim() : "No property record found for that address.",
+      warnings: [...new Set(warnings)].slice(0, 6),
+      adminDebug: access.isAdmin ? debug : undefined,
+    });
 
     const { formatted, state, zipCode } = addressParts(property, address);
     const common = { address: formatted || address, compCount: 10, lookupSubjectAttributes: true };
     const [valueEstimate, rentEstimate, saleListings, rentalListings, marketData] = await Promise.all([
-      rentcast("avm/value", common, warnings),
-      rentcast("avm/rent/long-term", common, warnings),
-      rentcast("listings/sale", { zipCode, state, limit: 10, status: "Active" }, warnings),
-      rentcast("listings/rental/long-term", { zipCode, state, limit: 10, status: "Active" }, warnings),
-      zipCode ? rentcast("markets", { zipCode }, warnings) : Promise.resolve(null),
+      rentcast("avm/value", common, warnings, debug),
+      rentcast("avm/rent/long-term", common, warnings, debug),
+      rentcast("listings/sale", { zipCode, state, limit: 10, status: "Active" }, warnings, debug),
+      rentcast("listings/rental/long-term", { zipCode, state, limit: 10, status: "Active" }, warnings, debug),
+      zipCode ? rentcast("markets", { zipCode }, warnings, debug) : Promise.resolve(null),
     ]);
 
     const saleComps = asArray(pick(valueEstimate?.comparables, valueEstimate?.comps, valueEstimate?.comparableProperties)).map(compactComp).filter((comp) => comp.address || comp.price);
@@ -171,10 +209,11 @@ export default async function handler(request, response) {
       rentalMarket,
       marketData,
       warnings: [...new Set(warnings)].slice(0, 6),
+      adminDebug: access.isAdmin ? debug : undefined,
       accessWarning: access.warning || undefined,
     });
   } catch (error) {
-    console.error("[rentcast] Request failed.", { message: error?.message, userId: data.user.id });
-    return json(response, 500, { error: "Property intelligence could not be loaded. Please try again." });
+    console.error("[rentcast] Request failed.", { message: error?.message, stack: error?.stack, userId: data.user.id });
+    return json(response, 500, { error: access.isAdmin ? `Property intelligence could not be loaded: ${error?.message || "Unknown server error."}` : "Property intelligence could not be loaded. Please try again." });
   }
 }

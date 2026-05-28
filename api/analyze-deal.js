@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 
 const allowedStatuses = new Set(["active", "trialing"]);
 const ownerAdminEmails = ["tormentor738@gmail.com"];
+const testCustomerEmails = ["gamuelgotgame@gmail.com"];
 const recentRequests = new Map();
 
 const numericFields = [
@@ -14,6 +15,16 @@ function adminEmails() {
   return [...new Set([
     ...ownerAdminEmails,
     ...String(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || "")
+      .split(",")
+      .map((email) => email.trim().toLowerCase())
+      .filter(Boolean),
+  ])];
+}
+
+function bypassCustomerEmails() {
+  return [...new Set([
+    ...testCustomerEmails,
+    ...String(process.env.TEST_CUSTOMER_EMAILS || process.env.VITE_TEST_CUSTOMER_EMAILS || "")
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -118,6 +129,8 @@ export default async function handler(request, response) {
 
   const email = String(data.user.email || "").toLowerCase();
   const ownerOverride = adminEmails().includes(email);
+  const customerOverride = bypassCustomerEmails().includes(email);
+  const hasBypassAccess = ownerOverride || customerOverride;
   let profile = null;
   let persistenceWarning = "";
 
@@ -130,17 +143,19 @@ export default async function handler(request, response) {
       profile = result.data;
     } catch (error) {
       console.error("[analysis] Profile lookup unavailable", { code: error?.code, message: error?.message, userId: data.user.id });
-      if (!ownerOverride) return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
-      persistenceWarning = "AI is available with owner access, but database saving is not ready. Apply the Supabase admin migration.";
+      if (!hasBypassAccess) return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
+      persistenceWarning = ownerOverride
+        ? `AI is available with owner access, but database saving is not ready: ${error?.message || "profile lookup failed"}. Apply the Supabase admin migration.`
+        : "AI is available for this test customer account, but database saving is not ready. Apply the Supabase migration.";
     }
-  } else if (!ownerOverride) {
+  } else if (!hasBypassAccess) {
     return response.status(503).json({ error: "Account setup is not ready. Please contact support@operitron.com." });
   } else {
-    persistenceWarning = "AI is available with owner access, but saved analyses require SUPABASE_SERVICE_ROLE_KEY in Vercel.";
+    persistenceWarning = "AI is available with access override, but saved analyses require SUPABASE_SERVICE_ROLE_KEY in Vercel.";
   }
 
   const isAdmin = ownerOverride || profile?.role === "admin";
-  if (!isAdmin && !allowedStatuses.has(profile?.subscription_status)) {
+  if (!isAdmin && !customerOverride && !allowedStatuses.has(profile?.subscription_status)) {
     return response.status(403).json({ error: "Start your 3-day free trial to access AI analysis." });
   }
   if (!process.env.OPENAI_API_KEY) {
@@ -155,8 +170,14 @@ export default async function handler(request, response) {
     return response.status(400).json({ error: error.message });
   }
   if (input.projectId && adminClient) {
-    const { data: ownedProject } = await adminClient.from("projects").select("id").eq("id", input.projectId).eq("user_id", data.user.id).maybeSingle();
-    if (!ownedProject) return response.status(400).json({ error: "Project not found." });
+    const { data: ownedProject, error: projectError } = await adminClient.from("projects").select("id").eq("id", input.projectId).eq("user_id", data.user.id).maybeSingle();
+    if (projectError) {
+      console.error("[analysis] Project lookup unavailable", { code: projectError.code, message: projectError.message, userId: data.user.id, projectId: input.projectId });
+      if (!hasBypassAccess) return response.status(503).json({ error: "Project lookup is not ready. Please contact support@operitron.com." });
+      persistenceWarning = persistenceWarning || "AI is available, but project linking is not ready. Apply the Supabase projects migration.";
+    } else if (!ownedProject) {
+      return response.status(400).json({ error: "Project not found." });
+    }
   }
 
   const prompt = [
