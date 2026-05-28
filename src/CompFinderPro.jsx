@@ -839,7 +839,7 @@ function AppShell() {
       return exists ? current.map((item) => String(item.id) === String(normalized.id) ? { ...item, ...normalized } : item) : [normalized, ...current];
     });
     setActiveProject((current) => current && String(current.id) === String(normalized.id) ? { ...current, ...normalized } : current);
-    if (!supabase || !user) return { error: "Account storage is unavailable." };
+    if (!supabase || !user) return { error: "Account storage is unavailable.", project: normalized };
     const { error } = await supabase.from("projects").upsert({
       id: normalized.id,
       user_id: user.id,
@@ -847,7 +847,7 @@ function AppShell() {
       address: normalized.address || "",
       data: normalized,
     }, { onConflict: "id" });
-    return error ? { error: error.message } : { error: "" };
+    return error ? { error: error.message, project: normalized } : { error: "", project: normalized };
   }
 
   async function getAccessToken() {
@@ -1493,7 +1493,7 @@ function ToolGrid({ setActiveTool, language = "en" }) {
   );
 }
 
-function ToolModal({ t, language, toolId, projects, onClose }) {
+function ToolModal({ t, language, toolId, projects, onSaveProject, onClose }) {
   const tool = getTools(language).find(([id]) => id === toolId) || getTools(language)[0];
   const [, title, desc, Icon] = tool;
   const requiresProject = ["wizard", "underwriter", "loan", "loanCalcs", "todo", "punch", "takeoff", "budget", "subs", "linked", "collab"].includes(toolId);
@@ -1513,24 +1513,91 @@ function ToolModal({ t, language, toolId, projects, onClose }) {
           </div>
           <button onClick={onClose} className="rounded-2xl border border-white/10 p-3 text-slate-300 hover:border-amber-400/50 hover:text-white"><X /></button>
         </div>
-        {projectReady ? <ToolBody t={t} language={language} toolId={toolId} project={selectedProject} /> : <ProjectPicker language={language} toolTitle={title} projects={projects} showExisting={showExisting} setShowExisting={setShowExisting} selectProject={(project) => { setSelectedProject(project); setProjectReady(true); }} />}
+        {projectReady ? <ToolBody t={t} language={language} toolId={toolId} project={selectedProject} /> : <ProjectPicker language={language} toolTitle={title} projects={projects} showExisting={showExisting} setShowExisting={setShowExisting} onSaveProject={onSaveProject} selectProject={(project) => { setSelectedProject(project); setProjectReady(true); }} />}
       </motion.div>
     </div>
   );
 }
 
-function ProjectPicker({ language, toolTitle, projects, showExisting, setShowExisting, selectProject }) {
+function ProjectPicker({ language, toolTitle, projects = [], showExisting, setShowExisting, onSaveProject, selectProject }) {
   const isEs = language === "es";
+  const [creating, setCreating] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [projectName, setProjectName] = useState("");
+  const [description, setDescription] = useState("");
+  const [query, setQuery] = useState("");
+  const filteredProjects = projects.filter((project) => `${project.name || ""} ${project.address || ""} ${project.description || ""}`.toLowerCase().includes(query.toLowerCase()));
+
+  async function createProject() {
+    const name = projectName.trim();
+    if (!name) return;
+    setSaving(true);
+    const project = {
+      id: Date.now(),
+      name,
+      title: name,
+      type: "Project",
+      address: "",
+      description: description.trim(),
+      notes: description.trim(),
+      arv: 0,
+      profit: 0,
+      roi: 0,
+      progress: 0,
+      status: "Active",
+      data: { description: description.trim(), createdFrom: toolTitle },
+    };
+    const saved = onSaveProject ? await onSaveProject(project) : project;
+    setSaving(false);
+    selectProject(saved?.project || saved || project);
+  }
+
+  if (creating) {
+    return (
+      <div className="mx-auto mt-6 max-w-xl rounded-[2rem] border border-white/10 bg-white/[.035] p-5 shadow-2xl shadow-black/30 sm:p-7">
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="text-2xl font-black text-white">{isEs ? "Nuevo Proyecto" : "New Project"}</h3>
+          <button onClick={() => setCreating(false)} className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-white"><X size={18} /></button>
+        </div>
+        <label className="mt-6 block">
+          <span className="label">{isEs ? "Nombre del proyecto" : "Project Name"}</span>
+          <input autoFocus value={projectName} onChange={(event) => setProjectName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") createProject(); }} className="field text-base" placeholder={isEs ? "Ej. Remodelación Silva" : "Example: Silva Remodel"} />
+        </label>
+        <label className="mt-4 block">
+          <span className="label">{isEs ? "Descripción (opcional)" : "Description (optional)"}</span>
+          <textarea value={description} onChange={(event) => setDescription(event.target.value)} className="field min-h-24 resize-y text-base" placeholder={isEs ? "Notas, dirección, alcance o contexto..." : "Notes, address, scope, or context..."} />
+        </label>
+        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+          <button onClick={() => setCreating(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button>
+          <button onClick={createProject} disabled={!projectName.trim() || saving} className="primary-button disabled:cursor-not-allowed disabled:opacity-50">{saving ? (isEs ? "Guardando..." : "Saving...") : (isEs ? "Crear Proyecto" : "Create Project")}</button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mx-auto mt-6 max-w-xl rounded-[2rem] border border-white/10 bg-white/[.035] p-5 shadow-2xl shadow-black/30 sm:p-7">
       <h3 className="text-2xl font-black text-white">{isEs ? "Selecciona un Proyecto" : "Select a Project"}</h3>
       <p className="mt-2 text-slate-400">{isEs ? "Elige un proyecto para usar con" : "Choose a project to use with"} <span className="font-black text-cyan-300">{toolTitle}</span></p>
       {!showExisting ? <div className="mt-7 grid gap-3">
-        <button onClick={() => selectProject({ name: isEs ? "Nuevo Proyecto" : "New Project" })} className="primary-button flex items-center justify-center gap-2"><Plus size={18} />{isEs ? "Crear Nuevo Proyecto" : "Create New Project"}</button>
+        <button onClick={() => setCreating(true)} className="primary-button flex items-center justify-center gap-2"><Plus size={18} />{isEs ? "Crear Nuevo Proyecto" : "Create New Project"}</button>
         <button onClick={() => setShowExisting(true)} className="secondary-button flex items-center justify-center gap-2"><FolderOpen size={18} />{isEs ? "Usar Proyecto Existente" : "Use Existing Project"}</button>
-      </div> : <div className="mt-6 space-y-3">
-        {projects.map((project) => <button key={project.id} onClick={() => selectProject(project)} className="glow-card flex w-full items-center justify-between rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left hover:border-cyan-300/35"><span><span className="block font-black text-white">{project.name}</span><span className="block text-sm text-slate-400">{project.address}</span></span><ChevronRight className="text-cyan-300" size={18} /></button>)}
-        <button onClick={() => setShowExisting(false)} className="mt-2 text-sm font-black text-slate-400 hover:text-cyan-300">← {isEs ? "Volver" : "Back"}</button>
+      </div> : <div className="mt-6 space-y-4">
+        <label className="block">
+          <span className="sr-only">{isEs ? "Buscar proyectos" : "Search projects"}</span>
+          <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/75 px-4 transition focus-within:border-cyan-300 focus-within:shadow-[0_0_0_3px_rgba(34,211,238,.12)]">
+            <Search className="text-slate-500" size={18} />
+            <input value={query} onChange={(event) => setQuery(event.target.value)} className="min-h-12 w-full bg-transparent text-base text-white outline-none placeholder:text-slate-500" placeholder={isEs ? "Buscar proyectos..." : "Search projects..."} />
+          </div>
+        </label>
+        <div className="max-h-72 space-y-3 overflow-y-auto pr-2 [scrollbar-color:rgba(34,211,238,.55)_rgba(15,23,42,.75)] [scrollbar-width:thin]">
+          {filteredProjects.length ? filteredProjects.map((project) => <button key={project.id} onClick={() => selectProject(project)} className="glow-card flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left hover:border-cyan-300/35">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-300/10 text-amber-300"><FolderOpen size={19} /></span>
+            <span className="min-w-0 flex-1"><span className="block truncate font-black text-white">{project.name || project.title || "Untitled Project"}</span><span className="block truncate text-sm text-slate-400">{project.description || project.address || project.notes || (isEs ? "Sin descripción" : "No description")}</span></span>
+            <ChevronRight className="shrink-0 text-cyan-300" size={18} />
+          </button>) : <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-center text-sm text-slate-400">{isEs ? "No encontramos proyectos con esa búsqueda." : "No projects match that search."}</div>}
+        </div>
+        <button onClick={() => setShowExisting(false)} className="secondary-button w-full">{isEs ? "Volver" : "Back"}</button>
       </div>}
     </div>
   );
