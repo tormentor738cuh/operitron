@@ -32,11 +32,19 @@ export default async function handler(request, response) {
   }
   const isAdmin = email === ownerEmail || profile?.role === "admin";
   if (!isAdmin) return response.status(403).json({ error: "Admin access required." });
+  const stripeConfig = [
+    { name: "Stripe keys loaded", ok: Boolean(process.env.STRIPE_SECRET_KEY), detail: process.env.STRIPE_SECRET_KEY ? "STRIPE_SECRET_KEY is available server-side." : "Missing STRIPE_SECRET_KEY." },
+    { name: "Monthly price ID loaded", ok: Boolean(process.env.STRIPE_MONTHLY_PRICE_ID || process.env.VITE_STRIPE_MONTHLY_PRICE_ID), detail: (process.env.STRIPE_MONTHLY_PRICE_ID || process.env.VITE_STRIPE_MONTHLY_PRICE_ID) ? "Monthly subscription price ID is configured." : "Missing monthly Stripe price ID." },
+    { name: "Annual price ID loaded", ok: Boolean(process.env.STRIPE_ANNUAL_PRICE_ID || process.env.VITE_STRIPE_ANNUAL_PRICE_ID), detail: (process.env.STRIPE_ANNUAL_PRICE_ID || process.env.VITE_STRIPE_ANNUAL_PRICE_ID) ? "Annual subscription price ID is configured." : "Missing annual Stripe price ID." },
+    { name: "Webhook secret configured", ok: Boolean(process.env.STRIPE_WEBHOOK_SECRET), detail: process.env.STRIPE_WEBHOOK_SECRET ? "STRIPE_WEBHOOK_SECRET is configured for subscription sync." : "Missing STRIPE_WEBHOOK_SECRET." },
+    { name: "Supabase service role configured", ok: Boolean(serviceKey), detail: serviceKey ? "SUPABASE_SERVICE_ROLE_KEY is available server-side." : "Missing SUPABASE_SERVICE_ROLE_KEY." },
+  ];
 
   return response.status(200).json({
     email,
     role: profile?.role || (email === ownerEmail ? "owner override" : "user"),
     access: "all_features",
+    stripeConfig,
     checks: [
       { name: "Owner access", ok: isAdmin, detail: "Authenticated admin bypass is enabled." },
       { name: "Database service key", ok: Boolean(serviceKey), detail: serviceKey ? "Server-side persistence enabled." : "Add SUPABASE_SERVICE_ROLE_KEY in Vercel." },

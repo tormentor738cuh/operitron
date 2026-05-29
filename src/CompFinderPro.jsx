@@ -1624,11 +1624,15 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
   const [report, setReport] = useState(null);
   const [status, setStatus] = useState("");
   const [checking, setChecking] = useState(false);
+  const [stripeStatus, setStripeStatus] = useState("");
+  const [stripeChecking, setStripeChecking] = useState(false);
   const toolsForOwner = getTools(language);
 
-  async function checkProduction() {
-    setChecking(true);
+  async function fetchAdminHealth({ production = false, stripe = false } = {}) {
+    if (production) setChecking(true);
+    if (stripe) setStripeChecking(true);
     setStatus("");
+    if (stripe) setStripeStatus("");
     try {
       if (!supabase) throw new Error(isEs ? "La autenticación no está configurada." : "Authentication is not configured.");
       const { data } = await supabase.auth.getSession();
@@ -1638,11 +1642,22 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
       const result = await readApiJson(response);
       if (!response.ok) throw new Error(result.error || (isEs ? "No se pudo verificar producción." : "Production check could not be completed."));
       setReport(result);
+      if (stripe) setStripeStatus(isEs ? "Configuración de Stripe verificada. No se creó ningún cargo." : "Stripe configuration checked. No charge was created.");
     } catch (error) {
-      setStatus(error.message);
+      if (stripe) setStripeStatus(error.message);
+      else setStatus(error.message);
     } finally {
-      setChecking(false);
+      if (production) setChecking(false);
+      if (stripe) setStripeChecking(false);
     }
+  }
+
+  function checkProduction() {
+    fetchAdminHealth({ production: true });
+  }
+
+  function checkStripeConfiguration() {
+    fetchAdminHealth({ stripe: true });
   }
 
   useEffect(() => {
@@ -1651,6 +1666,7 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
 
   const visibleChecks = report?.checks || [];
   const issues = visibleChecks.filter((check) => !check.ok);
+  const stripeChecks = report?.stripeConfig || [];
   return <div className="space-y-6">
     <section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/[.12] via-slate-950 to-purple-500/[.12] p-6 shadow-[0_0_48px_rgba(34,211,238,.1)] sm:p-8">
       <div className="absolute -right-20 -top-16 h-56 w-56 rounded-full bg-cyan-400/15 blur-3xl" />
@@ -1691,6 +1707,26 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
         {issues.length > 0 && <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-3 text-sm leading-6 text-amber-100">{isEs ? "Los elementos en amarillo requieren configuración antes de guardar datos o procesar servicios conectados." : "Yellow items require configuration before related data can save or connected services can run."}</p>}
       </GlassPanel>
     </div>
+
+    <GlassPanel>
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <SectionHeader title={isEs ? "Checklist de Lanzamiento" : "Launch Checklist"} detail={isEs ? "Verificación segura y de solo lectura. No crea checkout ni cobra tarjetas." : "Safe read-only verification. It does not create checkout sessions or charge cards."} />
+        <button onClick={checkStripeConfiguration} disabled={stripeChecking} className="primary-button whitespace-nowrap disabled:cursor-wait disabled:opacity-60">{stripeChecking ? (isEs ? "Verificando..." : "Checking...") : "Check Stripe Configuration"}</button>
+      </div>
+      {stripeStatus && <p className="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/[.08] p-3 text-sm leading-6 text-cyan-100">{stripeStatus}</p>}
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        {(stripeChecks.length ? stripeChecks : [
+          { name: "Stripe keys loaded", ok: false, detail: "Click Check Stripe Configuration." },
+          { name: "Monthly price ID loaded", ok: false, detail: "Click Check Stripe Configuration." },
+          { name: "Annual price ID loaded", ok: false, detail: "Click Check Stripe Configuration." },
+          { name: "Webhook secret configured", ok: false, detail: "Click Check Stripe Configuration." },
+          { name: "Supabase service role configured", ok: false, detail: "Click Check Stripe Configuration." },
+        ]).map((check) => <div key={check.name} className={`rounded-2xl border p-4 ${check.ok ? "border-emerald-300/20 bg-emerald-300/[.065]" : "border-red-300/20 bg-red-400/[.065]"}`}>
+          <p className={`flex items-center gap-2 text-sm font-black ${check.ok ? "text-emerald-300" : "text-red-200"}`}>{check.ok ? <CheckCircle2 size={17} /> : <X size={17} />}{check.ok ? "PASS" : "FAIL"} · {check.name}</p>
+          <p className="mt-2 text-xs leading-5 text-slate-400">{check.detail}</p>
+        </div>)}
+      </div>
+    </GlassPanel>
   </div>;
 }
 
