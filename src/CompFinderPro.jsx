@@ -946,7 +946,7 @@ function AppShell() {
       </div>
       {user && hasProductAccess && <Sidebar t={t} user={user} activePage={activePage} go={go} mobileOpen={mobileOpen} setMobileOpen={setMobileOpen} collapsed={sidebarCollapsed} setCollapsed={setSidebarCollapsed} isAdmin={isAdmin} openContact={() => setContactOpen(true)} />}
       {user && hasProductAccess && mobileOpen && <button aria-label="Close navigation" onClick={() => setMobileOpen(false)} className="fixed inset-0 z-30 bg-black/70 lg:hidden" />}
-      <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} hasProductAccess={hasProductAccess} isAdmin={isAdmin} collapsed={sidebarCollapsed} />
+      <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} hasProductAccess={hasProductAccess} isAdmin={isAdmin} collapsed={sidebarCollapsed} openContact={() => setContactOpen(true)} />
       <main className={`relative z-10 p-4 pb-28 sm:p-5 sm:pb-28 lg:p-8 lg:pb-8 ${user && hasProductAccess ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-72") : "mx-auto max-w-7xl"}`}>
         {user && hasProductAccess && history.length > 0 && activePage !== "dashboard" && <button onClick={back} className="mb-5 inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 hover:border-amber-400/50 hover:text-white">
           ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â Ãƒâ€šÃ‚Â {t.back}
@@ -2651,6 +2651,27 @@ function AITakeoff({ language = "en", project }) {
     setMenuOpen(false);
   }
 
+  function renderAiSummary() {
+    if (aiLoading) {
+      return <div className="mt-20 rounded-3xl border border-purple-400/20 bg-purple-400/5 p-8 text-center"><motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }} className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-cyan-300/30 text-cyan-200"><Bot /></motion.div><p className="mt-5 font-black text-white">Analyzing plans...</p><p className="mt-2 text-sm text-slate-400">Preparing quantities, counts, and cost-ready takeoff notes.</p></div>;
+    }
+    if (!measurements.length && !aiResultType) {
+      return <div className="mt-20 rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center"><Bot className="mx-auto text-cyan-300" size={34} /><p className="mt-5 font-black text-white">Run AI analysis to see results</p><p className="mt-2 text-sm leading-6 text-slate-400">Choose Full, Custom, or MEP analysis to organize plan quantities.</p><button onClick={aiGenerate} className="primary-button mt-5 w-full justify-center">Run AI Takeoff</button></div>;
+    }
+    if (aiResultType === "mep") {
+      const mepSections = [
+        ["Electrical", "0 items", [["Electrical Outlets", "0 count"], ["Switches", "0 count"], ["Light Fixtures", "0 count"]], "text-amber-300"],
+        ["Plumbing", "28 items", [["Sinks", "14 count"], ["Toilets", "6 count"], ["Bathtubs", "6 count"], ["Showers", "0 count"], ["Laundry Connections", "2 count"]], "text-blue-300"],
+        ["Mechanical (HVAC)", "4 items", [["Exhaust Fans", "4 count"], ["Thermostats", "0 count"]], "text-emerald-300"],
+      ];
+      return <div className="mt-6 space-y-4"><div className="flex items-center justify-between"><div><h3 className="text-2xl font-black text-white">MEP Analysis</h3><p className="text-sm text-slate-500">Mechanical, electrical, and plumbing estimate.</p></div><span className="rounded-full bg-emerald-300 px-4 py-2 text-sm font-black text-emerald-950">90% Excellent</span></div><div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm font-bold leading-6 text-amber-100">AI measurements are estimates and may not be accurate. Do not order materials based only on this analysis.</div>{mepSections.map(([title, total, rows, color]) => <div key={title} className="rounded-2xl border border-white/10 bg-slate-900/70 p-4"><div className="mb-3 flex justify-between"><p className={`font-black ${color}`}>{title}</p><span className="rounded-full bg-white/5 px-3 py-1 text-xs font-black text-slate-300">{total}</span></div>{rows.map(([label, value]) => <div key={label} className="flex justify-between border-t border-white/10 py-2 text-sm"><span className="text-slate-300">{label}</span><span className="font-black text-white">{value}</span></div>)}</div>)}<div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4"><p className="font-black text-white">Estimated Ductwork</p><p className="mt-1 text-3xl font-black text-emerald-300">240 LF</p></div><div className="rounded-2xl bg-slate-900/70 p-4 text-sm leading-6 text-slate-400"><span className="font-black text-white">Notes: </span>Drawing is an architectural floor plan. Electrical symbols are not present on this sheet, so electrical counts are conservative. Plumbing counts are based on visible fixture rooms.</div></div>;
+    }
+    const fullRows = aiResultType === "custom"
+      ? [["Focused Scope", customPrompt || "Architectural quantities"], ["Pages", "Page 1"], ["Confidence", "76% - Needs Review"]]
+      : [["Heated Square Footage", "2,862"], ["Total Under Roof", "3,248"], ["Confidence", "73% - Good"]];
+    return <div className="mt-6 space-y-4"><div className="flex items-center justify-between"><h3 className="text-2xl font-black text-white">{aiResultType === "custom" ? "Custom Analysis" : "AI Takeoff Summary"}</h3><span className="rounded-full bg-blue-100 px-4 py-2 text-sm font-black text-blue-700">{aiResultType === "custom" ? "76% Needs Review" : "73% Good"}</span></div><div className="rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4 text-sm font-bold leading-6 text-amber-100">AI measurements are estimates. Always verify quantities against your actual drawings before ordering.</div><div className="grid grid-cols-2 gap-3">{fullRows.map(([label, value]) => <div key={label} className="rounded-2xl bg-slate-900/70 p-4"><p className="text-xs font-black uppercase tracking-widest text-slate-500">{label}</p><p className="mt-1 text-xl font-black text-white">{value}</p></div>)}</div>{[["Flooring", "2,862 sq ft", "Main Floor"], ["Drywall", "8,846 sq ft", "Wall and ceiling drywall less openings"], ["Roofing", "3,424 sq ft", "Main house plus covered porches"], ["Counts", "48 items", "Windows, exterior doors, and interior doors"], ["Interior Trim", "778 LF", "Window trim and door trim"], ["Baseboard", "936 LF", "Room-by-room baseboard estimate"]].map(([title, value, detail]) => <div key={title} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"><div className="flex justify-between gap-3"><p className="font-black text-white">{title}</p><span className="rounded-full bg-white/5 px-3 py-1 text-sm font-black text-slate-300">{value}</span></div><p className="mt-2 text-sm text-slate-400">{detail}</p></div>)}</div>;
+  }
+
   async function exportPdf() {
     const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([import("jspdf"), import("html2canvas")]);
     const canvas = await html2canvas(reportRef.current, { backgroundColor: "#ffffff", scale: 2 });
@@ -2761,45 +2782,10 @@ function AITakeoff({ language = "en", project }) {
               </>
             ) : (
               <div className="flex flex-1 flex-col">
-                <div className="p-6">
-                  <div className="flex items-center gap-3">
-                    <div className="grid h-11 w-11 place-items-center rounded-2xl bg-amber-400/10 text-amber-300"><Home size={20} /></div>
-                    <div>
-                      <h3 className="text-xl font-black text-white">AI Takeoff Summary</h3>
-                      <p className="text-sm text-slate-500">Automated quantities from your selected measurements.</p>
-                    </div>
-                  </div>
-
-                  {measurements.length ? (
-                    <div className="mt-6 space-y-3">
-                      {totalsByGroup.filter((group) => group.count).map((group) => (
-                        <div key={group.id} className="rounded-2xl border border-purple-400/15 bg-purple-400/5 p-4">
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <p className="font-black text-white">{group.name}</p>
-                              <p className="mt-1 text-sm text-slate-400">{group.count} measurements Â· {formatNumber(group.withWaste, 1)} units</p>
-                            </div>
-                            <span className="font-black text-emerald-300">{formatMoney(group.cost)}</span>
-                          </div>
-                        </div>
-                      ))}
-                      <div className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4">
-                        <p className="text-sm font-black uppercase tracking-widest text-cyan-200">Estimated Total</p>
-                        <p className="mt-1 text-3xl font-black text-white">{formatMoney(totalCost)}</p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="mt-20 rounded-3xl border border-dashed border-white/10 bg-slate-900/50 p-8 text-center">
-                      <Bot className="mx-auto text-cyan-300" size={34} />
-                      <p className="mt-5 font-black text-white">Run AI analysis to see results</p>
-                      <p className="mt-2 text-sm leading-6 text-slate-400">AI mode will organize measurements into material quantities, waste factors, and cost estimates.</p>
-                      <button onClick={aiGenerate} className="primary-button mt-5 w-full justify-center">Run AI Takeoff</button>
-                    </div>
-                  )}
-
+                                <div className="min-h-0 flex-1 overflow-y-auto p-6">
+                  {renderAiSummary()}
                   {takeoffStatus && <p className="mt-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm font-bold text-cyan-100">{takeoffStatus}</p>}
-                </div>
-                <div className="mt-auto grid grid-cols-2 gap-3 border-t border-white/10 p-4">
+                </div>                <div className="mt-auto grid grid-cols-2 gap-3 border-t border-white/10 p-4">
                   <button onClick={exportPdf} className="secondary-button justify-center"><Printer size={18} />PDF</button>
                   <button onClick={saveTakeoff} className="primary-button justify-center"><Save size={18} />Save</button>
                 </div>
@@ -2810,8 +2796,37 @@ function AITakeoff({ language = "en", project }) {
       </main>
       {showScaleModal && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-md"><div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><h3 className="flex items-center gap-3 text-2xl font-black text-white"><Ruler className="text-amber-300" /> Set Drawing Scale</h3><p className="mt-3 max-w-2xl text-lg leading-7 text-slate-400">Choose a preset scale or calibrate manually by clicking two points on the plan.</p></div><button onClick={() => setShowScaleModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-white"><X /></button></div><div className="mt-6"><p className="mb-3 font-black text-white">Preset Scales</p><div className="grid gap-3 sm:grid-cols-3">{scalePresets.map((preset) => <button key={preset.label} onClick={() => applyScalePreset(preset)} className={`rounded-2xl border p-4 text-left transition hover:border-amber-400/60 hover:bg-amber-400/10 ${scaleLabel === preset.label ? "border-amber-400 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,.18)]" : "border-white/10 bg-slate-900/60"}`}><p className="text-lg font-black text-white">{preset.label}</p><p className="mt-1 text-sm font-bold text-slate-500">{preset.detail}</p></button>)}</div></div><div className="mt-7"><p className="mb-3 font-black text-white">Custom Calibration</p><div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/50 p-5"><p className="text-slate-400">Click two points on the plan and enter the real-world distance.</p><label className="mt-4 block"><span className="label">Known distance in feet</span><input inputMode="decimal" className="field" value={calibrationDistance} onChange={(event) => setCalibrationDistance(event.target.value)} /></label><button onClick={startCalibration} className="primary-button mt-4 w-full justify-center"><MousePointer2 size={18} /> Start Calibration</button></div></div><div className="mt-6 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-bold text-cyan-200">Current: {scaleLabel} Â· reference {scaleFeet} ft</p><button onClick={() => setShowScaleModal(false)} className="secondary-button">Cancel</button></div></div></div>}
       {showGroupModal && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"><div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-2xl font-black text-white">Add Group</h3><button onClick={() => setShowGroupModal(false)}><X /></button></div><div className="mt-5 grid gap-4"><label><span className="label">Name</span><input className="field text-lg" value={draftGroup.name} onChange={(event) => setDraftGroup({ ...draftGroup, name: event.target.value })} /></label><label><span className="label">Type</span><select className="field" value={draftGroup.type} onChange={(event) => setDraftGroup({ ...draftGroup, type: event.target.value })}><option>Area (SF)</option><option>Linear (LF)</option><option>Count</option><option>Volume (YD3)</option></select></label><label><span className="label">Parent Group</span><select className="field" value={draftGroup.parent} onChange={(event) => setDraftGroup({ ...draftGroup, parent: event.target.value })}><option>None</option>{groups.map((group) => <option key={group.id}>{group.name}</option>)}</select></label><div className="grid gap-4 md:grid-cols-2"><div><span className="label">Icon</span><div className="grid grid-cols-6 gap-2 rounded-2xl bg-slate-900 p-3">{iconOptions.map((icon) => { const Icon = IconByName[icon] || Layers; return <button key={icon} onClick={() => setDraftGroup({ ...draftGroup, icon })} className={`grid h-10 place-items-center rounded-xl ${draftGroup.icon === icon ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'}`}><Icon size={18} /></button>; })}</div></div><div><span className="label">Color</span><div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900 p-3">{colorOptions.map((color) => <button key={color} onClick={() => setDraftGroup({ ...draftGroup, color })} className={`h-9 rounded-lg border-2 ${draftGroup.color === color ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: color }} />)}</div></div></div><label><span className="label">Pitch</span><select className="field" value={draftGroup.pitch} onChange={(event) => setDraftGroup({ ...draftGroup, pitch: event.target.value })}><option>Flat (0/12)</option><option>Low slope (3/12)</option><option>Standard (6/12)</option><option>Steep (9/12)</option></select></label><label className="flex items-center gap-3 text-white"><input type="checkbox" checked={draftGroup.volume} onChange={(event) => setDraftGroup({ ...draftGroup, volume: event.target.checked })} /> Calculate volume (yd3)</label></div><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowGroupModal(false)} className="secondary-button">Cancel</button><button onClick={addGroup} className="primary-button">Save</button></div></div></div>}
-      {aiOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"><div className="w-full max-w-3xl rounded-3xl border border-purple-400/25 bg-slate-950 p-6 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-2xl font-black text-white"><Bot className="mr-2 inline text-purple-300" />AI Material Summary</h3><button onClick={() => setAiOpen(false)}><X /></button></div><p className="mt-2 text-slate-400">Generated from your measurement groups, unit prices, and waste factors. Verify before ordering.</p><div className="mt-5 grid gap-3 md:grid-cols-2">{totalsByGroup.filter((group) => group.count).map((group) => <div key={group.id} className="rounded-2xl border border-white/10 bg-slate-900 p-4"><p className="font-black text-white">{group.name}</p><p className="text-sm text-slate-400">{formatNumber(group.withWaste, 1)} units with {group.waste}% waste</p><p className="mt-2 text-xl font-black text-emerald-300">{formatMoney(group.cost)}</p></div>)}</div><div className="mt-5 flex flex-wrap justify-between gap-3 rounded-2xl bg-purple-400/10 p-4"><span className="font-black text-white">Estimated material total</span><span className="text-2xl font-black text-purple-200">{formatMoney(totalCost)}</span></div><div className="mt-5 flex justify-end gap-3"><button onClick={exportPdf} className="secondary-button"><Printer size={18} /> Export PDF</button><button onClick={() => setAiOpen(false)} className="primary-button">Done</button></div></div></div>}
-      <div ref={reportRef} className="fixed -left-[9999px] top-0 w-[794px] bg-white p-10 text-slate-950"><div className="flex justify-between border-b border-slate-300 pb-5"><h1 className="text-3xl font-black">Takeoff Report</h1><p>{new Date().toLocaleDateString()}</p></div>{totalsByGroup.filter((group) => group.count).map((group) => <div key={group.id} className="flex justify-between border-b border-slate-200 py-4"><span><strong>{group.name}</strong><br />{group.count} measurements</span><span>{formatNumber(group.withWaste, 1)} units<br /><small>{group.waste}% waste</small></span></div>)}<div className="flex justify-between pt-5 text-xl font-black"><span>Total</span><span>{formatMoney(totalCost)}</span></div><p className="mt-8 text-sm text-slate-500">Generated by Operitron</p></div>
+      {aiOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+        <div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl">
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="flex items-center gap-3 text-2xl font-black text-white"><span className="grid h-11 w-11 place-items-center rounded-2xl bg-purple-500/20 text-amber-300"><Bot /></span>AI Takeoff Analysis</h3>
+            <button onClick={() => setAiOpen(false)} className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-white"><X /></button>
+          </div>
+          {aiChoiceView === "menu" ? <>
+            <p className="mt-5 text-lg text-slate-400">Choose how you want to analyze your floor plans.</p>
+            <div className="mt-7 space-y-4">
+              <button onClick={() => runTakeoffAnalysis("full")} className="group flex w-full gap-4 rounded-3xl border border-white/10 bg-slate-900/60 p-5 text-left transition hover:border-cyan-300/50 hover:bg-cyan-300/10">
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-cyan-400 text-slate-950"><Sparkles /></span>
+                <span><span className="text-xl font-black text-white">Full Analysis <span className="ml-2 rounded-full bg-amber-400/15 px-3 py-1 text-sm text-amber-300">1 page</span></span><span className="mt-2 block text-slate-400">Analyze all pages automatically</span><span className="mt-3 block leading-6 text-slate-500">Extract heated square footage, flooring, drywall, siding, roofing, door/window counts, and trim assumptions.</span></span>
+              </button>
+              <button onClick={() => setAiChoiceView("custom")} className="group flex w-full gap-4 rounded-3xl border border-white/10 bg-slate-900/60 p-5 text-left transition hover:border-fuchsia-300/50 hover:bg-fuchsia-300/10">
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-fuchsia-500 text-white"><Mail /></span>
+                <span><span className="text-xl font-black text-white">Custom Analysis <Sparkles className="ml-2 inline text-fuchsia-300" size={18} /></span><span className="mt-2 block text-slate-400">Tell me what you need</span><span className="mt-3 block leading-6 text-slate-500">Specify pages and characteristics such as roofing only, window counts, trim, or selected rooms.</span></span>
+              </button>
+              <button onClick={() => runTakeoffAnalysis("mep")} className="group flex w-full gap-4 rounded-3xl border border-white/10 bg-slate-900/60 p-5 text-left transition hover:border-emerald-300/50 hover:bg-emerald-300/10">
+                <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-emerald-400 text-slate-950"><Settings /></span>
+                <span><span className="text-xl font-black text-white">MEP Analysis <span className="ml-2 rounded-full bg-emerald-400/15 px-3 py-1 text-sm text-emerald-300">NEW</span></span><span className="mt-2 block text-slate-400">Mechanical, Electrical & Plumbing</span><span className="mt-3 block leading-6 text-slate-500">Identify and quantify outlets, switches, panels, light fixtures, plumbing fixtures, HVAC equipment, and duct assumptions.</span></span>
+              </button>
+            </div>
+            <div className="mt-6 flex justify-end"><button onClick={() => setAiOpen(false)} className="secondary-button">Cancel</button></div>
+          </> : <>
+            <button onClick={() => setAiChoiceView("menu")} className="mt-5 flex items-center gap-2 text-sm font-black text-slate-300 hover:text-white"><ChevronRight className="rotate-180" size={16} />Back</button>
+            <div className="mt-5 rounded-3xl bg-slate-900/80 p-5 text-slate-200"><p className="leading-7">Hi! I can help you with a custom takeoff analysis. Tell me which page(s) you want to analyze and what you are looking for, like roofing measurements, window counts, drywall, or doors.</p></div>
+            <div className="mt-5 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4"><p className="font-black text-white">Ready to start the analysis?</p><p className="mt-2 text-sm text-slate-400">I will analyze page(s): 1</p><p className="mt-1 text-sm text-slate-400">Looking for: {customPrompt || "Analyze all architectural elements, measurements, and counts."}</p></div>
+            <div className="mt-5 flex gap-3"><textarea value={customPrompt} onChange={(event) => setCustomPrompt(event.target.value)} className="field min-h-28 flex-1" placeholder="Tell me which pages to analyze and what you're looking for..." /><button onClick={() => runTakeoffAnalysis("custom")} className="primary-button self-end"><Bot size={18} />Go</button></div>
+          </>}
+        </div>
+      </div>}      <div ref={reportRef} className="fixed -left-[9999px] top-0 w-[794px] bg-white p-10 text-slate-950"><div className="flex justify-between border-b border-slate-300 pb-5"><h1 className="text-3xl font-black">Takeoff Report</h1><p>{new Date().toLocaleDateString()}</p></div>{totalsByGroup.filter((group) => group.count).map((group) => <div key={group.id} className="flex justify-between border-b border-slate-200 py-4"><span><strong>{group.name}</strong><br />{group.count} measurements</span><span>{formatNumber(group.withWaste, 1)} units<br /><small>{group.waste}% waste</small></span></div>)}<div className="flex justify-between pt-5 text-xl font-black"><span>Total</span><span>{formatMoney(totalCost)}</span></div><p className="mt-8 text-sm text-slate-500">Generated by Operitron</p></div>
     </div>
   );
 }
