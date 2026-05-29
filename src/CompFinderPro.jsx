@@ -38,6 +38,7 @@ import {
   Settings,
   Share2,
   Sparkles,
+  Trash2,
   Upload,
   UserCircle,
   Users,
@@ -2452,8 +2453,15 @@ function Checklist({ items, project, language = "en" }) {
   const isEs = language === "es";
   const [tasks, setTasks] = useState(items.map((item, index) => ({ title: item, done: index === 1, priority: index % 2 ? "High" : "Normal", due: index % 2 ? "Friday" : "Next week" })));
   const [newTask, setNewTask] = useState("");
-  const addTask = () => { if (newTask.trim()) { setTasks([...tasks, { title: newTask.trim(), done: false, priority: "Normal", due: "Unscheduled" }]); setNewTask(""); } };
-  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Lista de Tareas" : "To Do List"}</h3><p className="text-slate-400">{isEs ? "Coordina próximos pasos de inversión y obra." : "Coordinate investment and construction next steps."}</p></div><span className="rounded-full bg-cyan-300/10 px-4 py-2 text-sm font-black text-cyan-200">{tasks.filter((task) => !task.done).length} {isEs ? "abiertas" : "open"}</span></div><div className="flex gap-3"><input value={newTask} onChange={(event) => setNewTask(event.target.value)} className="field" placeholder={isEs ? "Nueva tarea..." : "New task..."} /><button onClick={addTask} className="primary-button shrink-0"><Plus size={18} /> {isEs ? "Agregar" : "Add"}</button></div><div className="space-y-3">{tasks.map((task, index) => <button key={`${task.title}-${index}`} onClick={() => setTasks(tasks.map((item, itemIndex) => itemIndex === index ? { ...item, done: !item.done } : item))} className="flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left hover:border-cyan-300/30"><CheckCircle2 className={task.done ? "text-emerald-300" : "text-slate-600"} /><div className="flex-1"><p className={`font-black text-white ${task.done ? "line-through opacity-60" : ""}`}>{task.title}</p><p className="text-sm text-slate-400">{task.priority} · {task.due}</p></div></button>)}</div></div>;
+  const addTask = () => {
+    if (newTask.trim()) {
+      setTasks([...tasks, { title: newTask.trim(), done: false, priority: "Normal", due: "Unscheduled" }]);
+      setNewTask("");
+    }
+  };
+  const toggleTask = (index) => setTasks((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, done: !item.done } : item));
+  const removeTask = (index) => setTasks((current) => current.filter((_, itemIndex) => itemIndex !== index));
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Lista de Tareas" : "To Do List"}</h3><p className="text-slate-400">{isEs ? "Coordina próximos pasos de inversión y obra." : "Coordinate investment and construction next steps."}</p></div><span className="rounded-full bg-cyan-300/10 px-4 py-2 text-sm font-black text-cyan-200">{tasks.filter((task) => !task.done).length} {isEs ? "abiertas" : "open"}</span></div><div className="flex flex-col gap-3 sm:flex-row"><input value={newTask} onChange={(event) => setNewTask(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addTask(); }} className="field" placeholder={isEs ? "Nueva tarea..." : "New task..."} /><button onClick={addTask} className="primary-button shrink-0"><Plus size={18} /> {isEs ? "Agregar" : "Add"}</button></div><div className="space-y-3">{tasks.map((task, index) => <div key={`${task.title}-${index}`} className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-3 transition hover:border-cyan-300/30 hover:bg-cyan-300/[.03] sm:gap-4 sm:p-4"><button type="button" onClick={() => toggleTask(index)} aria-label={task.done ? (isEs ? "Marcar como pendiente" : "Mark task open") : (isEs ? "Marcar como completada" : "Mark task complete")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate-600 transition hover:bg-white/5 hover:text-emerald-300"><CheckCircle2 className={task.done ? "text-emerald-300" : "text-slate-600"} /></button><button type="button" onClick={() => toggleTask(index)} className="min-w-0 flex-1 text-left"><p className={`break-words font-black text-white ${task.done ? "line-through opacity-60" : ""}`}>{task.title}</p><p className="text-sm text-slate-400">{task.priority} · {task.due}</p></button><button type="button" onClick={() => removeTask(index)} aria-label={isEs ? `Eliminar ${task.title}` : `Remove ${task.title}`} title={isEs ? "Eliminar tarea" : "Remove task"} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-rose-300/15 text-rose-200 opacity-90 transition hover:border-rose-300/40 hover:bg-rose-400/10 hover:text-rose-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"><Trash2 size={18} /></button></div>)}</div></div>;
 }
 
 function PunchListApp({ language = "en", project }) {
@@ -2623,10 +2631,36 @@ function KnowledgeBase({ t, language }) {
   return <GlassPanel><h2 className="text-4xl font-black text-white">{t.knowledge}</h2><p className="mt-3 text-slate-400">{language === "es" ? `Respuestas detalladas sobre cómo ${t.brand} potencia cada fase de la inversión inmobiliaria.` : `Detailed answers about how ${t.brand} supports each phase of real estate investing.`}</p><div className="mt-8 space-y-4">{faqs.map(([q, a]) => <details key={q} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><summary className="cursor-pointer text-lg font-black text-white">{q}</summary><p className="mt-4 leading-7 text-slate-300">{a}</p></details>)}</div></GlassPanel>;
 }
 
+function AdminCheckoutDiagnostics({ diagnostics, language }) {
+  if (!diagnostics) return null;
+  const isEs = language === "es";
+  const rows = [
+    [isEs ? "Estado de Stripe" : "Stripe initialization status", diagnostics.stripeInitializationStatus],
+    [isEs ? "Price ID usado" : "Price ID being used", diagnostics.priceIdBeingUsed],
+    [isEs ? "Estado del usuario Supabase" : "Supabase user status", diagnostics.supabaseUserStatus],
+    [isEs ? "Código de respuesta API" : "API response code", diagnostics.apiResponseCode],
+    [isEs ? "Mensaje de error" : "Error message", diagnostics.errorMessage],
+  ];
+  if (diagnostics.missingConfiguration?.length) rows.push([isEs ? "Configuración faltante" : "Missing configuration", diagnostics.missingConfiguration.join(", ")]);
+  if (diagnostics.stripeErrorType) rows.push(["Stripe error type", diagnostics.stripeErrorType]);
+  if (diagnostics.stripeErrorCode) rows.push(["Stripe error code", diagnostics.stripeErrorCode]);
+  if (diagnostics.stripeRequestId) rows.push(["Stripe request ID", diagnostics.stripeRequestId]);
+  return <div className="rounded-2xl border border-amber-300/30 bg-amber-300/[.08] p-4 text-left shadow-[0_0_30px_rgba(251,191,36,.08)]">
+    <p className="text-sm font-black uppercase tracking-widest text-amber-200">{isEs ? "Diagnóstico administrativo de checkout" : "Admin checkout diagnostics"}</p>
+    <div className="mt-4 grid gap-2">
+      {rows.map(([label, value]) => <div key={label} className="grid gap-1 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm sm:grid-cols-[220px_1fr]">
+        <span className="font-bold text-slate-400">{label}</span>
+        <span className="break-words font-mono text-cyan-100">{String(value || "-")}</span>
+      </div>)}
+    </div>
+  </div>;
+}
+
 function PricingPlans({ language, user, go }) {
   const isEs = language === "es";
   const [billingStatus, setBillingStatus] = useState("");
   const [billingLoading, setBillingLoading] = useState("");
+  const [checkoutDiagnostics, setCheckoutDiagnostics] = useState(null);
   const monthlyFeatures = isEs
     ? ["Proyectos y deals ilimitados", "Analizador de deals y fix-and-flip", "Calculadoras DSCR, BRRR y cash-out", "Rastreador de construcción", "Takeoff de materiales con IA", "Punch list", "Gestión de subcontratistas y ofertas", "Compartir proyectos y colaborar", "Asistente IA en cada herramienta"]
     : ["Unlimited projects & deals", "Deal & Fix-and-Flip underwriter", "DSCR, BRRR & Cash-Out calculators", "Construction tracker", "AI material takeoff", "Punch list", "Subcontractor & bid management", "Project sharing & collaboration", "AI assistant on every tool"];
@@ -2644,6 +2678,7 @@ function PricingPlans({ language, user, go }) {
     }
     setBillingLoading(plan.id);
     setBillingStatus("");
+    setCheckoutDiagnostics(null);
     try {
       const { data } = await supabase.auth.getSession();
       const response = await fetch(checkoutEndpoint, {
@@ -2652,7 +2687,10 @@ function PricingPlans({ language, user, go }) {
         body: JSON.stringify({ plan: plan.id }),
       });
       const result = await readApiJson(response);
-      if (!response.ok) throw new Error(result.error || "Checkout could not start.");
+      if (!response.ok) {
+        if (result.diagnostics) setCheckoutDiagnostics(result.diagnostics);
+        throw new Error(result.error || "Checkout could not start.");
+      }
       window.location.assign(result.url);
     } catch (error) {
       const genericServerError = error.message === "A server error occurred. Please try again or contact support@operitron.com.";
@@ -2661,7 +2699,7 @@ function PricingPlans({ language, user, go }) {
       setBillingLoading("");
     }
   }
-  return <div className="space-y-8"><section className="mx-auto max-w-3xl text-center"><p className="text-sm font-black uppercase tracking-widest text-cyan-300">{isEs ? "Precios simples" : "Simple Pricing"}</p><h2 className="mt-3 text-4xl font-black text-white md:text-5xl">{isEs ? "Elige cómo quieres crecer con Operitron" : "Choose how you want to grow with Operitron"}</h2><p className="mt-4 text-lg leading-8 text-slate-400">{isEs ? "Dos planes claros para analizar deals, gestionar construcción y colaborar con tu equipo." : "Two clean plans for analyzing deals, managing construction, and collaborating with your team."}</p></section><div className="grid gap-6 lg:grid-cols-2">{plans.map((plan) => <motion.div key={plan.name} whileHover={{ y: -6 }} className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-2xl backdrop-blur-xl ${plan.featured ? "border-cyan-300/50 bg-gradient-to-br from-cyan-400/15 via-purple-500/10 to-white/[.055] shadow-cyan-500/10" : "border-white/10 bg-white/[.055] shadow-black/20"}`}>{plan.featured && <div className="absolute right-5 top-5 rounded-full border border-cyan-300/30 bg-cyan-300 px-4 py-1 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">{isEs ? "Mejor Valor" : "Best Value"}</div>}<div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/20 blur-3xl" /><div className="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" /><div className="relative z-10"><p className="text-2xl font-black text-white">{plan.name}</p><p className="mt-2 min-h-12 max-w-md text-slate-400">{plan.detail}</p><div className="mt-6 flex items-end gap-2"><span className={`text-5xl font-black ${plan.featured ? "text-cyan-200" : "text-amber-300"}`}>{plan.price}</span><span className="pb-2 font-bold text-slate-500">{plan.cadence}</span></div><p className="mt-3 font-bold text-emerald-300">{plan.note}</p><button disabled={billingLoading === plan.id} onClick={() => beginCheckout(plan)} className={`mt-7 w-full rounded-2xl py-4 font-black transition disabled:cursor-wait disabled:opacity-70 ${plan.featured ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.28)] hover:bg-cyan-200" : "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.22)] hover:bg-amber-300"}`}>{billingLoading === plan.id ? (isEs ? "Cargando..." : "Loading...") : (isEs ? "Comenzar" : "Get Started")}</button><ul className="mt-7 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-3 text-slate-300"><CheckCircle2 className={plan.featured ? "text-cyan-300" : "text-emerald-400"} size={19} /><span>{feature}</span></li>)}</ul></div></motion.div>)}</div>{billingStatus && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-center text-sm text-cyan-100">{billingStatus}</p>}</div>;
+  return <div className="space-y-8"><section className="mx-auto max-w-3xl text-center"><p className="text-sm font-black uppercase tracking-widest text-cyan-300">{isEs ? "Precios simples" : "Simple Pricing"}</p><h2 className="mt-3 text-4xl font-black text-white md:text-5xl">{isEs ? "Elige cómo quieres crecer con Operitron" : "Choose how you want to grow with Operitron"}</h2><p className="mt-4 text-lg leading-8 text-slate-400">{isEs ? "Dos planes claros para analizar deals, gestionar construcción y colaborar con tu equipo." : "Two clean plans for analyzing deals, managing construction, and collaborating with your team."}</p></section><div className="grid gap-6 lg:grid-cols-2">{plans.map((plan) => <motion.div key={plan.name} whileHover={{ y: -6 }} className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-2xl backdrop-blur-xl ${plan.featured ? "border-cyan-300/50 bg-gradient-to-br from-cyan-400/15 via-purple-500/10 to-white/[.055] shadow-cyan-500/10" : "border-white/10 bg-white/[.055] shadow-black/20"}`}>{plan.featured && <div className="absolute right-5 top-5 rounded-full border border-cyan-300/30 bg-cyan-300 px-4 py-1 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">{isEs ? "Mejor Valor" : "Best Value"}</div>}<div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/20 blur-3xl" /><div className="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" /><div className="relative z-10"><p className="text-2xl font-black text-white">{plan.name}</p><p className="mt-2 min-h-12 max-w-md text-slate-400">{plan.detail}</p><div className="mt-6 flex items-end gap-2"><span className={`text-5xl font-black ${plan.featured ? "text-cyan-200" : "text-amber-300"}`}>{plan.price}</span><span className="pb-2 font-bold text-slate-500">{plan.cadence}</span></div><p className="mt-3 font-bold text-emerald-300">{plan.note}</p><button disabled={billingLoading === plan.id} onClick={() => beginCheckout(plan)} className={`mt-7 w-full rounded-2xl py-4 font-black transition disabled:cursor-wait disabled:opacity-70 ${plan.featured ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.28)] hover:bg-cyan-200" : "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.22)] hover:bg-amber-300"}`}>{billingLoading === plan.id ? (isEs ? "Cargando..." : "Loading...") : (isEs ? "Comenzar" : "Get Started")}</button><ul className="mt-7 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-3 text-slate-300"><CheckCircle2 className={plan.featured ? "text-cyan-300" : "text-emerald-400"} size={19} /><span>{feature}</span></li>)}</ul></div></motion.div>)}</div>{billingStatus && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-center text-sm text-cyan-100">{billingStatus}</p>}<AdminCheckoutDiagnostics diagnostics={checkoutDiagnostics} language={language} /></div>;
 }
 
 function PasswordField({ value, onChange, placeholder, autoComplete, visible, onToggle, language }) {
