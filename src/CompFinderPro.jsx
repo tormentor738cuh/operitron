@@ -2399,6 +2399,10 @@ function AITakeoff({ language = "en", project }) {
   const total = drywall * cleanNumber(drywallPrice) + flooring * cleanNumber(flooringPrice) + baseboard * cleanNumber(baseboardPrice) + outlets * cleanNumber(outletPrice);
 
   async function exportPdf() {
+    if (!items.length) {
+      setVoiceStatus(isEs ? "Agrega al menos un elemento antes de generar PDF." : "Add at least one item before generating a PDF.");
+      return;
+    }
     const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([import("jspdf"), import("html2canvas")]);
     const canvas = await html2canvas(reportRef.current, { backgroundColor: "#ffffff", scale: 2 });
     const pdf = new jsPDF("p", "mm", "a4");
@@ -2474,9 +2478,52 @@ function PunchListApp({ language = "en", project }) {
     { title: "Non-Functional Lighting", trade: "Electrical", location: "Hallway 2F", status: "Open", color: "yellow", done: false },
     { title: "Drywall Patch - Master BR", trade: "Drywall", location: "Master Bedroom", status: "Resolved", color: "green", done: true },
   ]);
+  const [tradeFilter, setTradeFilter] = useState("All");
+  const [itemModalOpen, setItemModalOpen] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState("");
+  const [draftItem, setDraftItem] = useState({ title: "", trade: "General", location: "", status: "Open" });
   const reportRef = useRef(null);
-  const toggle = (index) => setItems(items.map((item, i) => i === index ? { ...item, done: !item.done, status: item.done ? "Open" : "Resolved", color: item.done ? "yellow" : "green" } : item));
+  const visibleItems = tradeFilter === "All" ? items : items.filter((item) => item.trade === tradeFilter);
+  const trades = ["All", ...Array.from(new Set(items.map((item) => item.trade))).filter(Boolean)];
+  const toggle = (targetItem) => setItems(items.map((item) => item === targetItem ? { ...item, done: !item.done, status: item.done ? "Open" : "Resolved", color: item.done ? "yellow" : "green" } : item));
+  const removeItem = (targetItem) => setItems(items.filter((item) => item !== targetItem));
   const tradeCounts = items.reduce((acc, item) => ({ ...acc, [item.trade]: (acc[item.trade] || 0) + 1 }), {});
+  const colorForStatus = (status) => status === "Resolved" ? "green" : status === "In Progress" ? "yellow" : "red";
+  function createList() {
+    if (!items.length || window.confirm(isEs ? "Esto iniciará una lista nueva y limpiará los elementos actuales." : "This will start a new list and clear current items.")) {
+      setItems([]);
+      setTradeFilter("All");
+      setGuideDismissed(true);
+      setVoiceStatus(isEs ? "Nueva lista creada." : "New punch list created.");
+    }
+  }
+  function saveItem() {
+    if (!draftItem.title.trim()) return;
+    setItems([{ ...draftItem, title: draftItem.title.trim(), location: draftItem.location.trim() || "Unassigned", done: draftItem.status === "Resolved", color: colorForStatus(draftItem.status) }, ...items]);
+    setDraftItem({ title: "", trade: "General", location: "", status: "Open" });
+    setItemModalOpen(false);
+  }
+  function startVoicePunch() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      setVoiceStatus(isEs ? "Tu navegador no permite transcripción por voz. Usa Chrome o Edge." : "Voice transcription is not available in this browser. Try Chrome or Edge.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = isEs ? "es-US" : "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    setVoiceStatus(isEs ? "Escuchando... habla el pendiente." : "Listening... speak the punch item.");
+    recognition.onresult = (event) => {
+      const transcript = event.results?.[0]?.[0]?.transcript?.trim();
+      if (transcript) {
+        setItems((current) => [{ title: transcript, trade: "General", location: "Voice note", status: "Open", color: "yellow", done: false }, ...current]);
+        setVoiceStatus(isEs ? `Agregado por voz: ${transcript}` : `Voice item added: ${transcript}`);
+      }
+    };
+    recognition.onerror = (event) => setVoiceStatus(isEs ? `No se pudo grabar: ${event.error}` : `Voice capture failed: ${event.error}`);
+    recognition.start();
+  }
   async function exportPdf() {
     const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([import("jspdf"), import("html2canvas")]);
     const canvas = await html2canvas(reportRef.current, { backgroundColor: "#ffffff", scale: 2 });
@@ -2488,11 +2535,20 @@ function PunchListApp({ language = "en", project }) {
   return (
     <ToolShell title="Construction Punch List App" subtitle="Close out projects faster with mobile-first issue tracking, photos, voice input, trade assignments, and PDF reports.">
       <ProjectContext project={project} language={language} />
-      <div className="mb-6 mt-5 flex flex-wrap items-center justify-between gap-3"><h3 className="text-2xl font-black text-white">{isEs ? "Recorrido de Cierre" : "Closeout Walkthrough"}</h3><button className="primary-button"><Plus size={18} />{isEs ? "Crear Lista" : "Create List"}</button></div>
+      <div className="mb-6 mt-5 flex flex-wrap items-center justify-between gap-3"><h3 className="text-2xl font-black text-white">{isEs ? "Recorrido de Cierre" : "Closeout Walkthrough"}</h3><button onClick={createList} className="primary-button"><Plus size={18} />{isEs ? "Crear Lista" : "Create List"}</button></div>
       {!guideDismissed && <div className="mb-7 rounded-3xl border border-cyan-300/20 bg-cyan-300/[.06] p-5">
         <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? `Paso ${guideStep + 1} de ${guide.length}` : `Step ${guideStep + 1} of ${guide.length}`}</p><h4 className="mt-2 text-lg font-black text-white">{guide[guideStep][0]}</h4><p className="mt-2 text-sm text-slate-300">{guide[guideStep][1]}</p></div></div>
         <div className="mt-5 flex items-center justify-between"><div className="flex gap-2">{guide.map((_, index) => <span key={index} className={`h-2 w-2 rounded-full ${index === guideStep ? "bg-cyan-300" : "bg-slate-700"}`} />)}</div><div className="flex gap-2"><button onClick={() => setGuideStep(Math.max(0, guideStep - 1))} className="secondary-button">{isEs ? "Anterior" : "Previous"}</button><button onClick={() => guideStep === guide.length - 1 ? setGuideDismissed(true) : setGuideStep(Math.min(guide.length - 1, guideStep + 1))} className="primary-button">{guideStep === guide.length - 1 ? (isEs ? "Comenzar" : "Get Started") : (isEs ? "Siguiente" : "Next")}</button></div></div>
       </div>}
+      <div className="mb-6 flex flex-wrap items-center justify-end gap-3 rounded-3xl border border-white/10 bg-slate-950/50 p-4">
+        <select value={tradeFilter} onChange={(event) => setTradeFilter(event.target.value)} className="field min-h-[3rem] w-full sm:w-56">
+          {trades.map((trade) => <option key={trade} value={trade}>{trade === "All" ? (isEs ? "Todos los oficios" : "All Trades") : trade}</option>)}
+        </select>
+        <button onClick={exportPdf} className="secondary-button"><FileText size={18} />{isEs ? "Generar PDF" : "Generate PDF"}</button>
+        <button onClick={startVoicePunch} className="secondary-button"><Mic size={18} />{isEs ? "Punch por Voz" : "Voice Punch"}</button>
+        <button onClick={() => setItemModalOpen(true)} className="primary-button"><Plus size={18} />{isEs ? "Agregar Ítem" : "Add Item"}</button>
+      </div>
+      {voiceStatus && <p className="mb-5 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-sm font-bold text-cyan-100">{voiceStatus}</p>}
       <div className="grid gap-7 xl:grid-cols-[390px_1fr]">
         <div className="rounded-[2rem] border border-white/10 bg-slate-950 p-4 shadow-2xl">
           <div className="rounded-[1.6rem] bg-[#0b1225] p-4">
