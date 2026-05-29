@@ -9,6 +9,7 @@ import {
   Calculator,
   Camera,
   CheckCircle2,
+  ChevronDown,
   ChevronRight,
   ClipboardCheck,
   Cloud,
@@ -29,21 +30,32 @@ import {
   LogOut,
   MapPin,
   Mail,
+  Maximize2,
   Menu,
   Mic,
+  MoreVertical,
+  MousePointer2,
+  Move,
   Phone,
   PlayCircle,
   Plus,
+  Printer,
+  Ruler,
+  Save,
   Search,
   Settings,
   Share2,
   Sparkles,
+  StickyNote,
   Trash2,
+  Undo2,
   Upload,
   UserCircle,
   Users,
   WalletCards,
   X,
+  ZoomIn,
+  ZoomOut,
 } from "lucide-react";
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
@@ -94,8 +106,8 @@ function subscriptionPlanLabel(plan, language) {
   const normalized = String(plan || "").trim().toLowerCase();
   if (normalized === "monthly") return language === "es" ? "Mensual" : "Monthly";
   if (normalized === "annual") return language === "es" ? "Anual" : "Annual";
-  if (["no subscription", "inactive", ""].includes(normalized)) return language === "es" ? "Sin suscripciÃƒÂ³n" : "No subscription";
-  if (normalized === "subscribed") return language === "es" ? "SuscripciÃƒÂ³n activa" : "Active subscription";
+  if (["no subscription", "inactive", ""].includes(normalized)) return language === "es" ? "Sin suscripciÃƒÆ’Ã‚Â³n" : "No subscription";
+  if (normalized === "subscribed") return language === "es" ? "SuscripciÃƒÆ’Ã‚Â³n activa" : "Active subscription";
   return plan;
 }
 
@@ -174,7 +186,7 @@ const seoArticles = {
       ["How to improve DSCR", "Lower the purchase price, increase the down payment, negotiate seller credits, reduce insurance costs, improve rent, or choose a loan structure with a lower payment. Each option changes both risk and return."],
     ],
     checklist: ["Use market rent, not best-case rent.", "Confirm taxes after sale or reassessment.", "Quote insurance before final underwriting.", "Model DSCR at multiple interest rates.", "Keep reserves for vacancy and repairs."],
-    cta: "Use OperitronÃ¢â‚¬â„¢s investment loan calculator to compare DSCR, cash-out, and construction loan scenarios.",
+    cta: "Use OperitronÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s investment loan calculator to compare DSCR, cash-out, and construction loan scenarios.",
   },
   constructionBudgets: {
     category: "Construction",
@@ -218,7 +230,7 @@ const seoArticles = {
       ["Holding and selling costs are real", "Taxes, utilities, insurance, interest, staging, agent commissions, seller credits, closing costs, and extra months can erase a deal. Model time honestly."],
     ],
     checklist: ["Use sold comps inside the same buyer pool.", "Add resale fees and seller concessions.", "Stress-test the timeline by 30 to 60 days.", "Get contractor bids before hard money draws begin.", "Set a minimum profit target before negotiating."],
-    cta: "Use OperitronÃ¢â‚¬â„¢s deal underwriter to calculate profit, ROI, 70% rule, and max offer before making an offer.",
+    cta: "Use OperitronÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s deal underwriter to calculate profit, ROI, 70% rule, and max offer before making an offer.",
   },
   airbnbRoi: {
     category: "Short-Term Rentals",
@@ -262,7 +274,7 @@ const seoArticles = {
       ["Soft costs deserve their own line items", "Plans, engineering, surveys, permits, utility taps, builder risk insurance, legal, accounting, lender fees, appraisal, inspections, and project management all belong in the budget."],
     ],
     checklist: ["Confirm utility availability before buying land.", "Price site work separately from vertical construction.", "Choose finish level before collecting bids.", "Add contingency for unknown conditions.", "Model construction interest and sale time."],
-    cta: "Use OperitronÃ¢â‚¬â„¢s construction wizard and budget estimator to turn build assumptions into a project checklist and cost model.",
+    cta: "Use OperitronÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s construction wizard and budget estimator to turn build assumptions into a project checklist and cost model.",
   },
   framingTimelines: {
     category: "Project Management",
@@ -284,7 +296,7 @@ const seoArticles = {
       ["Complexity changes productivity", "A simple rectangle frames faster than a custom design with multiple rooflines, tall walls, balconies, steel beams, or unusual window and door layouts."],
     ],
     checklist: ["Order trusses before the framing crew needs them.", "Verify rough openings before window and door delivery.", "Confirm lumber package completeness.", "Schedule inspections early.", "Track weather risk during framing and dry-in."],
-    cta: "Use OperitronÃ¢â‚¬â„¢s construction progress tools to track framing tasks, critical orders, risk alerts, and schedule dependencies.",
+    cta: "Use OperitronÃƒÂ¢Ã¢â€šÂ¬Ã¢â€žÂ¢s construction progress tools to track framing tasks, critical orders, risk alerts, and schedule dependencies.",
   },
 };
 
@@ -400,27 +412,27 @@ const copy = {
   es: {
     dashboard: "Panel",
     projectTools: "Herramientas",
-    propertySearch: "BÃƒÂºsqueda de Propiedad",
+    propertySearch: "BÃƒÆ’Ã‚Âºsqueda de Propiedad",
     learning: "Centro de Aprendizaje",
     knowledge: "Base de Conocimiento",
     tutorials: "Tutoriales",
     tours: "Recorridos",
     dropbox: "Dropbox",
     pricing: "Precios",
-    settings: "ConfiguraciÃƒÂ³n",
+    settings: "ConfiguraciÃƒÆ’Ã‚Â³n",
     profile: "Perfil",
-    startTrial: "Iniciar prueba gratis de 3 dÃƒÂ­as",
+    startTrial: "Iniciar prueba gratis de 3 dÃƒÆ’Ã‚Â­as",
     command: "AI Real Estate Operating System",
     welcome: "Bienvenido, Brandon",
     savedProjects: "Proyectos Guardados",
     projectedProfit: "Ganancia Proyectada",
     reportsReady: "Reportes Listos",
-    newAnalysis: "Nuevo AnÃƒÂ¡lisis",
+    newAnalysis: "Nuevo AnÃƒÆ’Ã‚Â¡lisis",
     openProject: "Abrir Proyecto",
     createProject: "Crear Proyecto",
-    quickTools: "Herramientas RÃƒÂ¡pidas",
-    trialNote: "Prueba gratis de 3 dÃƒÂ­as. Cancela cuando quieras.",
-    comingSoon: "PrÃƒÂ³ximamente",
+    quickTools: "Herramientas RÃƒÆ’Ã‚Â¡pidas",
+    trialNote: "Prueba gratis de 3 dÃƒÆ’Ã‚Â­as. Cancela cuando quieras.",
+    comingSoon: "PrÃƒÆ’Ã‚Â³ximamente",
     back: "Volver",
   },
 };
@@ -524,44 +536,44 @@ const enhancedCopy = {
     brand: "OPERITRON.COM",
     dashboard: "Panel",
     projectTools: "Herramientas",
-    propertySearch: "BÃƒÂºsqueda de Propiedad",
+    propertySearch: "BÃƒÆ’Ã‚Âºsqueda de Propiedad",
     learning: "Centro de Aprendizaje",
     knowledge: "Base de Conocimiento",
     tutorials: "Tutoriales",
     tours: "Recorridos",
     dropbox: "Dropbox",
     pricing: "Precios",
-    settings: "ConfiguraciÃƒÂ³n",
+    settings: "ConfiguraciÃƒÆ’Ã‚Â³n",
     profile: "Perfil",
-    privacy: "PolÃƒÂ­tica de Privacidad",
-    terms: "TÃƒÂ©rminos",
-    refund: "PolÃƒÂ­tica de Reembolsos",
+    privacy: "PolÃƒÆ’Ã‚Â­tica de Privacidad",
+    terms: "TÃƒÆ’Ã‚Â©rminos",
+    refund: "PolÃƒÆ’Ã‚Â­tica de Reembolsos",
     disclaimer: "Aviso Legal",
-    startTrial: "Iniciar prueba gratis de 3 dÃƒÂ­as",
+    startTrial: "Iniciar prueba gratis de 3 dÃƒÆ’Ã‚Â­as",
     command: "AI Real Estate Operating System",
     welcome: "Bienvenido, Brandon",
     savedProjects: "Proyectos Guardados",
     projectedProfit: "Ganancia Proyectada",
     reportsReady: "Reportes Listos",
-    newAnalysis: "Nuevo AnÃƒÂ¡lisis",
+    newAnalysis: "Nuevo AnÃƒÆ’Ã‚Â¡lisis",
     openProject: "Abrir Proyecto",
     createProject: "Crear Proyecto",
-    quickTools: "Herramientas RÃƒÂ¡pidas",
-    trialNote: "Prueba gratis de 3 dÃƒÂ­as. Cancela cuando quieras.",
-    comingSoon: "PrÃƒÂ³ximamente",
+    quickTools: "Herramientas RÃƒÆ’Ã‚Â¡pidas",
+    trialNote: "Prueba gratis de 3 dÃƒÆ’Ã‚Â­as. Cancela cuando quieras.",
+    comingSoon: "PrÃƒÆ’Ã‚Â³ximamente",
     back: "Volver",
     earlyAccess: "Acceso Anticipado",
-    earlyAccessText: "Prueba gratis de 3 dÃƒÂ­as para inversionistas, constructores y operadores.",
+    earlyAccessText: "Prueba gratis de 3 dÃƒÆ’Ã‚Â­as para inversionistas, constructores y operadores.",
     myProjects: "Mis Proyectos",
-    projectHint: "Haz clic en cualquier proyecto para abrir herramientas, cÃƒÂ¡lculos y registros vinculados.",
-    createProjectHint: "Crea un deal, construcciÃƒÂ³n, flip, renta o espacio de trabajo de obra.",
+    projectHint: "Haz clic en cualquier proyecto para abrir herramientas, cÃƒÆ’Ã‚Â¡lculos y registros vinculados.",
+    createProjectHint: "Crea un deal, construcciÃƒÆ’Ã‚Â³n, flip, renta o espacio de trabajo de obra.",
     projectName: "Nombre del proyecto",
-    propertyAddress: "DirecciÃƒÂ³n de la propiedad",
+    propertyAddress: "DirecciÃƒÆ’Ã‚Â³n de la propiedad",
     addProject: "Agregar Proyecto",
-    heroTitle: "Un espacio original para anÃƒÂ¡lisis de deals, registros de propiedades, herramientas de construcciÃƒÂ³n y reportes para inversionistas.",
-    heroText: "Creado para inversionistas, constructores y operadores que necesitan nÃƒÂºmeros claros y ejecuciÃƒÂ³n mÃƒÂ¡s ordenada.",
+    heroTitle: "Un espacio original para anÃƒÆ’Ã‚Â¡lisis de deals, registros de propiedades, herramientas de construcciÃƒÆ’Ã‚Â³n y reportes para inversionistas.",
+    heroText: "Creado para inversionistas, constructores y operadores que necesitan nÃƒÆ’Ã‚Âºmeros claros y ejecuciÃƒÆ’Ã‚Â³n mÃƒÆ’Ã‚Â¡s ordenada.",
     viewLearning: "Ver Centro de Aprendizaje",
-    whatsInside: "QuÃƒÂ© incluye",
+    whatsInside: "QuÃƒÆ’Ã‚Â© incluye",
     everyCard: "Cada tarjeta abre un panel de herramienta funcional.",
     activeProject: "Proyecto Activo",
     projectToolsDetail: "Haz clic en cualquier herramienta para abrir su panel. Pasa el cursor sobre ? para ver ayuda.",
@@ -572,59 +584,59 @@ const enhancedCopy = {
     language: "Idioma",
     workspace: "Espacio de Trabajo",
     trial: "Prueba",
-    accountSettings: "ConfiguraciÃƒÂ³n de Cuenta",
-    login: "Iniciar sesiÃƒÂ³n",
+    accountSettings: "ConfiguraciÃƒÆ’Ã‚Â³n de Cuenta",
+    login: "Iniciar sesiÃƒÆ’Ã‚Â³n",
     signUp: "Registrarse",
-    password: "ContraseÃƒÂ±a",
+    password: "ContraseÃƒÆ’Ã‚Â±a",
     checkEmail: "Revisa tu correo para confirmar la cuenta.",
-    loggedIn: "SesiÃƒÂ³n iniciada.",
-    confirmEmail: "Confirmar correo electrÃƒÂ³nico",
-    forgotPassword: "Ã‚Â¿Olvidaste tu contraseÃƒÂ±a?",
-    resetPassword: "Enviar enlace de recuperaciÃƒÂ³n",
-    resetSent: "Las instrucciones para restablecer tu contraseÃƒÂ±a se enviaron a tu correo.",
-    newPassword: "Nueva contraseÃƒÂ±a",
-    confirmPassword: "Confirmar nueva contraseÃƒÂ±a",
-    updatePassword: "Actualizar contraseÃƒÂ±a",
-    passwordMismatch: "Las contraseÃƒÂ±as no coinciden.",
-    passwordUpdated: "ContraseÃƒÂ±a actualizada. Puedes continuar a tu panel.",
-    emailMismatch: "Los correos electrÃƒÂ³nicos no coinciden.",
-    authUnavailable: "El acceso a cuentas no estÃƒÂ¡ disponible en esta vista previa. Escribe a support@operitron.com para recibir ayuda.",
+    loggedIn: "SesiÃƒÆ’Ã‚Â³n iniciada.",
+    confirmEmail: "Confirmar correo electrÃƒÆ’Ã‚Â³nico",
+    forgotPassword: "Ãƒâ€šÃ‚Â¿Olvidaste tu contraseÃƒÆ’Ã‚Â±a?",
+    resetPassword: "Enviar enlace de recuperaciÃƒÆ’Ã‚Â³n",
+    resetSent: "Las instrucciones para restablecer tu contraseÃƒÆ’Ã‚Â±a se enviaron a tu correo.",
+    newPassword: "Nueva contraseÃƒÆ’Ã‚Â±a",
+    confirmPassword: "Confirmar nueva contraseÃƒÆ’Ã‚Â±a",
+    updatePassword: "Actualizar contraseÃƒÆ’Ã‚Â±a",
+    passwordMismatch: "Las contraseÃƒÆ’Ã‚Â±as no coinciden.",
+    passwordUpdated: "ContraseÃƒÆ’Ã‚Â±a actualizada. Puedes continuar a tu panel.",
+    emailMismatch: "Los correos electrÃƒÆ’Ã‚Â³nicos no coinciden.",
+    authUnavailable: "El acceso a cuentas no estÃƒÆ’Ã‚Â¡ disponible en esta vista previa. Escribe a support@operitron.com para recibir ayuda.",
     loginReady: "Acceso seguro a tu cuenta.",
-    signingIn: "Iniciando sesiÃƒÂ³n...",
+    signingIn: "Iniciando sesiÃƒÆ’Ã‚Â³n...",
     creatingAccount: "Creando cuenta...",
-    sessionConfirmed: "Cuenta confirmada. Ya puedes iniciar sesiÃƒÂ³n.",
+    sessionConfirmed: "Cuenta confirmada. Ya puedes iniciar sesiÃƒÆ’Ã‚Â³n.",
     propertyReady: "Listo para buscar.",
-    rentcastKeyRequired: "Los registros de propiedad no estÃƒÂ¡n disponibles temporalmente. Contacta support@operitron.com.",
+    rentcastKeyRequired: "Los registros de propiedad no estÃƒÆ’Ã‚Â¡n disponibles temporalmente. Contacta support@operitron.com.",
     searchingRecords: "Buscando registros de propiedad...",
     propertyLoaded: "Inteligencia de propiedad cargada.",
     search: "Buscar",
     mortgageBalance: "Saldo Hipotecario",
     propertySummary: "Resumen de Propiedad",
     owner: "Propietario",
-    bedsBaths: "RecÃƒÂ¡maras / BaÃƒÂ±os",
+    bedsBaths: "RecÃƒÆ’Ã‚Â¡maras / BaÃƒÆ’Ã‚Â±os",
     squareFeet: "Pies Cuadrados",
-    lotSize: "TamaÃƒÂ±o del Lote",
-    yearBuilt: "AÃƒÂ±o de ConstrucciÃƒÂ³n",
-    lastSale: "ÃƒÅ¡ltima Venta",
+    lotSize: "TamaÃƒÆ’Ã‚Â±o del Lote",
+    yearBuilt: "AÃƒÆ’Ã‚Â±o de ConstrucciÃƒÆ’Ã‚Â³n",
+    lastSale: "ÃƒÆ’Ã…Â¡ltima Venta",
     coordinates: "Coordenadas",
-    assessments: "AvalÃƒÂºos Fiscales",
+    assessments: "AvalÃƒÆ’Ã‚Âºos Fiscales",
     propertyTaxes: "Impuestos de Propiedad",
-    availableAfterSearch: "Disponible despuÃƒÂ©s de buscar",
+    availableAfterSearch: "Disponible despuÃƒÆ’Ã‚Â©s de buscar",
     unavailable: "No disponible",
     aiAssistant: "Asistente IA de Deals",
-    aiPrompt: "Revisa este deal por riesgo, oportunidad y prÃƒÂ³ximos pasos.",
-    aiPreview: "Vista IA: verifica comps, alcance de rehabilitaciÃƒÂ³n, impuestos, seguro, permisos, dÃƒÂ­as en mercado y tÃƒÂ©rminos del prestamista antes de avanzar.",
-    aiPreviewNext: "Vista IA: los siguientes pasos mÃƒÂ¡s fuertes son validar ventas comparables, revisar permisos, confirmar precios de contratistas y probar el DSCR con una tasa mÃƒÂ¡s alta.",
+    aiPrompt: "Revisa este deal por riesgo, oportunidad y prÃƒÆ’Ã‚Â³ximos pasos.",
+    aiPreview: "Vista IA: verifica comps, alcance de rehabilitaciÃƒÆ’Ã‚Â³n, impuestos, seguro, permisos, dÃƒÆ’Ã‚Â­as en mercado y tÃƒÆ’Ã‚Â©rminos del prestamista antes de avanzar.",
+    aiPreviewNext: "Vista IA: los siguientes pasos mÃƒÆ’Ã‚Â¡s fuertes son validar ventas comparables, revisar permisos, confirmar precios de contratistas y probar el DSCR con una tasa mÃƒÆ’Ã‚Â¡s alta.",
     analyzeWithAi: "Analizar con IA",
     connectDropbox: "Conectar Dropbox",
     startTour: "Iniciar recorrido",
-    readGuide: "Leer guÃƒÂ­a",
+    readGuide: "Leer guÃƒÆ’Ã‚Â­a",
     dropboxDetail: "Conecta planos, permisos, solicitudes de desembolso, cotizaciones, fotos y paquetes de cierre.",
-    connection: "ConexiÃƒÂ³n",
+    connection: "ConexiÃƒÆ’Ã‚Â³n",
     folders: "Carpetas",
-    sync: "SincronizaciÃƒÂ³n",
+    sync: "SincronizaciÃƒÆ’Ã‚Â³n",
     manualUpload: "Carga manual disponible",
-    propertySearchDetail: "Busca registros de propiedad, comps, propietario, impuestos, historial de ventas, caracterÃƒÂ­sticas, coordenadas y cÃƒÂ¡lculos para inversionistas.",
+    propertySearchDetail: "Busca registros de propiedad, comps, propietario, impuestos, historial de ventas, caracterÃƒÆ’Ã‚Â­sticas, coordenadas y cÃƒÆ’Ã‚Â¡lculos para inversionistas.",
     equity: "Equidad",
     pricePerSqft: "Precio / Pie Cuadrado",
     taxRate: "Tasa Fiscal",
@@ -632,7 +644,7 @@ const enhancedCopy = {
     equityHelp: "Valor estimado menos saldo hipotecario.",
     pricePerSqftHelp: "Precio de venta dividido entre pies cuadrados.",
     taxRateHelp: "Impuestos anuales divididos entre valor fiscal.",
-    savedProjectsHelp: "NÃƒÂºmero de anÃƒÂ¡lisis de propiedades guardados en tu espacio de trabajo.",
+    savedProjectsHelp: "NÃƒÆ’Ã‚Âºmero de anÃƒÆ’Ã‚Â¡lisis de propiedades guardados en tu espacio de trabajo.",
     projectedProfitHelp: "Ganancia estimada combinada de los proyectos actuales.",
     reportsReadyHelp: "Reportes disponibles para exportar en PDF o revisar con socios.",
   },
@@ -692,12 +704,12 @@ const tools = [
 ];
 
 const toolsEs = [
-  ["wizard", "Asistente de ConstrucciÃƒÂ³n", "Planifica fases y rastrea cronograma, presupuesto, fotos y avance.", Hammer, "Pro"],
+  ["wizard", "Asistente de ConstrucciÃƒÆ’Ã‚Â³n", "Planifica fases y rastrea cronograma, presupuesto, fotos y avance.", Hammer, "Pro"],
   ["underwriter", "Analizador de Deals", "Revisa ARV, reparaciones, oferta, ROI y riesgo.", LineChart, "Core"],
-  ["loan", "Calculadora de PrÃƒÂ©stamo de InversiÃƒÂ³n", "Modela apalancamiento, puntos, pago y DSCR.", Calculator, "DSCR"],
-  ["todo", "Lista de Tareas", "Rastrea prÃƒÂ³ximos pasos de inversionistas, prestamistas y contratistas.", ListChecks, "Live"],
-  ["punch", "Lista de Pendientes", "Registra detalles de inspecciÃƒÂ³n final antes del cierre.", ClipboardCheck, "Oficios"],
-  ["takeoff", "CÃƒÂ¡lculo de Materiales Beta", "Estima cantidades desde ÃƒÂ¡reas, habitaciones y alcance.", Layers, "Beta"],
+  ["loan", "Calculadora de PrÃƒÆ’Ã‚Â©stamo de InversiÃƒÆ’Ã‚Â³n", "Modela apalancamiento, puntos, pago y DSCR.", Calculator, "DSCR"],
+  ["todo", "Lista de Tareas", "Rastrea prÃƒÆ’Ã‚Â³ximos pasos de inversionistas, prestamistas y contratistas.", ListChecks, "Live"],
+  ["punch", "Lista de Pendientes", "Registra detalles de inspecciÃƒÆ’Ã‚Â³n final antes del cierre.", ClipboardCheck, "Oficios"],
+  ["takeoff", "CÃƒÆ’Ã‚Â¡lculo de Materiales Beta", "Estima cantidades desde ÃƒÆ’Ã‚Â¡reas, habitaciones y alcance.", Layers, "Beta"],
   ["subs", "Subcontratistas / Cotizaciones Nuevo", "Compara ofertas y asigna paquetes de trabajo.", Users, "Nuevo"],
   ["budget", "Estimador de Presupuesto", "Construye estimaciones detalladas de costos.", DollarSign, "Nuevo"],
 ];
@@ -937,7 +949,7 @@ function AppShell() {
       <Header t={t} language={language} setLanguage={setLanguage} setMobileOpen={setMobileOpen} go={go} user={user} signOut={signOut} hasProductAccess={hasProductAccess} isAdmin={isAdmin} collapsed={sidebarCollapsed} />
       <main className={`relative z-10 p-4 pb-28 sm:p-5 sm:pb-28 lg:p-8 lg:pb-8 ${user && hasProductAccess ? (sidebarCollapsed ? "lg:ml-20" : "lg:ml-72") : "mx-auto max-w-7xl"}`}>
         {user && hasProductAccess && history.length > 0 && activePage !== "dashboard" && <button onClick={back} className="mb-5 inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-2 text-sm font-bold text-slate-300 hover:border-amber-400/50 hover:text-white">
-          Ã¢â€ Â {t.back}
+          ÃƒÂ¢Ã¢â‚¬Â Ã‚Â {t.back}
         </button>}
         <motion.div key={activePage} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
           {page}
@@ -1012,8 +1024,8 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "EspaÃƒÂ±ol" : "English"} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">
-            <Languages size={17} /><span className="hidden md:inline">{language === "en" ? "EspaÃƒÂ±ol" : "English"}</span><span className="md:hidden">{language === "en" ? "ES" : "EN"}</span>
+          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "EspaÃƒÆ’Ã‚Â±ol" : "English"} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">
+            <Languages size={17} /><span className="hidden md:inline">{language === "en" ? "EspaÃƒÆ’Ã‚Â±ol" : "English"}</span><span className="md:hidden">{language === "en" ? "ES" : "EN"}</span>
           </button>
           {user ? <div className="relative">
             <button onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} className="flex items-center gap-2 rounded-xl border border-white/10 p-2 text-slate-300 hover:border-cyan-300/50 hover:text-white sm:px-3"><UserCircle /><span className="hidden max-w-40 truncate text-sm font-bold xl:block">{user.email}</span></button>
@@ -1028,10 +1040,10 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
               <button onClick={() => { setAccountOpen(false); go("terms"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.terms}</button>
               <button onClick={() => { setAccountOpen(false); go("refund"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.refund}</button>
               <button onClick={() => { setAccountOpen(false); go("disclaimer"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.disclaimer}</button>
-              <button onClick={() => { setAccountOpen(false); signOut(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-red-300 hover:bg-red-400/10"><LogOut size={16} />{language === "es" ? "Cerrar sesiÃƒÂ³n" : "Sign out"}</button>
+              <button onClick={() => { setAccountOpen(false); signOut(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-red-300 hover:bg-red-400/10"><LogOut size={16} />{language === "es" ? "Cerrar sesiÃƒÆ’Ã‚Â³n" : "Sign out"}</button>
             </div>}
           </div> : <button onClick={() => go("settings")} className="whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">{t.login}</button>}
-          {!user && <button onClick={() => go("pricing")} className="hidden whitespace-nowrap rounded-2xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.35)] transition hover:-translate-y-0.5 hover:bg-amber-300 lg:block xl:px-5 xl:text-base">{language === "es" ? "Prueba gratis de 3 dÃƒÂ­as" : t.startTrial}</button>}
+          {!user && <button onClick={() => go("pricing")} className="hidden whitespace-nowrap rounded-2xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.35)] transition hover:-translate-y-0.5 hover:bg-amber-300 lg:block xl:px-5 xl:text-base">{language === "es" ? "Prueba gratis de 3 dÃƒÆ’Ã‚Â­as" : t.startTrial}</button>}
         </div>
       </div>
     </header>
@@ -1043,7 +1055,7 @@ function MobileNavigation({ t, language, activePage, go, user, hasProductAccess 
   const items = user && hasProductAccess
     ? [["dashboard", Home, isEs ? "Inicio" : "Home"], ["projectTools", Hammer, isEs ? "Obra" : "Tools"], ["propertySearch", Search, isEs ? "Buscar" : "Search"], ["profile", UserCircle, isEs ? "Perfil" : "Profile"]]
     : [["home", Home, isEs ? "Inicio" : "Home"], ["pricing", DollarSign, isEs ? "Planes" : "Plans"], ["settings", UserCircle, isEs ? "Cuenta" : "Account"], ["disclaimer", FileText, isEs ? "Legal" : "Legal"]];
-  return <nav aria-label={isEs ? "NavegaciÃƒÂ³n mÃƒÂ³vil" : "Mobile navigation"} className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 gap-1 rounded-[1.45rem] border border-white/10 bg-slate-950/95 p-1.5 shadow-[0_18px_50px_rgba(0,0,0,.5)] backdrop-blur-xl lg:hidden">{items.map(([page, Icon, label]) => {
+  return <nav aria-label={isEs ? "NavegaciÃƒÆ’Ã‚Â³n mÃƒÆ’Ã‚Â³vil" : "Mobile navigation"} className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-4 gap-1 rounded-[1.45rem] border border-white/10 bg-slate-950/95 p-1.5 shadow-[0_18px_50px_rgba(0,0,0,.5)] backdrop-blur-xl lg:hidden">{items.map(([page, Icon, label]) => {
     const active = activePage === page || (!(user && hasProductAccess) && page === "home" && activePage === "dashboard");
     return <button key={page} type="button" onClick={() => go(page)} className={`flex min-h-[3.6rem] flex-col items-center justify-center gap-1 rounded-[1.05rem] px-1 py-2 text-[0.68rem] font-bold transition ${active ? "bg-cyan-300/15 text-cyan-200" : "text-slate-400 hover:bg-white/5 hover:text-white"}`}><Icon size={19} /><span className="truncate">{label}</span></button>;
   })}</nav>;
@@ -1084,7 +1096,7 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
     const project = { id: Date.now(), name, type: t.newAnalysis, address: address || t.propertyAddress, arv: 0, profit: 0, purchase: 0, repairs: 0, expenses: 0, progress: 0, status: t.earlyAccess };
     if (onAddProject) {
       const result = await onAddProject(project);
-      setSaveStatus(result?.error ? (language === "es" ? "Proyecto visible en esta sesiÃƒÂ³n, pero no se pudo guardar. Revisa Owner Console." : "Project is visible this session, but could not be saved. Review Owner Console.") : (language === "es" ? "Proyecto guardado." : "Project saved."));
+      setSaveStatus(result?.error ? (language === "es" ? "Proyecto visible en esta sesiÃƒÆ’Ã‚Â³n, pero no se pudo guardar. Revisa Owner Console." : "Project is visible this session, but could not be saved. Review Owner Console.") : (language === "es" ? "Proyecto guardado." : "Project saved."));
     }
     else setProjects([project, ...projects]);
     setName("");
@@ -1095,7 +1107,7 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
     <div className="space-y-6 sm:space-y-8">
       <Hero t={t} go={go} />
       {isAdmin && <section className="flex flex-col justify-between gap-4 rounded-3xl border border-cyan-300/25 bg-cyan-300/[.07] p-5 sm:flex-row sm:items-center">
-        <div><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">{language === "es" ? "Acceso del Propietario" : "Owner Access"}</p><p className="mt-2 font-bold text-white">{language === "es" ? "Todas las herramientas estÃƒÂ¡n habilitadas para tu cuenta administrativa." : "All paid workspace tools are enabled for your administrator account."}</p></div>
+        <div><p className="text-xs font-black uppercase tracking-[0.22em] text-cyan-300">{language === "es" ? "Acceso del Propietario" : "Owner Access"}</p><p className="mt-2 font-bold text-white">{language === "es" ? "Todas las herramientas estÃƒÆ’Ã‚Â¡n habilitadas para tu cuenta administrativa." : "All paid workspace tools are enabled for your administrator account."}</p></div>
         <button onClick={() => go("admin")} className="secondary-button whitespace-nowrap">{language === "es" ? "Abrir Control" : "Open Owner Console"}</button>
       </section>}
 
@@ -1120,8 +1132,8 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
             ))}
           </div> : <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/35 px-5 py-10 text-center">
             <FolderOpen className="mx-auto text-cyan-300" />
-            <p className="mt-3 font-black text-white">{language === "es" ? "AÃƒÂºn no hay proyectos guardados" : "No saved projects yet"}</p>
-            <p className="mt-1 text-sm text-slate-400">{language === "es" ? "Crea un proyecto o inicia un nuevo anÃƒÂ¡lisis." : "Create a project or begin a new analysis."}</p>
+            <p className="mt-3 font-black text-white">{language === "es" ? "AÃƒÆ’Ã‚Âºn no hay proyectos guardados" : "No saved projects yet"}</p>
+            <p className="mt-1 text-sm text-slate-400">{language === "es" ? "Crea un proyecto o inicia un nuevo anÃƒÆ’Ã‚Â¡lisis." : "Create a project or begin a new analysis."}</p>
           </div>}
         </GlassPanel>
 
@@ -1149,9 +1161,9 @@ function PublicHome({ t, go }) {
   const isEs = t.dashboard === "Panel";
   const publicCards = isEs
     ? [
-      ["AnÃƒÂ¡lisis de Deals", "Analiza flips, rentas, BRRR y oportunidades de construcciÃƒÂ³n con fÃƒÂ³rmulas para inversionistas.", LineChart],
-      ["Inteligencia de Propiedades", "Conecta APIs para propietarios, impuestos, historial de ventas, comps y contexto de valuaciÃƒÂ³n.", MapPin],
-      ["Herramientas de ConstrucciÃƒÂ³n", "Gestiona takeoffs, punch lists, cotizaciones, archivos vinculados y colaboradores en un solo espacio.", Hammer],
+      ["AnÃƒÆ’Ã‚Â¡lisis de Deals", "Analiza flips, rentas, BRRR y oportunidades de construcciÃƒÆ’Ã‚Â³n con fÃƒÆ’Ã‚Â³rmulas para inversionistas.", LineChart],
+      ["Inteligencia de Propiedades", "Conecta APIs para propietarios, impuestos, historial de ventas, comps y contexto de valuaciÃƒÆ’Ã‚Â³n.", MapPin],
+      ["Herramientas de ConstrucciÃƒÆ’Ã‚Â³n", "Gestiona takeoffs, punch lists, cotizaciones, archivos vinculados y colaboradores en un solo espacio.", Hammer],
     ]
     : [
       ["Deal Analysis", "Underwrite flips, rentals, BRRR deals, and construction opportunities with investor-grade formulas.", LineChart],
@@ -1190,8 +1202,8 @@ function VisitorWorkflow({ isEs }) {
   const steps = isEs
     ? [
       ["1", "Filtra oportunidades", "Captura precio, ARV, renta, deuda y gastos para probar la viabilidad inicial."],
-      ["2", "Valida el activo", "Revisa comps, impuestos, datos pÃƒÂºblicos, historial y riesgos antes de comprometer capital."],
-      ["3", "Planifica la ejecuciÃƒÂ³n", "Convierte el alcance en presupuesto, cronograma, takeoff, cotizaciones y punch list."],
+      ["2", "Valida el activo", "Revisa comps, impuestos, datos pÃƒÆ’Ã‚Âºblicos, historial y riesgos antes de comprometer capital."],
+      ["3", "Planifica la ejecuciÃƒÆ’Ã‚Â³n", "Convierte el alcance en presupuesto, cronograma, takeoff, cotizaciones y punch list."],
       ["4", "Comparte decisiones", "Exporta reportes, colabora con tu equipo y conserva supuestos en el proyecto."],
     ]
     : [
@@ -1200,16 +1212,16 @@ function VisitorWorkflow({ isEs }) {
       ["3", "Plan execution", "Turn scope into budget, schedule, takeoff, quotes, and closeout tracking."],
       ["4", "Share decisions", "Export reports, collaborate with your team, and preserve assumptions by project."],
     ];
-  return <section className="rounded-[2rem] border border-white/10 bg-slate-950/55 p-5 sm:p-7"><SectionHeader title={isEs ? "Del anÃƒÂ¡lisis a la ejecuciÃƒÂ³n" : "From analysis to execution"} detail={isEs ? "Un flujo claro para inversionistas, constructores y operadores que necesitan verificar antes de actuar." : "A clear operating path for investors and builders who need to verify before they act."} /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{steps.map(([number, title, text]) => <article key={title} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><span className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-300/10 font-black text-cyan-300">{number}</span><h3 className="mt-4 text-lg font-black text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{text}</p></article>)}</div><p className="mt-5 rounded-2xl border border-amber-300/15 bg-amber-300/[.05] p-4 text-sm leading-6 text-slate-300">{isEs ? "Operitron apoya decisiones; valida comparables, presupuestos, permisos, financiamiento y asesorÃƒÂ­a profesional antes de invertir o construir." : "Operitron supports decisions; verify comps, budgets, permits, financing, and professional advice before investing or building."}</p></section>;
+  return <section className="rounded-[2rem] border border-white/10 bg-slate-950/55 p-5 sm:p-7"><SectionHeader title={isEs ? "Del anÃƒÆ’Ã‚Â¡lisis a la ejecuciÃƒÆ’Ã‚Â³n" : "From analysis to execution"} detail={isEs ? "Un flujo claro para inversionistas, constructores y operadores que necesitan verificar antes de actuar." : "A clear operating path for investors and builders who need to verify before they act."} /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{steps.map(([number, title, text]) => <article key={title} className="rounded-2xl border border-white/10 bg-white/[.035] p-4"><span className="grid h-9 w-9 place-items-center rounded-xl bg-cyan-300/10 font-black text-cyan-300">{number}</span><h3 className="mt-4 text-lg font-black text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{text}</p></article>)}</div><p className="mt-5 rounded-2xl border border-amber-300/15 bg-amber-300/[.05] p-4 text-sm leading-6 text-slate-300">{isEs ? "Operitron apoya decisiones; valida comparables, presupuestos, permisos, financiamiento y asesorÃƒÆ’Ã‚Â­a profesional antes de invertir o construir." : "Operitron supports decisions; verify comps, budgets, permits, financing, and professional advice before investing or building."}</p></section>;
 }
 
 function LandingCTA({ isEs, t, go }) {
-  return <section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-r from-cyan-400/[.10] via-slate-950 to-purple-500/[.10] p-5 shadow-[0_0_42px_rgba(34,211,238,.08)] sm:p-7"><div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-cyan-400/15 blur-3xl" /><div className="relative flex flex-col items-start justify-between gap-5 lg:flex-row lg:items-center"><div className="max-w-3xl"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">{isEs ? "Comienza hoy" : "Start today"}</p><h3 className="mt-3 text-2xl font-black text-white sm:text-3xl">{isEs ? "Ã‚Â¿Listo para empezar con OPERITRON.COM?" : "Ready to Start with OPERITRON.COM?"}</h3><p className="mt-3 leading-7 text-slate-300">{isEs ? "OPERITRON.COM te ofrece anÃƒÂ¡lisis de deals, herramientas de construcciÃƒÂ³n, takeoffs, punch lists y colaboraciÃƒÂ³n en una sola plataforma. " : "OPERITRON.COM gives you deal analysis, construction tools, takeoffs, punch lists, and collaboration in one platform. "}{t.trialNote}</p></div><div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"><button onClick={() => go("settings")} className="primary-button whitespace-nowrap">{isEs ? "Crear cuenta" : "Create Account"}</button><button onClick={() => go("pricing")} className="secondary-button whitespace-nowrap">{t.pricing}</button></div></div></section>;
+  return <section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-r from-cyan-400/[.10] via-slate-950 to-purple-500/[.10] p-5 shadow-[0_0_42px_rgba(34,211,238,.08)] sm:p-7"><div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-cyan-400/15 blur-3xl" /><div className="relative flex flex-col items-start justify-between gap-5 lg:flex-row lg:items-center"><div className="max-w-3xl"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">{isEs ? "Comienza hoy" : "Start today"}</p><h3 className="mt-3 text-2xl font-black text-white sm:text-3xl">{isEs ? "Ãƒâ€šÃ‚Â¿Listo para empezar con OPERITRON.COM?" : "Ready to Start with OPERITRON.COM?"}</h3><p className="mt-3 leading-7 text-slate-300">{isEs ? "OPERITRON.COM te ofrece anÃƒÆ’Ã‚Â¡lisis de deals, herramientas de construcciÃƒÆ’Ã‚Â³n, takeoffs, punch lists y colaboraciÃƒÆ’Ã‚Â³n en una sola plataforma. " : "OPERITRON.COM gives you deal analysis, construction tools, takeoffs, punch lists, and collaboration in one platform. "}{t.trialNote}</p></div><div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row"><button onClick={() => go("settings")} className="primary-button whitespace-nowrap">{isEs ? "Crear cuenta" : "Create Account"}</button><button onClick={() => go("pricing")} className="secondary-button whitespace-nowrap">{t.pricing}</button></div></div></section>;
 }
 
 function LandingStats({ isEs }) {
   const stats = isEs
-    ? [["8", "Herramientas de Proyecto"], ["14", "Fases de ConstrucciÃƒÂ³n"], ["2", "Planes Transparentes"], ["3 DÃƒÂ­as", "Prueba de Acceso Completo"]]
+    ? [["8", "Herramientas de Proyecto"], ["14", "Fases de ConstrucciÃƒÆ’Ã‚Â³n"], ["2", "Planes Transparentes"], ["3 DÃƒÆ’Ã‚Â­as", "Prueba de Acceso Completo"]]
     : [["8", "Project Tools"], ["14", "Construction Phases"], ["2", "Transparent Plans"], ["3 Days", "Full-Access Trial"]];
   return <section className="grid gap-4 border-y border-white/10 py-8 md:grid-cols-4">{stats.map(([value, label]) => <div key={label} className="text-center"><p className="text-3xl font-black text-amber-300">{value}</p><p className="mt-1 text-sm font-bold text-slate-500">{label}</p></div>)}</section>;
 }
@@ -1217,10 +1229,10 @@ function LandingStats({ isEs }) {
 function LandingFeatureSections({ isEs }) {
   const sections = isEs
     ? [
-      ["Analiza Deals en Minutos", "EvalÃƒÂºa ARV, precio de compra, reparaciones, financiamiento, DSCR, ROI y flujo de caja sin vivir en hojas de cÃƒÂ¡lculo.", ["ROI en tiempo real", "Regla del 70%", "Oferta mÃƒÂ¡xima", "Escenarios de salida"], LineChart],
-      ["Rastrea Cada Fase de ConstrucciÃƒÂ³n", "Organiza cronogramas, presupuestos, fotos, inspecciones y dependencias crÃƒÂ­ticas desde una sola vista de obra.", ["Fases de construcciÃƒÂ³n", "Riesgo de retrasos", "Control de presupuesto", "Progreso por hitos"], BarChart3],
-      ["Mide Planos con IA", "Sube planos, estima cantidades, aplica factores de desperdicio y genera reportes de materiales para cotizar con mÃƒÂ¡s claridad.", ["PDFs multipÃƒÂ¡gina", "ÃƒÂreas y lineales", "Costos de materiales", "ExportaciÃƒÂ³n PDF"], Layers],
-      ["Cierra Proyectos con Punch Lists", "Documenta pendientes, asigna oficios, adjunta fotos y exporta reportes limpios para contratistas, compradores o prestamistas.", ["Fotos por partida", "AsignaciÃƒÂ³n por oficio", "Estados abiertos/resueltos", "Reporte PDF"], ClipboardCheck],
+      ["Analiza Deals en Minutos", "EvalÃƒÆ’Ã‚Âºa ARV, precio de compra, reparaciones, financiamiento, DSCR, ROI y flujo de caja sin vivir en hojas de cÃƒÆ’Ã‚Â¡lculo.", ["ROI en tiempo real", "Regla del 70%", "Oferta mÃƒÆ’Ã‚Â¡xima", "Escenarios de salida"], LineChart],
+      ["Rastrea Cada Fase de ConstrucciÃƒÆ’Ã‚Â³n", "Organiza cronogramas, presupuestos, fotos, inspecciones y dependencias crÃƒÆ’Ã‚Â­ticas desde una sola vista de obra.", ["Fases de construcciÃƒÆ’Ã‚Â³n", "Riesgo de retrasos", "Control de presupuesto", "Progreso por hitos"], BarChart3],
+      ["Mide Planos con IA", "Sube planos, estima cantidades, aplica factores de desperdicio y genera reportes de materiales para cotizar con mÃƒÆ’Ã‚Â¡s claridad.", ["PDFs multipÃƒÆ’Ã‚Â¡gina", "ÃƒÆ’Ã‚Âreas y lineales", "Costos de materiales", "ExportaciÃƒÆ’Ã‚Â³n PDF"], Layers],
+      ["Cierra Proyectos con Punch Lists", "Documenta pendientes, asigna oficios, adjunta fotos y exporta reportes limpios para contratistas, compradores o prestamistas.", ["Fotos por partida", "AsignaciÃƒÆ’Ã‚Â³n por oficio", "Estados abiertos/resueltos", "Reporte PDF"], ClipboardCheck],
     ]
     : [
       ["Underwrite Any Deal in Minutes", "Review ARV, purchase price, repairs, financing, DSCR, ROI, and cash flow without living inside spreadsheets.", ["Real-time ROI", "70% rule", "Max offer", "Exit scenarios"], LineChart],
@@ -1233,40 +1245,40 @@ function LandingFeatureSections({ isEs }) {
 
 function WhyChoose({ isEs }) {
   const items = isEs
-    ? [["NÃƒÂºmeros Claros", "FÃƒÂ³rmulas visibles para revisar supuestos antes de comprar."], ["Flujo Todo-en-Uno", "Deals, construcciÃƒÂ³n, takeoffs y reportes sin cambiar de sistema."], ["Listo para Equipos", "Colabora con socios, contratistas, prestamistas y gerentes."], ["DiseÃƒÂ±ado para Operadores", "Creado para decisiones reales de inversiÃƒÂ³n y obra, no solo reportes bonitos."]]
+    ? [["NÃƒÆ’Ã‚Âºmeros Claros", "FÃƒÆ’Ã‚Â³rmulas visibles para revisar supuestos antes de comprar."], ["Flujo Todo-en-Uno", "Deals, construcciÃƒÆ’Ã‚Â³n, takeoffs y reportes sin cambiar de sistema."], ["Listo para Equipos", "Colabora con socios, contratistas, prestamistas y gerentes."], ["DiseÃƒÆ’Ã‚Â±ado para Operadores", "Creado para decisiones reales de inversiÃƒÆ’Ã‚Â³n y obra, no solo reportes bonitos."]]
     : [["Clear Numbers", "Visible formulas help you review assumptions before you buy."], ["All-in-One Workflow", "Deals, construction, takeoffs, and reports without switching systems."], ["Team Ready", "Collaborate with partners, contractors, lenders, and managers."], ["Built for Operators", "Designed for real investment and build decisions, not just pretty reports."]];
-  return <section><SectionHeader title="Why Choose OPERITRON.COM?" detail={isEs ? "IA prÃƒÂ¡ctica, cÃƒÂ¡lculos claros y control de proyecto en una plataforma original." : "Practical AI, clear calculations, and project control in one original platform."} /><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{items.map(([title, text]) => <Info key={title} title={title} text={text} />)}</div></section>;
+  return <section><SectionHeader title="Why Choose OPERITRON.COM?" detail={isEs ? "IA prÃƒÆ’Ã‚Â¡ctica, cÃƒÆ’Ã‚Â¡lculos claros y control de proyecto en una plataforma original." : "Practical AI, clear calculations, and project control in one original platform."} /><div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">{items.map(([title, text]) => <Info key={title} title={title} text={text} />)}</div></section>;
 }
 
 function Testimonials({ isEs }) {
   const quotes = isEs
     ? [
-      { quote: "Ã¢â‚¬Å“Operitron nos ayudÃƒÂ³ a revisar mÃƒÂ¡s deals sin perder control de los supuestos.Ã¢â‚¬Â", initial: "C", name: "Camila S.", role: "Desarrolladora de Vivienda", location: "Phoenix, AZ", color: "from-cyan-400 to-blue-600" },
-      { quote: "Ã¢â‚¬Å“La combinaciÃƒÂ³n de underwriting y construcciÃƒÂ³n es exactamente lo que necesitaba nuestro equipo.Ã¢â‚¬Â", initial: "A", name: "Adriana V.", role: "Constructora Residencial", location: "Raleigh, NC", color: "from-purple-400 to-indigo-600" },
-      { quote: "Ã¢â‚¬Å“Los reportes y punch lists hacen que las conversaciones con contratistas sean mÃƒÂ¡s limpias.Ã¢â‚¬Â", initial: "D", name: "Diego L.", role: "Operador BRRR", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
+      { quote: "ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œOperitron nos ayudÃƒÆ’Ã‚Â³ a revisar mÃƒÆ’Ã‚Â¡s deals sin perder control de los supuestos.ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â", initial: "C", name: "Camila S.", role: "Desarrolladora de Vivienda", location: "Phoenix, AZ", color: "from-cyan-400 to-blue-600" },
+      { quote: "ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œLa combinaciÃƒÆ’Ã‚Â³n de underwriting y construcciÃƒÆ’Ã‚Â³n es exactamente lo que necesitaba nuestro equipo.ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â", initial: "A", name: "Adriana V.", role: "Constructora Residencial", location: "Raleigh, NC", color: "from-purple-400 to-indigo-600" },
+      { quote: "ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œLos reportes y punch lists hacen que las conversaciones con contratistas sean mÃƒÆ’Ã‚Â¡s limpias.ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â", initial: "D", name: "Diego L.", role: "Operador BRRR", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
     ]
     : [
-      { quote: "Ã¢â‚¬Å“Operitron helps us review more deals without losing control of the assumptions.Ã¢â‚¬Â", initial: "C", name: "Camila S.", role: "Housing Developer", location: "Phoenix, AZ", color: "from-cyan-400 to-blue-600" },
-      { quote: "Ã¢â‚¬Å“The underwriting plus construction workflow is exactly what our team needed.Ã¢â‚¬Â", initial: "A", name: "Alyssa V.", role: "Residential Builder", location: "Raleigh, NC", color: "from-purple-400 to-indigo-600" },
-      { quote: "Ã¢â‚¬Å“Reports and punch lists make contractor conversations cleaner.Ã¢â‚¬Â", initial: "D", name: "Daniel L.", role: "BRRR Portfolio Operator", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
+      { quote: "ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œOperitron helps us review more deals without losing control of the assumptions.ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â", initial: "C", name: "Camila S.", role: "Housing Developer", location: "Phoenix, AZ", color: "from-cyan-400 to-blue-600" },
+      { quote: "ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œThe underwriting plus construction workflow is exactly what our team needed.ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â", initial: "A", name: "Alyssa V.", role: "Residential Builder", location: "Raleigh, NC", color: "from-purple-400 to-indigo-600" },
+      { quote: "ÃƒÂ¢Ã¢â€šÂ¬Ã…â€œReports and punch lists make contractor conversations cleaner.ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â", initial: "D", name: "Daniel L.", role: "BRRR Portfolio Operator", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
     ];
-  return <section><SectionHeader title={isEs ? "Confiado por Operadores" : "Trusted by Investors"} detail={isEs ? "Software para equipos que viven entre nÃƒÂºmeros, obra y ejecuciÃƒÂ³n." : "Software for teams living between numbers, jobsites, and execution."} /><div className="grid gap-4 md:grid-cols-3">{quotes.map((review) => <motion.article key={review.name} whileHover={{ y: -4 }} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 transition hover:border-cyan-300/25 hover:shadow-[0_16px_45px_rgba(34,211,238,.08)]"><p className="text-amber-300" aria-label="5 out of 5 stars">Ã¢Ëœâ€¦Ã¢Ëœâ€¦Ã¢Ëœâ€¦Ã¢Ëœâ€¦Ã¢Ëœâ€¦</p><p className="mt-4 min-h-24 leading-7 text-slate-300">{review.quote}</p><div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-4"><div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${review.color} text-lg font-black text-white shadow-[0_0_22px_rgba(34,211,238,.18)]`}>{review.initial}</div><div><p className="font-black text-white">{review.name}</p><p className="text-sm text-cyan-200">{review.role} <span className="text-slate-500">Ã‚|</span> {review.location}</p></div></div></motion.article>)}</div></section>;
+  return <section><SectionHeader title={isEs ? "Confiado por Operadores" : "Trusted by Investors"} detail={isEs ? "Software para equipos que viven entre nÃƒÆ’Ã‚Âºmeros, obra y ejecuciÃƒÆ’Ã‚Â³n." : "Software for teams living between numbers, jobsites, and execution."} /><div className="grid gap-4 md:grid-cols-3">{quotes.map((review) => <motion.article key={review.name} whileHover={{ y: -4 }} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 transition hover:border-cyan-300/25 hover:shadow-[0_16px_45px_rgba(34,211,238,.08)]"><p className="text-amber-300" aria-label="5 out of 5 stars">ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦ÃƒÂ¢Ã‹Å“Ã¢â‚¬Â¦</p><p className="mt-4 min-h-24 leading-7 text-slate-300">{review.quote}</p><div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-4"><div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${review.color} text-lg font-black text-white shadow-[0_0_22px_rgba(34,211,238,.18)]`}>{review.initial}</div><div><p className="font-black text-white">{review.name}</p><p className="text-sm text-cyan-200">{review.role} <span className="text-slate-500">Ãƒâ€š|</span> {review.location}</p></div></div></motion.article>)}</div></section>;
 }
 
 function ByNumbers({ isEs }) {
-  return <section><SectionHeader title={isEs ? "En NÃƒÂºmeros" : "By the Numbers"} detail={isEs ? "Resultados reales impulsados por herramientas inteligentes." : "Real results powered by intelligent tools."} /><div className="grid gap-4 md:grid-cols-3"><Info title={isEs ? "15% Menos Retrasos" : "15% Fewer Delays"} text={isEs ? "La predicciÃƒÂ³n de cuellos de botella con IA identifica riesgos de ruta crÃƒÂ­tica antes de que se conviertan en sobrecostos." : "AI bottleneck prediction flags critical-path risk before it becomes expensive schedule drift."} /><Info title={isEs ? "PrecisiÃƒÂ³n en Takeoff" : "Takeoff Accuracy"} text={isEs ? "Mediciones automatizadas con factores de desperdicio reducen errores de conteo manual y faltantes de material." : "Automated measurement logic with waste factors reduces manual counting mistakes and material gaps."} /><Info title={isEs ? "2x MÃƒÂ¡s RÃƒÂ¡pido en AnÃƒÂ¡lisis" : "2x Faster Underwriting"} text={isEs ? "ROI, financiamiento y DSCR en tiempo real convierten horas de hojas de cÃƒÂ¡lculo en minutos." : "Real-time ROI, financing, and DSCR calculations turn spreadsheet hours into minutes."} /></div></section>;
+  return <section><SectionHeader title={isEs ? "En NÃƒÆ’Ã‚Âºmeros" : "By the Numbers"} detail={isEs ? "Resultados reales impulsados por herramientas inteligentes." : "Real results powered by intelligent tools."} /><div className="grid gap-4 md:grid-cols-3"><Info title={isEs ? "15% Menos Retrasos" : "15% Fewer Delays"} text={isEs ? "La predicciÃƒÆ’Ã‚Â³n de cuellos de botella con IA identifica riesgos de ruta crÃƒÆ’Ã‚Â­tica antes de que se conviertan en sobrecostos." : "AI bottleneck prediction flags critical-path risk before it becomes expensive schedule drift."} /><Info title={isEs ? "PrecisiÃƒÆ’Ã‚Â³n en Takeoff" : "Takeoff Accuracy"} text={isEs ? "Mediciones automatizadas con factores de desperdicio reducen errores de conteo manual y faltantes de material." : "Automated measurement logic with waste factors reduces manual counting mistakes and material gaps."} /><Info title={isEs ? "2x MÃƒÆ’Ã‚Â¡s RÃƒÆ’Ã‚Â¡pido en AnÃƒÆ’Ã‚Â¡lisis" : "2x Faster Underwriting"} text={isEs ? "ROI, financiamiento y DSCR en tiempo real convierten horas de hojas de cÃƒÆ’Ã‚Â¡lculo en minutos." : "Real-time ROI, financing, and DSCR calculations turn spreadsheet hours into minutes."} /></div></section>;
 }
 
 function LandingFAQ({ isEs }) {
   const faqs = isEs
-    ? [["Ã‚Â¿Operitron reemplaza a mi contratista o asesor?", "No. OPERITRON.COM organiza cÃƒÂ¡lculos y flujos de trabajo para apoyar decisiones; siempre valida con profesionales licenciados."], ["Ã‚Â¿Puedo usarlo para flips, rentals y BRRR?", "SÃƒÂ­. Incluye underwriting, DSCR, cash-out, construcciÃƒÂ³n, takeoffs y reportes."], ["Ã‚Â¿Incluye prueba gratis?", "SÃƒÂ­. La prueba gratis de tres dÃƒÂ­as comienza al iniciar una suscripciÃƒÂ³n Mensual o Anual en el checkout seguro."], ["Ã‚Â¿Puedo colaborar con mi equipo?", "SÃƒÂ­. Puedes estructurar colaboradores, elementos vinculados, cotizaciones y reportes por proyecto."]]
+    ? [["Ãƒâ€šÃ‚Â¿Operitron reemplaza a mi contratista o asesor?", "No. OPERITRON.COM organiza cÃƒÆ’Ã‚Â¡lculos y flujos de trabajo para apoyar decisiones; siempre valida con profesionales licenciados."], ["Ãƒâ€šÃ‚Â¿Puedo usarlo para flips, rentals y BRRR?", "SÃƒÆ’Ã‚Â­. Incluye underwriting, DSCR, cash-out, construcciÃƒÆ’Ã‚Â³n, takeoffs y reportes."], ["Ãƒâ€šÃ‚Â¿Incluye prueba gratis?", "SÃƒÆ’Ã‚Â­. La prueba gratis de tres dÃƒÆ’Ã‚Â­as comienza al iniciar una suscripciÃƒÆ’Ã‚Â³n Mensual o Anual en el checkout seguro."], ["Ãƒâ€šÃ‚Â¿Puedo colaborar con mi equipo?", "SÃƒÆ’Ã‚Â­. Puedes estructurar colaboradores, elementos vinculados, cotizaciones y reportes por proyecto."]]
     : [["Does Operitron replace my contractor or advisor?", "No. OPERITRON.COM organizes calculations and workflows for decision support; always validate with licensed professionals."], ["Can I use it for flips, rentals, and BRRR?", "Yes. It includes underwriting, DSCR, cash-out, construction tracking, takeoffs, and reports."], ["Is there a free trial?", "Yes. A three-day trial begins when you start a Monthly or Annual subscription in secure checkout."], ["Can I collaborate with my team?", "Yes. Structure collaborators, linked items, quotes, and reports by project."]];
-  return <section><SectionHeader title={isEs ? "Preguntas Frecuentes" : "Frequently Asked Questions"} detail={isEs ? "Respuestas rÃƒÂ¡pidas para inversionistas y constructores." : "Quick answers for investors and builders."} /><div className="space-y-3">{faqs.map(([q, a]) => <details key={q} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><summary className="cursor-pointer font-black text-white">{q}</summary><p className="mt-3 leading-7 text-slate-400">{a}</p></details>)}</div></section>;
+  return <section><SectionHeader title={isEs ? "Preguntas Frecuentes" : "Frequently Asked Questions"} detail={isEs ? "Respuestas rÃƒÆ’Ã‚Â¡pidas para inversionistas y constructores." : "Quick answers for investors and builders."} /><div className="space-y-3">{faqs.map(([q, a]) => <details key={q} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><summary className="cursor-pointer font-black text-white">{q}</summary><p className="mt-3 leading-7 text-slate-400">{a}</p></details>)}</div></section>;
 }
 
 function LandingKnowledgeBase({ isEs }) {
-  const topics = isEs ? ["CÃƒÂ³mo evaluar un deal mÃƒÂ¡s rÃƒÂ¡pido", "CÃƒÂ³mo preparar una oferta mÃƒÂ¡xima", "CÃƒÂ³mo organizar un cierre de construcciÃƒÂ³n", "CÃƒÂ³mo revisar DSCR antes de hablar con un prestamista"] : ["How to evaluate a deal faster", "How to prepare a max offer", "How to organize construction closeout", "How to review DSCR before calling a lender"];
-  return <section><SectionHeader title={isEs ? "Base de Conocimiento para Inversionistas" : "Investor Knowledge Base"} detail={isEs ? "GuÃƒÂ­as originales para analizar, construir y operar con mÃƒÂ¡s claridad." : "Original guides for analyzing, building, and operating with more clarity."} /><div className="grid gap-4 md:grid-cols-2">{topics.map((topic) => <button key={topic} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 text-left font-black text-white hover:border-cyan-300/40">{topic}<ChevronRight className="float-right text-cyan-300" /></button>)}</div></section>;
+  const topics = isEs ? ["CÃƒÆ’Ã‚Â³mo evaluar un deal mÃƒÆ’Ã‚Â¡s rÃƒÆ’Ã‚Â¡pido", "CÃƒÆ’Ã‚Â³mo preparar una oferta mÃƒÆ’Ã‚Â¡xima", "CÃƒÆ’Ã‚Â³mo organizar un cierre de construcciÃƒÆ’Ã‚Â³n", "CÃƒÆ’Ã‚Â³mo revisar DSCR antes de hablar con un prestamista"] : ["How to evaluate a deal faster", "How to prepare a max offer", "How to organize construction closeout", "How to review DSCR before calling a lender"];
+  return <section><SectionHeader title={isEs ? "Base de Conocimiento para Inversionistas" : "Investor Knowledge Base"} detail={isEs ? "GuÃƒÆ’Ã‚Â­as originales para analizar, construir y operar con mÃƒÆ’Ã‚Â¡s claridad." : "Original guides for analyzing, building, and operating with more clarity."} /><div className="grid gap-4 md:grid-cols-2">{topics.map((topic) => <button key={topic} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 text-left font-black text-white hover:border-cyan-300/40">{topic}<ChevronRight className="float-right text-cyan-300" /></button>)}</div></section>;
 }
 
 function SEOArticleGrid({ go }) {
@@ -1327,7 +1339,7 @@ function SEOArticlePage({ page, go }) {
     <article className="mx-auto max-w-6xl space-y-8">
       <section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/[.12] via-slate-950 to-purple-500/[.12] p-6 shadow-2xl shadow-black/25 sm:p-10">
         <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" />
-        <button onClick={() => go("home")} className="secondary-button relative mb-6">Ã¢â€ Â Home</button>
+        <button onClick={() => go("home")} className="secondary-button relative mb-6">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â Home</button>
         <div className="relative grid gap-6 lg:grid-cols-[1fr_320px] lg:items-end">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">{article.category}</p>
@@ -1404,7 +1416,7 @@ function SEOArticlePage({ page, go }) {
 function Hero({ t, go }) {
   const isEs = t.dashboard === "Panel";
   const insideItems = isEs
-    ? ["Analizador de Deals", "Calculadora DSCR", "Calculadora BRRR", "Rastreador de ConstrucciÃƒÂ³n", "Takeoff de Materiales con IA", "Punch List", "Checklist de ConstrucciÃƒÂ³n", "ColaboraciÃƒÂ³n de Equipo"]
+    ? ["Analizador de Deals", "Calculadora DSCR", "Calculadora BRRR", "Rastreador de ConstrucciÃƒÆ’Ã‚Â³n", "Takeoff de Materiales con IA", "Punch List", "Checklist de ConstrucciÃƒÆ’Ã‚Â³n", "ColaboraciÃƒÆ’Ã‚Â³n de Equipo"]
     : ["Deal Underwriter", "DSCR Calculator", "BRRR Calculator", "Construction Tracker", "AI Material Takeoff", "Punch List", "Construction Checklist", "Team Collaboration"];
   return (
     <section className="overflow-hidden rounded-[1.5rem] border border-white/10 bg-gradient-to-br from-cyan-400/10 via-slate-900/80 to-amber-400/10 p-5 shadow-2xl shadow-black/30 sm:rounded-[2rem] sm:p-7">
@@ -1434,29 +1446,29 @@ function Hero({ t, go }) {
 }
 
 function PublicFooter({ isEs, go }) {
-  const toolLinks = isEs ? [["AnÃƒÂ¡lisis de Deals"], ["Calculadora DSCR"], ["Calculadora BRRR"], ["Rastreador de ConstrucciÃƒÂ³n"]] : [["Deal Analysis"], ["DSCR Calculator"], ["BRRR Calculator"], ["Construction Tracker"]];
+  const toolLinks = isEs ? [["AnÃƒÆ’Ã‚Â¡lisis de Deals"], ["Calculadora DSCR"], ["Calculadora BRRR"], ["Rastreador de ConstrucciÃƒÆ’Ã‚Â³n"]] : [["Deal Analysis"], ["DSCR Calculator"], ["BRRR Calculator"], ["Construction Tracker"]];
   const moreLinks = isEs ? [["Takeoff con IA"], ["Punch List"], ["Lista de Tareas"], ["Precios", "pricing"]] : [["AI Takeoff"], ["Punch List"], ["To-Do List"], ["Pricing", "pricing"]];
   const resourceLinks = isEs ? [["Aprende", "learning"], ["Tutoriales", "tutorials"], ["Base de Conocimiento", "knowledge"], ["Recorridos", "tours"]] : [["Learn", "learning"], ["Tutorials", "tutorials"], ["Knowledge Base", "knowledge"], ["Tours", "tours"]];
-  const companyLinks = isEs ? [["TÃƒÂ©rminos", "terms"], ["Privacidad", "privacy"], ["Reembolsos", "refund"], ["Aviso Legal", "disclaimer"]] : [["Terms", "terms"], ["Privacy", "privacy"], ["Refunds", "refund"], ["Disclaimer", "disclaimer"]];
+  const companyLinks = isEs ? [["TÃƒÆ’Ã‚Â©rminos", "terms"], ["Privacidad", "privacy"], ["Reembolsos", "refund"], ["Aviso Legal", "disclaimer"]] : [["Terms", "terms"], ["Privacy", "privacy"], ["Refunds", "refund"], ["Disclaimer", "disclaimer"]];
   return (
     <footer className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-6 shadow-2xl shadow-black/20">
       <div className="grid gap-5 md:grid-cols-3">
-        <Info title={isEs ? "15% Menos Retrasos" : "15% Fewer Delays"} text={isEs ? "La predicciÃƒÂ³n de cuellos de botella con IA identifica riesgos de ruta crÃƒÂ­tica antes de que se conviertan en sobrecostos de cronograma." : "AI bottleneck prediction identifies critical-path risk before it becomes schedule overrun."} />
-        <Info title={isEs ? "PrecisiÃƒÂ³n en Takeoff" : "Takeoff Accuracy"} text={isEs ? "Mediciones automatizadas con lÃƒÂ³gica de factores de desperdicio reducen errores de conteo manual y faltantes de material." : "Automated measurements with waste-factor logic reduce manual counting errors and material shortages."} />
-        <Info title={isEs ? "2x MÃƒÂ¡s RÃƒÂ¡pido en AnÃƒÂ¡lisis" : "2x Faster Analysis"} text={isEs ? "ROI en tiempo real, proyecciones de financiamiento y cÃƒÂ¡lculos DSCR convierten horas de hojas de cÃƒÂ¡lculo en minutos." : "Real-time ROI, financing projections, and DSCR calculations turn spreadsheet hours into minutes."} />
+        <Info title={isEs ? "15% Menos Retrasos" : "15% Fewer Delays"} text={isEs ? "La predicciÃƒÆ’Ã‚Â³n de cuellos de botella con IA identifica riesgos de ruta crÃƒÆ’Ã‚Â­tica antes de que se conviertan en sobrecostos de cronograma." : "AI bottleneck prediction identifies critical-path risk before it becomes schedule overrun."} />
+        <Info title={isEs ? "PrecisiÃƒÆ’Ã‚Â³n en Takeoff" : "Takeoff Accuracy"} text={isEs ? "Mediciones automatizadas con lÃƒÆ’Ã‚Â³gica de factores de desperdicio reducen errores de conteo manual y faltantes de material." : "Automated measurements with waste-factor logic reduce manual counting errors and material shortages."} />
+        <Info title={isEs ? "2x MÃƒÆ’Ã‚Â¡s RÃƒÆ’Ã‚Â¡pido en AnÃƒÆ’Ã‚Â¡lisis" : "2x Faster Analysis"} text={isEs ? "ROI en tiempo real, proyecciones de financiamiento y cÃƒÆ’Ã‚Â¡lculos DSCR convierten horas de hojas de cÃƒÆ’Ã‚Â¡lculo en minutos." : "Real-time ROI, financing projections, and DSCR calculations turn spreadsheet hours into minutes."} />
       </div>
       <div className="mt-6 rounded-3xl border border-amber-400/20 bg-amber-400/10 p-5">
-        <p className="font-black text-amber-200">{isEs ? "Ã¢Å¡Â Ã¯Â¸Â Aviso Importante" : "Ã¢Å¡Â Ã¯Â¸Â Important Notice"}</p>
-        <p className="mt-2 leading-7 text-slate-300">{isEs ? "Importante: Operitron es una herramienta de apoyo a la toma de decisiones, no una garantÃƒÂ­a. Todas las proyecciones, presupuestos y rendimientos son estimaciones basadas en sus datos y suposiciones. Operitron no es responsable de pÃƒÂ©rdidas, retrasos, sobrecostos, problemas de cumplimiento de cÃƒÂ³digos, resultados de financiamiento o resultados de inversiÃƒÂ³n. Siempre verifique los datos y consulte a profesionales licenciados." : "Operitron is decision-support software, not a guarantee. All projections, budgets, and returns are estimates based on your inputs and assumptions. Always verify data and consult licensed professionals."}</p>
+        <p className="font-black text-amber-200">{isEs ? "ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Aviso Importante" : "ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â Important Notice"}</p>
+        <p className="mt-2 leading-7 text-slate-300">{isEs ? "Importante: Operitron es una herramienta de apoyo a la toma de decisiones, no una garantÃƒÆ’Ã‚Â­a. Todas las proyecciones, presupuestos y rendimientos son estimaciones basadas en sus datos y suposiciones. Operitron no es responsable de pÃƒÆ’Ã‚Â©rdidas, retrasos, sobrecostos, problemas de cumplimiento de cÃƒÆ’Ã‚Â³digos, resultados de financiamiento o resultados de inversiÃƒÆ’Ã‚Â³n. Siempre verifique los datos y consulte a profesionales licenciados." : "Operitron is decision-support software, not a guarantee. All projections, budgets, and returns are estimates based on your inputs and assumptions. Always verify data and consult licensed professionals."}</p>
       </div>
       <div className="mt-8 grid gap-6 border-t border-white/10 pt-6 sm:grid-cols-2 lg:grid-cols-4">
         <FooterColumn title={isEs ? "Herramientas" : "Tools"} items={toolLinks} go={go} />
-        <FooterColumn title={isEs ? "MÃƒÂ¡s" : "More"} items={moreLinks} go={go} />
+        <FooterColumn title={isEs ? "MÃƒÆ’Ã‚Â¡s" : "More"} items={moreLinks} go={go} />
         <FooterColumn title={isEs ? "Recursos" : "Resources"} items={resourceLinks} go={go} />
         <FooterColumn title={isEs ? "Empresa" : "Company"} items={companyLinks} go={go} />
       </div>
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-5 text-sm text-slate-500">
-        <p>Ã‚Â© 2026 Operitron. {isEs ? "Todos los derechos reservados." : "All rights reserved."}</p>
+        <p>Ãƒâ€šÃ‚Â© 2026 Operitron. {isEs ? "Todos los derechos reservados." : "All rights reserved."}</p>
         <a href="mailto:support@operitron.com" className="font-bold text-cyan-300 transition hover:text-cyan-200">support@operitron.com</a>
       </div>
     </footer>
@@ -1613,11 +1625,11 @@ function ProjectPicker({ language, toolTitle, projects = [], showExisting, setSh
         </div>
         <label className="mt-6 block">
           <span className="label">{isEs ? "Nombre del proyecto" : "Project Name"}</span>
-          <input autoFocus value={projectName} onChange={(event) => setProjectName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") createProject(); }} className="field text-base" placeholder={isEs ? "Ej. RemodelaciÃƒÂ³n Silva" : "Example: Silva Remodel"} />
+          <input autoFocus value={projectName} onChange={(event) => setProjectName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") createProject(); }} className="field text-base" placeholder={isEs ? "Ej. RemodelaciÃƒÆ’Ã‚Â³n Silva" : "Example: Silva Remodel"} />
         </label>
         <label className="mt-4 block">
-          <span className="label">{isEs ? "DescripciÃƒÂ³n (opcional)" : "Description (optional)"}</span>
-          <textarea value={description} onChange={(event) => setDescription(event.target.value)} className="field min-h-24 resize-y text-base" placeholder={isEs ? "Notas, direcciÃƒÂ³n, alcance o contexto..." : "Notes, address, scope, or context..."} />
+          <span className="label">{isEs ? "DescripciÃƒÆ’Ã‚Â³n (opcional)" : "Description (optional)"}</span>
+          <textarea value={description} onChange={(event) => setDescription(event.target.value)} className="field min-h-24 resize-y text-base" placeholder={isEs ? "Notas, direcciÃƒÆ’Ã‚Â³n, alcance o contexto..." : "Notes, address, scope, or context..."} />
         </label>
         <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button onClick={() => setCreating(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button>
@@ -1645,9 +1657,9 @@ function ProjectPicker({ language, toolTitle, projects = [], showExisting, setSh
         <div className="max-h-72 space-y-3 overflow-y-auto pr-2 [scrollbar-color:rgba(34,211,238,.55)_rgba(15,23,42,.75)] [scrollbar-width:thin]">
           {filteredProjects.length ? filteredProjects.map((project) => <button key={project.id} onClick={() => selectProject(project)} className="glow-card flex w-full items-center gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left hover:border-cyan-300/35">
             <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-amber-300/10 text-amber-300"><FolderOpen size={19} /></span>
-            <span className="min-w-0 flex-1"><span className="block truncate font-black text-white">{project.name || project.title || "Untitled Project"}</span><span className="block truncate text-sm text-slate-400">{project.description || project.address || project.notes || (isEs ? "Sin descripciÃƒÂ³n" : "No description")}</span></span>
+            <span className="min-w-0 flex-1"><span className="block truncate font-black text-white">{project.name || project.title || "Untitled Project"}</span><span className="block truncate text-sm text-slate-400">{project.description || project.address || project.notes || (isEs ? "Sin descripciÃƒÆ’Ã‚Â³n" : "No description")}</span></span>
             <ChevronRight className="shrink-0 text-cyan-300" size={18} />
-          </button>) : <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-center text-sm text-slate-400">{isEs ? "No encontramos proyectos con esa bÃƒÂºsqueda." : "No projects match that search."}</div>}
+          </button>) : <div className="rounded-2xl border border-dashed border-white/10 bg-slate-950/40 p-5 text-center text-sm text-slate-400">{isEs ? "No encontramos proyectos con esa bÃƒÆ’Ã‚Âºsqueda." : "No projects match that search."}</div>}
         </div>
         <button onClick={() => setShowExisting(false)} className="secondary-button w-full">{isEs ? "Volver" : "Back"}</button>
       </div>}
@@ -1661,7 +1673,7 @@ function ToolModalFrame({ children, onClose }) {
 
 function SubscriptionGate({ language, go }) {
   const isEs = language === "es";
-  return <section className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 to-purple-500/10 p-7"><DollarSign className="text-cyan-300" size={32} /><h2 className="mt-5 pr-8 text-2xl font-black text-white">{isEs ? "Activa tu prueba de 3 dÃƒÂ­as" : "Activate your 3-day trial"}</h2><p className="mt-3 leading-7 text-slate-300">{isEs ? "Las herramientas profesionales se habilitan con un plan Mensual o Anual activo. Comienza de forma segura con Stripe Checkout." : "Professional tools unlock with an active Monthly or Annual plan. Start securely through Stripe Checkout."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{isEs ? "Ver planes" : "View plans"}</button></section>;
+  return <section className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 to-purple-500/10 p-7"><DollarSign className="text-cyan-300" size={32} /><h2 className="mt-5 pr-8 text-2xl font-black text-white">{isEs ? "Activa tu prueba de 3 dÃƒÆ’Ã‚Â­as" : "Activate your 3-day trial"}</h2><p className="mt-3 leading-7 text-slate-300">{isEs ? "Las herramientas profesionales se habilitan con un plan Mensual o Anual activo. Comienza de forma segura con Stripe Checkout." : "Professional tools unlock with an active Monthly or Annual plan. Start securely through Stripe Checkout."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{isEs ? "Ver planes" : "View plans"}</button></section>;
 }
 
 function OwnerConsole({ language, user, go, setActiveTool }) {
@@ -1679,15 +1691,15 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
     setStatus("");
     if (stripe) setStripeStatus("");
     try {
-      if (!supabase) throw new Error(isEs ? "La autenticaciÃƒÂ³n no estÃƒÂ¡ configurada." : "Authentication is not configured.");
+      if (!supabase) throw new Error(isEs ? "La autenticaciÃƒÆ’Ã‚Â³n no estÃƒÆ’Ã‚Â¡ configurada." : "Authentication is not configured.");
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
-      if (!token) throw new Error(isEs ? "Inicia sesiÃƒÂ³n para continuar." : "Sign in to continue.");
+      if (!token) throw new Error(isEs ? "Inicia sesiÃƒÆ’Ã‚Â³n para continuar." : "Sign in to continue.");
       const response = await fetch("/api/admin-health", { headers: { Authorization: `Bearer ${token}` } });
       const result = await readApiJson(response);
-      if (!response.ok) throw new Error(result.error || (isEs ? "No se pudo verificar producciÃƒÂ³n." : "Production check could not be completed."));
+      if (!response.ok) throw new Error(result.error || (isEs ? "No se pudo verificar producciÃƒÆ’Ã‚Â³n." : "Production check could not be completed."));
       setReport(result);
-      if (stripe) setStripeStatus(isEs ? "ConfiguraciÃƒÂ³n de Stripe verificada. No se creÃƒÂ³ ningÃƒÂºn cargo." : "Stripe configuration checked. No charge was created.");
+      if (stripe) setStripeStatus(isEs ? "ConfiguraciÃƒÆ’Ã‚Â³n de Stripe verificada. No se creÃƒÆ’Ã‚Â³ ningÃƒÆ’Ã‚Âºn cargo." : "Stripe configuration checked. No charge was created.");
     } catch (error) {
       if (stripe) setStripeStatus(error.message);
       else setStatus(error.message);
@@ -1719,8 +1731,8 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
         <div>
           <p className="text-xs font-black uppercase tracking-[0.25em] text-cyan-300">{isEs ? "Control del Propietario" : "Owner Console"}</p>
           <h1 className="mt-3 text-3xl font-black text-white sm:text-4xl">{isEs ? "Acceso total de Operitron" : "Operitron full-access control"}</h1>
-          <p className="mt-3 max-w-2xl leading-7 text-slate-300">{isEs ? "Tu identidad administrativa omite el cobro para desarrollo, revisiÃƒÂ³n y control de todas las herramientas del producto." : "Your administrator identity bypasses billing for product development, review, and control across every workspace tool."}</p>
-          <p className="mt-3 inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-black text-cyan-200">{user?.email} Ã‚| {isEs ? "Administrador" : "Administrator"}</p>
+          <p className="mt-3 max-w-2xl leading-7 text-slate-300">{isEs ? "Tu identidad administrativa omite el cobro para desarrollo, revisiÃƒÆ’Ã‚Â³n y control de todas las herramientas del producto." : "Your administrator identity bypasses billing for product development, review, and control across every workspace tool."}</p>
+          <p className="mt-3 inline-flex rounded-full border border-cyan-300/25 bg-cyan-300/10 px-4 py-2 text-sm font-black text-cyan-200">{user?.email} Ãƒâ€š| {isEs ? "Administrador" : "Administrator"}</p>
         </div>
         <button onClick={checkProduction} disabled={checking} className="primary-button whitespace-nowrap disabled:opacity-60">{checking ? (isEs ? "Verificando..." : "Checking...") : (isEs ? "Verificar sistema" : "Run system check")}</button>
       </div>
@@ -1728,7 +1740,7 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
 
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
       <GlassPanel>
-        <SectionHeader title={isEs ? "Acceso a Herramientas" : "Tool Access"} detail={isEs ? "Las ocho ÃƒÂ¡reas profesionales estÃƒÂ¡n desbloqueadas para tu cuenta administrativa." : "All eight professional work areas are unlocked for your administrator account."} />
+        <SectionHeader title={isEs ? "Acceso a Herramientas" : "Tool Access"} detail={isEs ? "Las ocho ÃƒÆ’Ã‚Â¡reas profesionales estÃƒÆ’Ã‚Â¡n desbloqueadas para tu cuenta administrativa." : "All eight professional work areas are unlocked for your administrator account."} />
         <div className="grid gap-3 sm:grid-cols-2">
           {toolsForOwner.map(([id, title, detail, Icon]) => <button key={id} onClick={() => setActiveTool(id)} className="glow-card flex gap-3 rounded-2xl border border-white/10 bg-slate-950/55 p-4 text-left transition hover:border-cyan-300/35"><span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-cyan-300/10 text-cyan-300"><Icon size={19} /></span><span><span className="block font-black text-white">{title}</span><span className="mt-1 block text-xs leading-5 text-slate-400">{detail}</span></span></button>)}
         </div>
@@ -1740,7 +1752,7 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
       </GlassPanel>
 
       <GlassPanel>
-        <SectionHeader title={isEs ? "Estado de ProducciÃƒÂ³n" : "Production Readiness"} detail={isEs ? "Comprobaciones privadas para detectar configuraciÃƒÂ³n faltante." : "Private checks to surface missing configuration."} />
+        <SectionHeader title={isEs ? "Estado de ProducciÃƒÆ’Ã‚Â³n" : "Production Readiness"} detail={isEs ? "Comprobaciones privadas para detectar configuraciÃƒÆ’Ã‚Â³n faltante." : "Private checks to surface missing configuration."} />
         {status && <p className="rounded-xl border border-red-300/25 bg-red-400/10 p-3 text-sm leading-6 text-red-200">{status}</p>}
         {!status && !report && <p className="text-sm text-slate-400">{isEs ? "Cargando verificaciones..." : "Loading checks..."}</p>}
         <div className="space-y-3">
@@ -1749,13 +1761,13 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
             <p className="mt-1 text-xs leading-5 text-slate-400">{check.detail}</p>
           </div>)}
         </div>
-        {issues.length > 0 && <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-3 text-sm leading-6 text-amber-100">{isEs ? "Los elementos en amarillo requieren configuraciÃƒÂ³n antes de guardar datos o procesar servicios conectados." : "Yellow items require configuration before related data can save or connected services can run."}</p>}
+        {issues.length > 0 && <p className="mt-4 rounded-xl border border-amber-300/20 bg-amber-300/[.06] p-3 text-sm leading-6 text-amber-100">{isEs ? "Los elementos en amarillo requieren configuraciÃƒÆ’Ã‚Â³n antes de guardar datos o procesar servicios conectados." : "Yellow items require configuration before related data can save or connected services can run."}</p>}
       </GlassPanel>
     </div>
 
     <GlassPanel>
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <SectionHeader title={isEs ? "Checklist de Lanzamiento" : "Launch Checklist"} detail={isEs ? "VerificaciÃƒÂ³n segura y de solo lectura. No crea checkout ni cobra tarjetas." : "Safe read-only verification. It does not create checkout sessions or charge cards."} />
+        <SectionHeader title={isEs ? "Checklist de Lanzamiento" : "Launch Checklist"} detail={isEs ? "VerificaciÃƒÆ’Ã‚Â³n segura y de solo lectura. No crea checkout ni cobra tarjetas." : "Safe read-only verification. It does not create checkout sessions or charge cards."} />
         <button onClick={checkStripeConfiguration} disabled={stripeChecking} className="primary-button whitespace-nowrap disabled:cursor-wait disabled:opacity-60">{stripeChecking ? (isEs ? "Verificando..." : "Checking...") : "Check Stripe Configuration"}</button>
       </div>
       {stripeStatus && <p className="mt-4 rounded-xl border border-cyan-300/20 bg-cyan-300/[.08] p-3 text-sm leading-6 text-cyan-100">{stripeStatus}</p>}
@@ -1767,7 +1779,7 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
           { name: "Webhook secret configured", ok: false, detail: "Click Check Stripe Configuration." },
           { name: "Supabase service role configured", ok: false, detail: "Click Check Stripe Configuration." },
         ]).map((check) => <div key={check.name} className={`rounded-2xl border p-4 ${check.ok ? "border-emerald-300/20 bg-emerald-300/[.065]" : "border-red-300/20 bg-red-400/[.065]"}`}>
-          <p className={`flex items-center gap-2 text-sm font-black ${check.ok ? "text-emerald-300" : "text-red-200"}`}>{check.ok ? <CheckCircle2 size={17} /> : <X size={17} />}{check.ok ? "PASS" : "FAIL"} Ã‚| {check.name}</p>
+          <p className={`flex items-center gap-2 text-sm font-black ${check.ok ? "text-emerald-300" : "text-red-200"}`}>{check.ok ? <CheckCircle2 size={17} /> : <X size={17} />}{check.ok ? "PASS" : "FAIL"} Ãƒâ€š| {check.name}</p>
           <p className="mt-2 text-xs leading-5 text-slate-400">{check.detail}</p>
         </div>)}
       </div>
@@ -1778,16 +1790,16 @@ function OwnerConsole({ language, user, go, setActiveTool }) {
 function PremiumPaywall({ language, user, go }) {
   const isEs = language === "es";
   const perks = isEs
-    ? ["Analizador IA y underwriting avanzado", "Calculadoras DSCR, BRRR y cash-out", "Proyectos, reportes, Dropbox y colaboraciÃƒÂ³n", "Rastreo de construcciÃƒÂ³n y takeoff de materiales"]
+    ? ["Analizador IA y underwriting avanzado", "Calculadoras DSCR, BRRR y cash-out", "Proyectos, reportes, Dropbox y colaboraciÃƒÆ’Ã‚Â³n", "Rastreo de construcciÃƒÆ’Ã‚Â³n y takeoff de materiales"]
     : ["AI analysis and advanced underwriting", "DSCR, BRRR, and cash-out calculators", "Projects, reports, Dropbox, and collaboration", "Construction tracking and material takeoffs"];
-  return <div className="mx-auto max-w-5xl space-y-7"><section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/12 via-slate-950 to-purple-500/12 p-6 text-center shadow-[0_0_55px_rgba(34,211,238,.12)] sm:p-10"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" /><Sparkles className="relative mx-auto text-cyan-300" size={38} /><p className="relative mt-5 text-xs font-black uppercase tracking-[0.28em] text-cyan-300">OPERITRON.COM</p><h1 className="relative mx-auto mt-3 max-w-3xl text-3xl font-black text-white sm:text-5xl">{isEs ? "Comienza tu prueba gratis de 3 dÃƒÂ­as" : "Start your 3-day free trial"}</h1><p className="relative mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">{isEs ? "Tu cuenta estÃƒÂ¡ lista. Las herramientas profesionales se activan cuando inicias una suscripciÃƒÂ³n Mensual o Anual mediante Stripe Checkout." : "Your account is ready. Professional tools activate when you start a Monthly or Annual subscription through secure Stripe Checkout."}</p><p className="relative mt-4 text-sm font-bold text-slate-400">{user?.email}</p><div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row"><button onClick={() => go("pricing")} className="primary-button">{isEs ? "Ver planes e iniciar prueba" : "View plans and start trial"}</button><button onClick={() => go("profile")} className="secondary-button">{isEs ? "Mi cuenta" : "My account"}</button></div></section><div className="grid gap-4 md:grid-cols-2">{perks.map((perk) => <div key={perk} className="rounded-2xl border border-white/10 bg-white/[.045] p-5 text-slate-200"><CheckCircle2 className="mb-3 text-cyan-300" size={20} /><p className="font-bold">{perk}</p></div>)}</div></div>;
+  return <div className="mx-auto max-w-5xl space-y-7"><section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/12 via-slate-950 to-purple-500/12 p-6 text-center shadow-[0_0_55px_rgba(34,211,238,.12)] sm:p-10"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" /><Sparkles className="relative mx-auto text-cyan-300" size={38} /><p className="relative mt-5 text-xs font-black uppercase tracking-[0.28em] text-cyan-300">OPERITRON.COM</p><h1 className="relative mx-auto mt-3 max-w-3xl text-3xl font-black text-white sm:text-5xl">{isEs ? "Comienza tu prueba gratis de 3 dÃƒÆ’Ã‚Â­as" : "Start your 3-day free trial"}</h1><p className="relative mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">{isEs ? "Tu cuenta estÃƒÆ’Ã‚Â¡ lista. Las herramientas profesionales se activan cuando inicias una suscripciÃƒÆ’Ã‚Â³n Mensual o Anual mediante Stripe Checkout." : "Your account is ready. Professional tools activate when you start a Monthly or Annual subscription through secure Stripe Checkout."}</p><p className="relative mt-4 text-sm font-bold text-slate-400">{user?.email}</p><div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row"><button onClick={() => go("pricing")} className="primary-button">{isEs ? "Ver planes e iniciar prueba" : "View plans and start trial"}</button><button onClick={() => go("profile")} className="secondary-button">{isEs ? "Mi cuenta" : "My account"}</button></div></section><div className="grid gap-4 md:grid-cols-2">{perks.map((perk) => <div key={perk} className="rounded-2xl border border-white/10 bg-white/[.045] p-5 text-slate-200"><CheckCircle2 className="mb-3 text-cyan-300" size={20} /><p className="font-bold">{perk}</p></div>)}</div></div>;
 }
 
 function ToolBody({ t, language, toolId, project }) {
   if (toolId === "wizard") return <ConstructionWizard language={language} project={project} />;
   if (toolId === "underwriter") return <DealUnderwriter language={language} project={project} />;
   if (toolId === "loan" || toolId === "loanCalcs") return <InvestmentLoanCalculator language={language} project={project} />;
-  if (toolId === "todo") return <Checklist project={project} items={language === "es" ? ["Ordenar armaduras", "Confirmar inspecciÃƒÂ³n de cimentaciÃƒÂ³n", "Recopilar tres ofertas de HVAC", "Programar cuadrilla de drywall"] : ["Order trusses", "Confirm foundation inspection", "Collect three HVAC bids", "Schedule drywall crew"]} language={language} />;
+  if (toolId === "todo") return <Checklist project={project} items={language === "es" ? ["Ordenar armaduras", "Confirmar inspecciÃƒÆ’Ã‚Â³n de cimentaciÃƒÆ’Ã‚Â³n", "Recopilar tres ofertas de HVAC", "Programar cuadrilla de drywall"] : ["Order trusses", "Confirm foundation inspection", "Collect three HVAC bids", "Schedule drywall crew"]} language={language} />;
   if (toolId === "punch") return <PunchListApp language={language} project={project} />;
   if (toolId === "takeoff") return <AITakeoff language={language} project={project} />;
   if (toolId === "budget") return <BudgetEstimator language={language} project={project} />;
@@ -1923,7 +1935,7 @@ function ConstructionWizard({ language = "en", project }) {
         </div>
       </div>
 
-      {step === 1 && <WizardStep title="Foundation Type" detail="Select the type of foundation for your project"><OptionGrid options={[["Slab (Losa)", "Concrete poured directly on ground level"], ["Basement (SÃƒÂ³tano)", "Full basement below ground level"], ["Crawlspace (Espacio de Acceso)", "Elevated foundation with access space"]]} value={answers.foundation} onChange={(value) => update("foundation", value)} /></WizardStep>}
+      {step === 1 && <WizardStep title="Foundation Type" detail="Select the type of foundation for your project"><OptionGrid options={[["Slab (Losa)", "Concrete poured directly on ground level"], ["Basement (SÃƒÆ’Ã‚Â³tano)", "Full basement below ground level"], ["Crawlspace (Espacio de Acceso)", "Elevated foundation with access space"]]} value={answers.foundation} onChange={(value) => update("foundation", value)} /></WizardStep>}
       {step === 2 && <WizardStep title="Finish Level" detail="Select the quality level of finishes"><OptionGrid options={[["Basic", "Standard finishes, cost-effective"], ["Semi-Luxury", "Upgraded finishes, mid-range quality"], ["Luxury", "High-end finishes, premium quality"]]} value={answers.finish} onChange={(value) => update("finish", value)} /></WizardStep>}
       {step === 3 && <WizardStep title="Building Structure" detail="Configure the structure type, building size and garage"><WizardGroup title="Structure Type"><OptionGrid compact options={[["Wood Framing", "Traditional wood stud framing"], ["Concrete Block", "CMU / concrete block walls"]]} value={answers.structure} onChange={(value) => update("structure", value)} /></WizardGroup><WizardGroup title="Number of Stories"><OptionGrid compact options={[["1 Story", "Single-level home"], ["2 Stories", "Two-level home"], ["3+ Stories", "Three or more levels"]]} value={answers.stories} onChange={(value) => update("stories", value)} /></WizardGroup><WizardGroup title="Garage Size"><Segmented options={["No Garage", "1-Car Garage", "2-Car Garage", "3-Car Garage"]} value={answers.garage} onChange={(value) => update("garage", value)} /></WizardGroup></WizardStep>}
       {step === 4 && <WizardStep title="Exterior Siding" detail="Select one or more siding materials and drag each share to total 100%."><div className="mb-4 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/70 p-4"><span className="font-black text-white">Total: {sidingTotal}%</span><span className={sidingTotal === 100 ? "font-black text-emerald-300" : "font-black text-amber-300"}>{sidingTotal === 100 ? "Ready" : "Adjust to 100%"}</span></div><div className="grid gap-3 md:grid-cols-2">{Object.entries(siding).map(([name, pct]) => <div key={name} className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-white">{name}</p><p className="text-sm text-slate-400">{sidingDescription(name)}</p></div><span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-sm font-black text-cyan-200">{pct}%</span></div><label className="mt-4 block"><span className="sr-only">{name} percentage</span><input type="range" min="0" max="100" step="1" value={pct} onChange={(e) => setSidingPct(name, e.target.value)} className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-cyan-300" /></label></div>)}</div></WizardStep>}
@@ -1962,11 +1974,11 @@ function EmbeddedConstructionProgress({ plan, language }) {
       <div className="flex items-center gap-3">
         <div className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan-300/10 text-cyan-300"><BarChart3 /></div>
         <div>
-          <h4 className="text-xl font-black text-white">{isEs ? "Progreso de ConstrucciÃƒÂ³n" : "Construction Progress"}</h4>
+          <h4 className="text-xl font-black text-white">{isEs ? "Progreso de ConstrucciÃƒÆ’Ã‚Â³n" : "Construction Progress"}</h4>
           <p className="text-sm text-slate-400">{isEs ? "Integrado dentro del asistente: cronograma, presupuesto, fotos y avance." : "Built into the wizard: schedule, budget, photos, and completion tracking."}</p>
         </div>
       </div>
-      <MiniMetric label={isEs ? "DuraciÃƒÂ³n" : "Duration"} value={`${totalWeeks} ${isEs ? "sem" : "wks"}`} />
+      <MiniMetric label={isEs ? "DuraciÃƒÆ’Ã‚Â³n" : "Duration"} value={`${totalWeeks} ${isEs ? "sem" : "wks"}`} />
     </div>
     <div className="mt-5 h-2 overflow-hidden rounded-full bg-slate-800"><motion.div initial={false} animate={{ width: `${completed || 8}%` }} className="h-full rounded-full bg-gradient-to-r from-cyan-300 to-amber-300" /></div>
     <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -1982,21 +1994,21 @@ function GeneratedConstructionChecklist({ plan, assumptions, language }) {
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
         <p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? "Plan Generado" : "Generated Plan"}</p>
-        <h4 className="mt-2 text-2xl font-black text-white">{isEs ? "Tu Lista de ConstrucciÃƒÂ³n" : "Your Construction Checklist"}</h4>
+        <h4 className="mt-2 text-2xl font-black text-white">{isEs ? "Tu Lista de ConstrucciÃƒÆ’Ã‚Â³n" : "Your Construction Checklist"}</h4>
         <p className="mt-2 text-sm text-slate-400">{isEs ? "Fases y tareas creadas desde las especificaciones de tu proyecto." : "Phases and tasks created from your project specifications."}</p>
       </div>
       <button className="secondary-button">{isEs ? "Guardar en Proyecto" : "Save to Project"}</button>
     </div>
     <div className="grid gap-3 sm:grid-cols-4">
-      <MiniMetric label={isEs ? "DuraciÃƒÂ³n Estimada" : "Estimated Duration"} value={`${plan.totalWeeks} ${isEs ? "semanas" : "weeks"}`} />
-      <MiniMetric label={isEs ? "Costo ConstrucciÃƒÂ³n" : "Construction Cost"} value={formatMoney(plan.estimatedCost)} />
+      <MiniMetric label={isEs ? "DuraciÃƒÆ’Ã‚Â³n Estimada" : "Estimated Duration"} value={`${plan.totalWeeks} ${isEs ? "semanas" : "weeks"}`} />
+      <MiniMetric label={isEs ? "Costo ConstrucciÃƒÆ’Ã‚Â³n" : "Construction Cost"} value={formatMoney(plan.estimatedCost)} />
       <MiniMetric label={isEs ? "Contingencia 10%" : "10% Contingency"} value={formatMoney(plan.contingency)} />
       <MiniMetric label={isEs ? "Riesgo de Programa" : "Schedule Risk"} value={plan.risk} />
     </div>
     <div className="grid gap-5 xl:grid-cols-[1fr_300px]">
       <div className="space-y-3">{plan.phases.map((phase, index) => <details key={phase.name} className="rounded-2xl border border-white/10 bg-white/[.03] p-4" open={index < 2}><summary className="flex cursor-pointer list-none items-center gap-3"><span className={`grid h-7 w-7 place-items-center rounded-full text-xs font-black ${phase.complete ? "bg-emerald-400 text-slate-950" : "bg-slate-800 text-slate-300"}`}>{index + 1}</span><span className="flex-1 font-black text-white">{phase.name}</span><span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">{phase.weeks} wk</span><span className="h-2 w-20 rounded-full bg-slate-800"><span className="block h-full rounded-full bg-cyan-300" style={{ width: `${phase.weeks / maxWeeks * 100}%` }} /></span></summary><div className="ml-10 mt-4 grid gap-2">{phase.tasks.map((task) => <label key={task} className="flex items-center gap-3 text-sm text-slate-300"><input type="checkbox" className="accent-cyan-300" defaultChecked={phase.complete} />{task}</label>)}</div></details>)}</div>
       <div className="space-y-4">
-        <Info title={isEs ? "RecomendaciÃƒÂ³n de IA" : "AI Recommendation"} text={plan.risk === "Moderate" ? (isEs ? "Confirma permisos y condiciones del terreno antes de comprometer cuadrillas." : "Confirm permitting and site conditions before committing crews.") : (isEs ? "El alcance estÃƒÂ¡ preparado para programaciÃƒÂ³n inicial y cotizaciones." : "Scope is ready for initial scheduling and quote collection.")} />
+        <Info title={isEs ? "RecomendaciÃƒÆ’Ã‚Â³n de IA" : "AI Recommendation"} text={plan.risk === "Moderate" ? (isEs ? "Confirma permisos y condiciones del terreno antes de comprometer cuadrillas." : "Confirm permitting and site conditions before committing crews.") : (isEs ? "El alcance estÃƒÆ’Ã‚Â¡ preparado para programaciÃƒÆ’Ã‚Â³n inicial y cotizaciones." : "Scope is ready for initial scheduling and quote collection.")} />
         <Info title={isEs ? "Supuestos Registrados" : "Recorded Assumptions"} text={assumptions.slice(1, 4).join(" | ")} />
       </div>
     </div>
@@ -2052,18 +2064,18 @@ function SmartConstructionChecklist({ plan, assumptions, language }) {
       const severity = rain >= 65 || wind >= 55 ? "HIGH" : rain >= 40 || wind >= 35 ? "MEDIUM" : "LOW";
       setWeather({ place: `${found.name}, ${found.admin1 || found.country}`, rain, wind, severity, time: new Date().toLocaleTimeString() });
     } catch (_error) {
-      setWeather({ error: isEs ? "No se pudo obtener el pronÃƒÂ³stico para esta ubicaciÃƒÂ³n." : "Forecast could not be found for this location." });
+      setWeather({ error: isEs ? "No se pudo obtener el pronÃƒÆ’Ã‚Â³stico para esta ubicaciÃƒÆ’Ã‚Â³n." : "Forecast could not be found for this location." });
     } finally {
       setWeatherLoading(false);
     }
   }
   return <motion.section initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 rounded-3xl border border-cyan-300/25 bg-slate-950/70 p-5 sm:p-6">
     <div className="flex flex-wrap items-start justify-between gap-4">
-      <div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? "Plan Generado" : "Generated Plan"}</p><h4 className="mt-2 text-2xl font-black text-white">{isEs ? "Tu Lista de ConstrucciÃƒÂ³n" : "Your Construction Checklist"}</h4><p className="mt-2 text-sm text-slate-400">{isEs ? "Plan operativo de 14 fases con recomendaciones y seguimiento." : "A 14-phase operating plan with recommendations and live tracking."}</p><p className="mt-2 text-xs text-slate-500">{isEs ? "Ultima actualizacion" : "Last updated"}: {new Date().toLocaleTimeString()}</p></div>
+      <div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? "Plan Generado" : "Generated Plan"}</p><h4 className="mt-2 text-2xl font-black text-white">{isEs ? "Tu Lista de ConstrucciÃƒÆ’Ã‚Â³n" : "Your Construction Checklist"}</h4><p className="mt-2 text-sm text-slate-400">{isEs ? "Plan operativo de 14 fases con recomendaciones y seguimiento." : "A 14-phase operating plan with recommendations and live tracking."}</p><p className="mt-2 text-xs text-slate-500">{isEs ? "Ultima actualizacion" : "Last updated"}: {new Date().toLocaleTimeString()}</p></div>
       <button className="secondary-button">{isEs ? "Guardar en Proyecto" : "Save to Project"}</button>
     </div>
     <div className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[.06] p-4">
-      <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-black text-emerald-200">{isEs ? "DuraciÃƒÂ³n Total Estimada" : "Total Estimated Duration"}: {totalWeeks} {isEs ? "semanas" : "weeks"}</p><p className="font-black text-cyan-200">{completion}% {isEs ? "completo" : "complete"}</p></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><p className="font-black text-emerald-200">{isEs ? "DuraciÃƒÆ’Ã‚Â³n Total Estimada" : "Total Estimated Duration"}: {totalWeeks} {isEs ? "semanas" : "weeks"}</p><p className="font-black text-cyan-200">{completion}% {isEs ? "completo" : "complete"}</p></div>
       <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-800"><motion.div animate={{ width: `${completion}%` }} className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-cyan-300" /></div>
     </div>
     <div className="grid gap-3 sm:grid-cols-4"><MiniMetric label={isEs ? "Costo Estimado" : "Estimated Cost"} value={formatMoney(plan.estimatedCost)} /><MiniMetric label={isEs ? "Contingencia" : "Contingency"} value={formatMoney(plan.contingency)} /><MiniMetric label={isEs ? "Tareas Completadas" : "Completed Tasks"} value={`${completeTasks} / ${totalTasks}`} green={completeTasks > 0} /><MiniMetric label={isEs ? "Riesgo" : "Schedule Risk"} value={plan.risk} /></div>
@@ -2074,13 +2086,13 @@ function SmartConstructionChecklist({ plan, assumptions, language }) {
     <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-3">{plan.phases.map((phase, index) => { const done = phase.tasks.filter((task) => checked[taskKey(phase.name, task)]).length; return <details key={phase.name} className="rounded-2xl border border-white/10 bg-white/[.03] p-4" open={index < 2}><summary className="flex cursor-pointer list-none flex-wrap items-center gap-3"><span className={`grid h-8 w-8 place-items-center rounded-full text-xs font-black ${done === phase.tasks.length ? "bg-emerald-400 text-slate-950" : "bg-slate-800 text-slate-300"}`}>{index + 1}</span><span className="min-w-40 flex-1 font-black text-white">{phase.name}</span><span className="text-xs font-bold text-slate-400">{phase.tasks.length} {isEs ? "tareas" : "tasks"}</span><span className="rounded-full bg-slate-800 px-3 py-1 text-xs font-bold text-slate-300">~{phase.weeks} {isEs ? "sem" : "wk"}</span></summary><div className="mt-4 grid gap-2 sm:ml-11">{phase.tasks.map((task) => { const critical = task.includes("Critical Order"); const key = taskKey(phase.name, task); return <label key={task} className="flex items-start gap-3 rounded-xl p-2 text-sm text-slate-300 hover:bg-white/[.03]"><input type="checkbox" checked={Boolean(checked[key])} onChange={(event) => setChecked((current) => ({ ...current, [key]: event.target.checked }))} className="mt-1 accent-cyan-300" /><span className={checked[key] ? "text-slate-500 line-through" : ""}>{task.replace(" - Critical Order", "")}</span>{critical && <span className="ml-auto shrink-0 rounded-full bg-amber-300/10 px-2 py-1 text-[0.62rem] font-black text-amber-300">Critical Order</span>}</label>})}<button className="mt-2 rounded-xl border border-dashed border-white/10 p-2 text-left text-sm font-bold text-cyan-300"><Plus className="mr-2 inline" size={14} />{isEs ? "Agregar tarea" : "Add task"}</button></div></details>; })}</div>
       <div className="space-y-4">
-        <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "CoordinaciÃƒÂ³n de Oficios" : "Trade Coordination"}</h5>{coordination.map(([title, crew, sequence, detail]) => <div key={title} className="mt-4 border-t border-white/10 pt-4"><p className="font-black text-white">{title}</p><p className="text-sm font-bold text-cyan-200">{crew}</p><p className="mt-2 text-xs font-black text-amber-300">{sequence}</p><p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p></div>)}</section>
+        <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "CoordinaciÃƒÆ’Ã‚Â³n de Oficios" : "Trade Coordination"}</h5>{coordination.map(([title, crew, sequence, detail]) => <div key={title} className="mt-4 border-t border-white/10 pt-4"><p className="font-black text-white">{title}</p><p className="text-sm font-bold text-cyan-200">{crew}</p><p className="mt-2 text-xs font-black text-amber-300">{sequence}</p><p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p></div>)}</section>
         <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "Alertas de Riesgo" : "Risk Alerts"}</h5>{alerts.map(([level, title, detail, mitigation]) => <div key={title} className="mt-4 rounded-xl bg-slate-950/60 p-3"><span className={`rounded-full px-2 py-1 text-[0.65rem] font-black ${level === "HIGH" ? "bg-rose-400/15 text-rose-300" : "bg-amber-300/15 text-amber-300"}`}>{level}</span><p className="mt-2 font-black text-white">{title}</p><p className="mt-1 text-sm text-slate-400">{detail}</p><p className="mt-2 text-sm text-emerald-300">Mitigation: {mitigation}</p></div>)}</section>
         <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "Consejos de Optimizacion" : "Optimization Tips"}</h5>{optimizationTips.map(([title, detail, savings]) => <div key={title} className="mt-4 border-t border-white/10 pt-4"><p className="font-black text-white">{title}</p><p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p><p className="mt-2 text-sm font-black text-emerald-300">{isEs ? "Ahorro potencial" : "Potential savings"}: {savings}</p></div>)}</section>
-        <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "Ãƒâ€œrdenes de Material" : "Material Orders"}</h5>{orders.map(([title, lead, due]) => <div key={title} className="mt-3 rounded-xl bg-slate-950/60 p-3"><p className="font-bold text-white">{title}</p><p className="mt-1 text-xs text-slate-400">Lead time: {lead}</p><p className="mt-2 text-xs font-black text-cyan-300">Order by: {due}</p></div>)}</section>
+        <section className="rounded-2xl border border-white/10 bg-white/[.03] p-4"><h5 className="font-black text-white">{isEs ? "ÃƒÆ’Ã¢â‚¬Å“rdenes de Material" : "Material Orders"}</h5>{orders.map(([title, lead, due]) => <div key={title} className="mt-3 rounded-xl bg-slate-950/60 p-3"><p className="font-bold text-white">{title}</p><p className="mt-1 text-xs text-slate-400">Lead time: {lead}</p><p className="mt-2 text-xs font-black text-cyan-300">Order by: {due}</p></div>)}</section>
       </div>
     </div>
-    <section className="rounded-3xl border border-cyan-300/20 bg-white/[.03] p-5"><div className="flex flex-wrap justify-between gap-3"><h5 className="flex items-center gap-2 text-lg font-black text-white"><Globe2 className="text-cyan-300" />{isEs ? "AnÃƒÂ¡lisis ClimÃƒÂ¡tico" : "Weather Risk Analysis"}</h5>{weather?.time && <p className="text-xs text-slate-500">{isEs ? "Actualizado" : "Updated"}: {weather.time}</p>}</div><div className="mt-4 flex flex-col gap-3 sm:flex-row"><input className="field" value={location} onChange={(event) => setLocation(event.target.value)} placeholder={isEs ? "Buscar ciudad o direcciÃƒÂ³n..." : "Search city or address..."} /><button onClick={analyzeWeather} disabled={weatherLoading} className="primary-button shrink-0">{weatherLoading ? (isEs ? "Analizando..." : "Analyzing...") : (isEs ? "Analizar" : "Analyze")}</button></div>{!weather && <p className="mt-3 text-sm text-slate-400">{isEs ? "Configura la ubicaciÃƒÂ³n y analiza riesgos con pronÃƒÂ³stico de siete dÃƒÂ­as." : "Set the project location and analyze risks with a seven-day forecast."}</p>}{weather?.error && <p className="mt-4 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-200">{weather.error}</p>}{weather && !weather.error && <div className="mt-4 grid gap-3 sm:grid-cols-4"><MiniMetric label={isEs ? "UbicaciÃƒÂ³n" : "Location"} value={weather.place} /><MiniMetric label={isEs ? "Riesgo" : "Risk"} value={weather.severity} green={weather.severity === "LOW"} /><MiniMetric label={isEs ? "Prob. lluvia" : "Rain Chance"} value={`${weather.rain}%`} /><MiniMetric label={isEs ? "RÃƒÂ¡faga mÃƒÂ¡x." : "Max Wind Gust"} value={`${weather.wind} km/h`} /></div>}</section>
+    <section className="rounded-3xl border border-cyan-300/20 bg-white/[.03] p-5"><div className="flex flex-wrap justify-between gap-3"><h5 className="flex items-center gap-2 text-lg font-black text-white"><Globe2 className="text-cyan-300" />{isEs ? "AnÃƒÆ’Ã‚Â¡lisis ClimÃƒÆ’Ã‚Â¡tico" : "Weather Risk Analysis"}</h5>{weather?.time && <p className="text-xs text-slate-500">{isEs ? "Actualizado" : "Updated"}: {weather.time}</p>}</div><div className="mt-4 flex flex-col gap-3 sm:flex-row"><input className="field" value={location} onChange={(event) => setLocation(event.target.value)} placeholder={isEs ? "Buscar ciudad o direcciÃƒÆ’Ã‚Â³n..." : "Search city or address..."} /><button onClick={analyzeWeather} disabled={weatherLoading} className="primary-button shrink-0">{weatherLoading ? (isEs ? "Analizando..." : "Analyzing...") : (isEs ? "Analizar" : "Analyze")}</button></div>{!weather && <p className="mt-3 text-sm text-slate-400">{isEs ? "Configura la ubicaciÃƒÆ’Ã‚Â³n y analiza riesgos con pronÃƒÆ’Ã‚Â³stico de siete dÃƒÆ’Ã‚Â­as." : "Set the project location and analyze risks with a seven-day forecast."}</p>}{weather?.error && <p className="mt-4 rounded-xl border border-rose-300/20 bg-rose-300/10 p-3 text-sm text-rose-200">{weather.error}</p>}{weather && !weather.error && <div className="mt-4 grid gap-3 sm:grid-cols-4"><MiniMetric label={isEs ? "UbicaciÃƒÆ’Ã‚Â³n" : "Location"} value={weather.place} /><MiniMetric label={isEs ? "Riesgo" : "Risk"} value={weather.severity} green={weather.severity === "LOW"} /><MiniMetric label={isEs ? "Prob. lluvia" : "Rain Chance"} value={`${weather.rain}%`} /><MiniMetric label={isEs ? "RÃƒÆ’Ã‚Â¡faga mÃƒÆ’Ã‚Â¡x." : "Max Wind Gust"} value={`${weather.wind} km/h`} /></div>}</section>
     <section className="rounded-3xl border border-white/10 bg-white/[.03] p-5"><div className="flex flex-wrap items-center justify-between gap-3"><h5 className="text-lg font-black text-white">{isEs ? "Cronograma del Proyecto (Gantt)" : "Project Timeline (Gantt)"}</h5><div className="flex items-center gap-2 text-xs font-bold text-slate-400"><span>{isEs ? "Agregar demoras" : "Add Delays"}</span><button className="rounded-lg border border-white/10 px-2 py-1" title="Weather delay">Weather</button><button className="rounded-lg border border-white/10 px-2 py-1" title="Inspection delay">Inspection</button><button className="rounded-lg border border-white/10 px-2 py-1" title="Alert">Alert</button></div></div><div className="mt-4 overflow-x-auto"><div className="min-w-[680px] space-y-2"><div className="ml-48 grid grid-cols-6 text-center text-xs font-bold text-slate-500">{[1, 2, 3, 4, 5, 6].map((month) => <span key={month}>{isEs ? "Mes" : "Month"} {month}</span>)}</div>{plan.phases.map((phase, index) => <div key={phase.name} className="grid grid-cols-[12rem_1fr] items-center gap-3 text-sm"><span className="truncate font-bold text-slate-300">{phase.name}</span><div className="relative h-8 rounded-lg bg-slate-800/70"><motion.div initial={{ width: 0 }} animate={{ width: `${Math.max(12, phase.weeks / maxWeeks * 45)}%` }} transition={{ delay: index * 0.04, duration: 0.5 }} className={`absolute h-full rounded-lg ${index < 2 ? "bg-emerald-400/55" : "bg-cyan-300/45"}`} style={{ left: `${Math.min(76, index * 6)}%` }}><span className="flex h-full items-center justify-center text-[0.62rem] font-black text-white">{phase.weeks} wk</span></motion.div></div></div>)}</div></div><div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm"><div className="flex gap-4 text-slate-400"><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-slate-700" />Pending</span><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-emerald-400/55" />Completed</span><span className="flex items-center gap-2"><i className="h-3 w-3 rounded bg-cyan-300/45" />Phase Complete</span></div><p className="font-black text-cyan-200">{totalWeeks} {isEs ? "semanas totales" : "total weeks"} (~{Math.ceil(totalWeeks / 4.3)} {isEs ? "meses" : "months"})</p></div></section>
     <Info title={isEs ? "Supuestos Registrados" : "Recorded Assumptions"} text={assumptions.slice(1, 4).join(" | ")} />
   </motion.section>;
@@ -2126,7 +2138,7 @@ function DealUnderwriter({ language = "en", project }) {
   const roi = formulas.roi(profit, total);
   const noi = 2800 * 12 - 8500;
   const debt = formulas.monthlyMortgage(cleanNumber(purchase) * 0.8, 7.25, 30) * 12;
-  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de compra" : "Purchase Price"} value={purchase} setValue={setPurchase} /><MoneyInput label={isEs ? "Presupuesto de rehabilitaciÃƒÂ³n" : "Rehab Budget"} value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label={isEs ? "Cierre / Mantenimiento / Venta" : "Closing / Holding / Selling"} value={costs} setValue={setCosts} /></div><ResultBox items={[[isEs ? "Costo total" : "Total Cost", formatMoney(total)], [isEs ? "Ganancia" : "Profit", formatMoney(profit), profit > 0], ["ROI", `${roi.toFixed(1)}%`, roi > 15], [isEs ? "Oferta mÃƒÂ¡xima al 70%" : "70% Max Offer", formatMoney(cleanNumber(arv) * 0.7 - cleanNumber(rehab)), true], [isEs ? "Tasa de capitalizaciÃƒÂ³n" : "Cap Rate", `${formulas.capRate(noi, cleanNumber(purchase)).toFixed(2)}%`], ["DSCR", formulas.dscr(noi, debt).toFixed(2), formulas.dscr(noi, debt) >= 1.2], [isEs ? "Retorno sobre efectivo" : "Cash-on-Cash", `${formulas.cashOnCash(noi - debt, total * 0.25).toFixed(2)}%`]]} /></div></div>;
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de compra" : "Purchase Price"} value={purchase} setValue={setPurchase} /><MoneyInput label={isEs ? "Presupuesto de rehabilitaciÃƒÆ’Ã‚Â³n" : "Rehab Budget"} value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label={isEs ? "Cierre / Mantenimiento / Venta" : "Closing / Holding / Selling"} value={costs} setValue={setCosts} /></div><ResultBox items={[[isEs ? "Costo total" : "Total Cost", formatMoney(total)], [isEs ? "Ganancia" : "Profit", formatMoney(profit), profit > 0], ["ROI", `${roi.toFixed(1)}%`, roi > 15], [isEs ? "Oferta mÃƒÆ’Ã‚Â¡xima al 70%" : "70% Max Offer", formatMoney(cleanNumber(arv) * 0.7 - cleanNumber(rehab)), true], [isEs ? "Tasa de capitalizaciÃƒÆ’Ã‚Â³n" : "Cap Rate", `${formulas.capRate(noi, cleanNumber(purchase)).toFixed(2)}%`], ["DSCR", formulas.dscr(noi, debt).toFixed(2), formulas.dscr(noi, debt) >= 1.2], [isEs ? "Retorno sobre efectivo" : "Cash-on-Cash", `${formulas.cashOnCash(noi - debt, total * 0.25).toFixed(2)}%`]]} /></div></div>;
 }
 
 function InvestmentLoanCalculator({ language = "en", project }) {
@@ -2168,27 +2180,27 @@ function InvestmentLoanCalculator({ language = "en", project }) {
     <div className="space-y-6">
       <ProjectContext project={project} language={language} />
       <div className="text-center">
-        <h3 className="text-2xl font-black text-white sm:text-3xl">{isEs ? "Calculadora de PrÃƒÂ©stamos de InversiÃƒÂ³n" : "Investment Loan Calculator"}</h3>
-        <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-400">{isEs ? "Calcula pagos para prÃƒÂ©stamos DSCR, refinanciamiento cash-out y construcciÃƒÂ³n desde cero." : "Calculate payments for DSCR, Cash-Out Refinance, and Ground-Up Construction loans."}</p>
+        <h3 className="text-2xl font-black text-white sm:text-3xl">{isEs ? "Calculadora de PrÃƒÆ’Ã‚Â©stamos de InversiÃƒÆ’Ã‚Â³n" : "Investment Loan Calculator"}</h3>
+        <p className="mx-auto mt-2 max-w-2xl text-sm leading-6 text-slate-400">{isEs ? "Calcula pagos para prÃƒÆ’Ã‚Â©stamos DSCR, refinanciamiento cash-out y construcciÃƒÆ’Ã‚Â³n desde cero." : "Calculate payments for DSCR, Cash-Out Refinance, and Ground-Up Construction loans."}</p>
       </div>
       <div className="mx-auto grid max-w-lg grid-cols-3 rounded-2xl bg-slate-900/80 p-1">
-        {[["dscr", "DSCR"], ["cashout", "Cash-Out"], ["ground", isEs ? "ConstrucciÃƒÂ³n" : "Ground Up"]].map(([id, label]) => <button key={id} onClick={() => setMode(id)} className={`rounded-xl px-3 py-3 text-sm font-black transition ${mode === id ? "bg-cyan-300 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,.25)]" : "text-slate-400 hover:text-white"}`}>{label}</button>)}
+        {[["dscr", "DSCR"], ["cashout", "Cash-Out"], ["ground", isEs ? "ConstrucciÃƒÆ’Ã‚Â³n" : "Ground Up"]].map(([id, label]) => <button key={id} onClick={() => setMode(id)} className={`rounded-xl px-3 py-3 text-sm font-black transition ${mode === id ? "bg-cyan-300 text-slate-950 shadow-[0_0_22px_rgba(34,211,238,.25)]" : "text-slate-400 hover:text-white"}`}>{label}</button>)}
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
         <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 sm:p-6">
           <div className="mb-6 flex items-start justify-between gap-4">
-            <div><h4 className="text-xl font-black text-white">{mode === "dscr" ? (isEs ? "Calculadora DSCR" : "DSCR Loan Calculator") : mode === "cashout" ? (isEs ? "Calculadora de Refinanciamiento Cash-Out" : "Cash-Out Refinance Calculator") : (isEs ? "Calculadora de InterÃƒÂ©s de ConstrucciÃƒÂ³n" : "Construction Interest Calculator")}</h4>{mode === "ground" && <p className="mt-1 text-sm text-slate-400">{isEs ? "ConstrucciÃƒÂ³n desde cero" : "Ground-Up Construction"}</p>}</div>
+            <div><h4 className="text-xl font-black text-white">{mode === "dscr" ? (isEs ? "Calculadora DSCR" : "DSCR Loan Calculator") : mode === "cashout" ? (isEs ? "Calculadora de Refinanciamiento Cash-Out" : "Cash-Out Refinance Calculator") : (isEs ? "Calculadora de InterÃƒÆ’Ã‚Â©s de ConstrucciÃƒÆ’Ã‚Â³n" : "Construction Interest Calculator")}</h4>{mode === "ground" && <p className="mt-1 text-sm text-slate-400">{isEs ? "ConstrucciÃƒÆ’Ã‚Â³n desde cero" : "Ground-Up Construction"}</p>}</div>
             <button onClick={reset} className="rounded-xl border border-white/10 px-3 py-2 text-xs font-black text-slate-400 hover:border-cyan-300/30 hover:text-white">{isEs ? "Limpiar" : "Clear"}</button>
           </div>
-          {mode === "dscr" && <div className="grid gap-4 sm:grid-cols-2"><MoneyInput label={isEs ? "Valor de Propiedad" : "Property Value"} value={dscr.value} setValue={patch(setDscr, "value")} /><MoneyInput label={isEs ? "Monto del PrÃƒÂ©stamo" : "Loan Amount"} value={dscr.loan} setValue={patch(setDscr, "loan")} /><NumberInput label={isEs ? "Tasa de InterÃƒÂ©s (%)" : "Interest Rate (%)"} value={dscr.rate} setValue={patch(setDscr, "rate")} /><NumberInput label={isEs ? "Plazo (AÃƒÂ±os)" : "Loan Term (Years)"} value={dscr.years} setValue={patch(setDscr, "years")} /><MoneyInput label={isEs ? "Ingreso Mensual por Renta" : "Monthly Rental Income"} value={dscr.rent} setValue={patch(setDscr, "rent")} /><MoneyInput label={isEs ? "Impuestos Anuales" : "Annual Property Taxes"} value={dscr.taxes} setValue={patch(setDscr, "taxes")} /><MoneyInput label={isEs ? "Seguro Anual" : "Annual Insurance"} value={dscr.insurance} setValue={patch(setDscr, "insurance")} /><MoneyInput label="Monthly HOA" value={dscr.hoa} setValue={patch(setDscr, "hoa")} /></div>}
-          {mode === "cashout" && <div className="grid gap-4 sm:grid-cols-2"><MoneyInput label={isEs ? "Valor Actual de Propiedad" : "Current Property Value"} value={cashout.value} setValue={patch(setCashout, "value")} /><MoneyInput label={isEs ? "Saldo Actual del PrÃƒÂ©stamo" : "Current Loan Balance"} value={cashout.balance} setValue={patch(setCashout, "balance")} /><div className="sm:col-span-2"><MoneyInput label={isEs ? "Monto Cash-Out" : "Cash-Out Amount"} value={cashout.amount} setValue={patch(setCashout, "amount")} /></div><NumberInput label={isEs ? "Tasa Nueva (%)" : "New Interest Rate (%)"} value={cashout.rate} setValue={patch(setCashout, "rate")} /><NumberInput label={isEs ? "Plazo (AÃƒÂ±os)" : "Loan Term (Years)"} value={cashout.years} setValue={patch(setCashout, "years")} /><NumberInput label={isEs ? "Costos de Cierre (%)" : "Estimated Closing Costs (%)"} value={cashout.closing} setValue={patch(setCashout, "closing")} /></div>}
-          {mode === "ground" && <div className="grid gap-4 sm:grid-cols-2"><div className="sm:col-span-2"><MoneyInput label={isEs ? "Monto Total del PrÃƒÂ©stamo" : "Total Loan Amount"} value={ground.loan} setValue={patch(setGround, "loan")} /></div><NumberInput label={isEs ? "Tasa de InterÃƒÂ©s (%)" : "Interest Rate (%)"} value={ground.rate} setValue={patch(setGround, "rate")} /><NumberInput label={isEs ? "Tiempo de ConstrucciÃƒÂ³n (Meses)" : "Construction Time (Months)"} value={ground.construction} setValue={patch(setGround, "construction")} /><NumberInput label={isEs ? "Tiempo de Venta (Meses)" : "Sale Time (Months)"} value={ground.sale} setValue={patch(setGround, "sale")} /><MiniMetric label={isEs ? "DuraciÃƒÂ³n Total" : "Total Project Duration"} value={`${duration} mo`} /><label className="block sm:col-span-2"><span className="label">{isEs ? "Programa de Desembolsos" : "Draw Schedule"}</span><select value={ground.schedule} onChange={(event) => patch(setGround, "schedule")(event.target.value)} className="field"><option value="uniform">{isEs ? "Uniforme (Desembolsos Iguales)" : "Uniform (Equal Draws)"}</option></select><p className="mt-2 text-xs text-slate-500">{isEs ? `Los desembolsos ocurren solo durante la fase de construcciÃƒÂ³n de ${constructionMonths} meses.` : `Draws occur during the ${constructionMonths}-month construction phase only.`}</p></label></div>}
+          {mode === "dscr" && <div className="grid gap-4 sm:grid-cols-2"><MoneyInput label={isEs ? "Valor de Propiedad" : "Property Value"} value={dscr.value} setValue={patch(setDscr, "value")} /><MoneyInput label={isEs ? "Monto del PrÃƒÆ’Ã‚Â©stamo" : "Loan Amount"} value={dscr.loan} setValue={patch(setDscr, "loan")} /><NumberInput label={isEs ? "Tasa de InterÃƒÆ’Ã‚Â©s (%)" : "Interest Rate (%)"} value={dscr.rate} setValue={patch(setDscr, "rate")} /><NumberInput label={isEs ? "Plazo (AÃƒÆ’Ã‚Â±os)" : "Loan Term (Years)"} value={dscr.years} setValue={patch(setDscr, "years")} /><MoneyInput label={isEs ? "Ingreso Mensual por Renta" : "Monthly Rental Income"} value={dscr.rent} setValue={patch(setDscr, "rent")} /><MoneyInput label={isEs ? "Impuestos Anuales" : "Annual Property Taxes"} value={dscr.taxes} setValue={patch(setDscr, "taxes")} /><MoneyInput label={isEs ? "Seguro Anual" : "Annual Insurance"} value={dscr.insurance} setValue={patch(setDscr, "insurance")} /><MoneyInput label="Monthly HOA" value={dscr.hoa} setValue={patch(setDscr, "hoa")} /></div>}
+          {mode === "cashout" && <div className="grid gap-4 sm:grid-cols-2"><MoneyInput label={isEs ? "Valor Actual de Propiedad" : "Current Property Value"} value={cashout.value} setValue={patch(setCashout, "value")} /><MoneyInput label={isEs ? "Saldo Actual del PrÃƒÆ’Ã‚Â©stamo" : "Current Loan Balance"} value={cashout.balance} setValue={patch(setCashout, "balance")} /><div className="sm:col-span-2"><MoneyInput label={isEs ? "Monto Cash-Out" : "Cash-Out Amount"} value={cashout.amount} setValue={patch(setCashout, "amount")} /></div><NumberInput label={isEs ? "Tasa Nueva (%)" : "New Interest Rate (%)"} value={cashout.rate} setValue={patch(setCashout, "rate")} /><NumberInput label={isEs ? "Plazo (AÃƒÆ’Ã‚Â±os)" : "Loan Term (Years)"} value={cashout.years} setValue={patch(setCashout, "years")} /><NumberInput label={isEs ? "Costos de Cierre (%)" : "Estimated Closing Costs (%)"} value={cashout.closing} setValue={patch(setCashout, "closing")} /></div>}
+          {mode === "ground" && <div className="grid gap-4 sm:grid-cols-2"><div className="sm:col-span-2"><MoneyInput label={isEs ? "Monto Total del PrÃƒÆ’Ã‚Â©stamo" : "Total Loan Amount"} value={ground.loan} setValue={patch(setGround, "loan")} /></div><NumberInput label={isEs ? "Tasa de InterÃƒÆ’Ã‚Â©s (%)" : "Interest Rate (%)"} value={ground.rate} setValue={patch(setGround, "rate")} /><NumberInput label={isEs ? "Tiempo de ConstrucciÃƒÆ’Ã‚Â³n (Meses)" : "Construction Time (Months)"} value={ground.construction} setValue={patch(setGround, "construction")} /><NumberInput label={isEs ? "Tiempo de Venta (Meses)" : "Sale Time (Months)"} value={ground.sale} setValue={patch(setGround, "sale")} /><MiniMetric label={isEs ? "DuraciÃƒÆ’Ã‚Â³n Total" : "Total Project Duration"} value={`${duration} mo`} /><label className="block sm:col-span-2"><span className="label">{isEs ? "Programa de Desembolsos" : "Draw Schedule"}</span><select value={ground.schedule} onChange={(event) => patch(setGround, "schedule")(event.target.value)} className="field"><option value="uniform">{isEs ? "Uniforme (Desembolsos Iguales)" : "Uniform (Equal Draws)"}</option></select><p className="mt-2 text-xs text-slate-500">{isEs ? `Los desembolsos ocurren solo durante la fase de construcciÃƒÆ’Ã‚Â³n de ${constructionMonths} meses.` : `Draws occur during the ${constructionMonths}-month construction phase only.`}</p></label></div>}
         </section>
         <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5 sm:p-6">
           <h4 className="text-xl font-black text-white">{isEs ? "Resultados" : "Results"}</h4>
-          {mode === "dscr" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Pago Mensual" : "Monthly Payment"} value={formatMoneyCents(dscrPayment)} accent /><CalculatorMetric label="DSCR Ratio" value={`${dscrRatio.toFixed(2)} ${dscrRatio < 1.2 ? (isEs ? "(PrecauciÃƒÂ³n)" : "(Warning)") : ""}`} accent={dscrRatio >= 1.2} /><CalculatorMetric label={isEs ? "InterÃƒÂ©s Total" : "Total Interest"} value={formatMoneyCents(Math.max(0, dscrPI * cleanNumber(dscr.years) * 12 - cleanNumber(dscr.loan)))} /><CalculatorMetric label="LTV Ratio" value={`${dscrLtv.toFixed(1)}%`} /></div><PaymentBreakdown principal={dscrPI} escrows={dscrTaxes + dscrInsurance + cleanNumber(dscr.hoa)} language={language} /></>}
-          {mode === "cashout" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Nuevo PrÃƒÂ©stamo" : "New Loan Amount"} value={formatMoneyCents(cashLoan)} /><CalculatorMetric label={isEs ? "Nuevo Pago Mensual" : "New Monthly Payment"} value={formatMoneyCents(cashPayment)} accent /><CalculatorMetric label={isEs ? "Efectivo Recibido" : "Cash Received (after costs)"} value={formatMoneyCents(cashReceived)} positive /><CalculatorMetric label={isEs ? "Capital Restante" : "Equity Remaining"} value={formatMoneyCents(cashEquity)} /><CalculatorMetric label="New LTV Ratio" value={`${cashLtv.toFixed(1)}%`} /><CalculatorMetric label={isEs ? "InterÃƒÂ©s Total" : "Total Interest"} value={formatMoneyCents(Math.max(0, cashPayment * cleanNumber(cashout.years) * 12 - cashLoan))} /></div><ComparisonBars current={formulas.monthlyMortgage(cleanNumber(cashout.balance), 5.5, cleanNumber(cashout.years))} next={cashPayment} language={language} /></>}
-          {mode === "ground" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Costo Total de InterÃƒÂ©s" : "Total Interest Cost"} value={formatMoneyCents(constructionInterest)} accent /><CalculatorMetric label={isEs ? "InterÃƒÂ©s Mensual Promedio" : "Average Monthly Interest"} value={formatMoneyCents(constructionInterest / duration)} /><CalculatorMetric label={isEs ? "Reserva de InterÃƒÂ©s Necesaria" : "Interest Reserve Needed"} value={formatMoneyCents(reserve)} positive /><CalculatorMetric label={isEs ? "Tasa Anual Efectiva" : "Effective Annual Rate"} value={`${effectiveRate.toFixed(2)}%`} /></div><InterestTimeline balances={balances} constructionMonths={constructionMonths} saleMonths={saleMonths} language={language} /></>}
+          {mode === "dscr" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Pago Mensual" : "Monthly Payment"} value={formatMoneyCents(dscrPayment)} accent /><CalculatorMetric label="DSCR Ratio" value={`${dscrRatio.toFixed(2)} ${dscrRatio < 1.2 ? (isEs ? "(PrecauciÃƒÆ’Ã‚Â³n)" : "(Warning)") : ""}`} accent={dscrRatio >= 1.2} /><CalculatorMetric label={isEs ? "InterÃƒÆ’Ã‚Â©s Total" : "Total Interest"} value={formatMoneyCents(Math.max(0, dscrPI * cleanNumber(dscr.years) * 12 - cleanNumber(dscr.loan)))} /><CalculatorMetric label="LTV Ratio" value={`${dscrLtv.toFixed(1)}%`} /></div><PaymentBreakdown principal={dscrPI} escrows={dscrTaxes + dscrInsurance + cleanNumber(dscr.hoa)} language={language} /></>}
+          {mode === "cashout" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Nuevo PrÃƒÆ’Ã‚Â©stamo" : "New Loan Amount"} value={formatMoneyCents(cashLoan)} /><CalculatorMetric label={isEs ? "Nuevo Pago Mensual" : "New Monthly Payment"} value={formatMoneyCents(cashPayment)} accent /><CalculatorMetric label={isEs ? "Efectivo Recibido" : "Cash Received (after costs)"} value={formatMoneyCents(cashReceived)} positive /><CalculatorMetric label={isEs ? "Capital Restante" : "Equity Remaining"} value={formatMoneyCents(cashEquity)} /><CalculatorMetric label="New LTV Ratio" value={`${cashLtv.toFixed(1)}%`} /><CalculatorMetric label={isEs ? "InterÃƒÆ’Ã‚Â©s Total" : "Total Interest"} value={formatMoneyCents(Math.max(0, cashPayment * cleanNumber(cashout.years) * 12 - cashLoan))} /></div><ComparisonBars current={formulas.monthlyMortgage(cleanNumber(cashout.balance), 5.5, cleanNumber(cashout.years))} next={cashPayment} language={language} /></>}
+          {mode === "ground" && <><div className="mt-5 grid gap-3 sm:grid-cols-2"><CalculatorMetric label={isEs ? "Costo Total de InterÃƒÆ’Ã‚Â©s" : "Total Interest Cost"} value={formatMoneyCents(constructionInterest)} accent /><CalculatorMetric label={isEs ? "InterÃƒÆ’Ã‚Â©s Mensual Promedio" : "Average Monthly Interest"} value={formatMoneyCents(constructionInterest / duration)} /><CalculatorMetric label={isEs ? "Reserva de InterÃƒÆ’Ã‚Â©s Necesaria" : "Interest Reserve Needed"} value={formatMoneyCents(reserve)} positive /><CalculatorMetric label={isEs ? "Tasa Anual Efectiva" : "Effective Annual Rate"} value={`${effectiveRate.toFixed(2)}%`} /></div><InterestTimeline balances={balances} constructionMonths={constructionMonths} saleMonths={saleMonths} language={language} /></>}
         </section>
       </div>
       <EmbeddedLoanCalculations language={language} mode={mode} metrics={{
@@ -2217,9 +2229,9 @@ function EmbeddedLoanCalculations({ language, mode, metrics }) {
   return <section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5">
     <div className="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? "CÃƒÂ¡lculos de PrÃƒÂ©stamo" : "Loan Calculations"}</p>
+        <p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? "CÃƒÆ’Ã‚Â¡lculos de PrÃƒÆ’Ã‚Â©stamo" : "Loan Calculations"}</p>
         <h4 className="mt-2 text-xl font-black text-white">{isEs ? "Supuestos guardables junto al proyecto" : "Project-ready loan assumption vault"}</h4>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{isEs ? "Esta secciÃƒÂ³n integra los cÃƒÂ¡lculos de prÃƒÂ©stamo dentro de la calculadora principal para mantener DSCR, cash-out y construcciÃƒÂ³n en un solo lugar." : "This folds the old loan-calculations tool into the main calculator so DSCR, cash-out, and construction debt assumptions stay together."}</p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">{isEs ? "Esta secciÃƒÆ’Ã‚Â³n integra los cÃƒÆ’Ã‚Â¡lculos de prÃƒÆ’Ã‚Â©stamo dentro de la calculadora principal para mantener DSCR, cash-out y construcciÃƒÆ’Ã‚Â³n en un solo lugar." : "This folds the old loan-calculations tool into the main calculator so DSCR, cash-out, and construction debt assumptions stay together."}</p>
       </div>
       <button className="secondary-button"><FileText size={18} /> {isEs ? "Guardar Resumen" : "Save Summary"}</button>
     </div>
@@ -2241,17 +2253,17 @@ function CalculatorMetric({ label, value, accent, positive }) {
 function PaymentBreakdown({ principal, escrows, language }) {
   const total = principal + escrows || 1;
   const pPercent = principal / total * 100;
-  return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "Desglose del Pago" : "Payment Breakdown"}</p><div className="mx-auto flex h-36 w-36 items-center justify-center rounded-full" style={{ background: `conic-gradient(#22d3ee 0 ${pPercent}%, #818cf8 ${pPercent}% 100%)` }}><div className="h-20 w-20 rounded-full bg-[#080d1f]" /></div><div className="mt-4 flex flex-wrap justify-center gap-4 text-xs font-bold"><span className="text-cyan-300">Ã¢â€“Â  {language === "es" ? "Principal e InterÃƒÂ©s" : "Principal & Interest"}</span><span className="text-indigo-300">Ã¢â€“Â  {language === "es" ? "Impuestos y Seguro" : "Taxes & Insurance"}</span></div></div>;
+  return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "Desglose del Pago" : "Payment Breakdown"}</p><div className="mx-auto flex h-36 w-36 items-center justify-center rounded-full" style={{ background: `conic-gradient(#22d3ee 0 ${pPercent}%, #818cf8 ${pPercent}% 100%)` }}><div className="h-20 w-20 rounded-full bg-[#080d1f]" /></div><div className="mt-4 flex flex-wrap justify-center gap-4 text-xs font-bold"><span className="text-cyan-300">ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  {language === "es" ? "Principal e InterÃƒÆ’Ã‚Â©s" : "Principal & Interest"}</span><span className="text-indigo-300">ÃƒÂ¢Ã¢â‚¬â€œÃ‚Â  {language === "es" ? "Impuestos y Seguro" : "Taxes & Insurance"}</span></div></div>;
 }
 
 function ComparisonBars({ current, next, language }) {
   const max = Math.max(current, next, 1);
-  return <div className="mt-7"><p className="mb-4 font-black text-white">{language === "es" ? "ComparaciÃƒÂ³n de Pagos" : "Payment Comparison"}</p>{[[language === "es" ? "Actual" : "Current", current, "bg-indigo-400"], [language === "es" ? "Nuevo" : "New", next, "bg-cyan-300"]].map(([label, value, color]) => <div key={label} className="mb-4 grid grid-cols-[5rem_1fr] items-center gap-3"><span className="text-sm text-slate-400">{label}</span><div className="rounded-r-lg bg-slate-900"><div className={`${color} rounded-r-lg px-3 py-3 text-right text-xs font-black text-slate-950`} style={{ width: `${Math.max(16, value / max * 100)}%` }}>{formatMoneyCents(value)}</div></div></div>)}</div>;
+  return <div className="mt-7"><p className="mb-4 font-black text-white">{language === "es" ? "ComparaciÃƒÆ’Ã‚Â³n de Pagos" : "Payment Comparison"}</p>{[[language === "es" ? "Actual" : "Current", current, "bg-indigo-400"], [language === "es" ? "Nuevo" : "New", next, "bg-cyan-300"]].map(([label, value, color]) => <div key={label} className="mb-4 grid grid-cols-[5rem_1fr] items-center gap-3"><span className="text-sm text-slate-400">{label}</span><div className="rounded-r-lg bg-slate-900"><div className={`${color} rounded-r-lg px-3 py-3 text-right text-xs font-black text-slate-950`} style={{ width: `${Math.max(16, value / max * 100)}%` }}>{formatMoneyCents(value)}</div></div></div>)}</div>;
 }
 
 function InterestTimeline({ balances, constructionMonths, saleMonths, language }) {
   const max = Math.max(...balances, 1);
-  return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "CronologÃƒÂ­a de AcumulaciÃƒÂ³n de InterÃƒÂ©s" : "Interest Accumulation Timeline"}</p><div className="flex h-44 items-end gap-1.5 rounded-2xl border border-white/5 bg-slate-900/40 p-3 sm:gap-2">{balances.map((balance, index) => <div key={index} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"><div className={`w-full rounded-t-md ${index < constructionMonths ? "bg-gradient-to-t from-cyan-500/45 to-cyan-300" : "bg-gradient-to-t from-indigo-500/45 to-indigo-300"}`} style={{ height: `${Math.max(8, balance / max * 100)}%` }} title={formatMoney(balance)} /><span className="text-center text-[0.62rem] font-bold text-slate-500">{index + 1}</span></div>)}</div><div className="mt-4 flex flex-wrap justify-center gap-5 text-xs font-bold text-slate-400"><span className="text-cyan-300">{language === "es" ? `ConstrucciÃƒÂ³n: 1-${constructionMonths} meses` : `Construction: 1-${constructionMonths} mo`}</span>{saleMonths > 0 && <span className="text-indigo-300">{language === "es" ? `Venta: ${constructionMonths + 1}-${constructionMonths + saleMonths} meses` : `Sale: ${constructionMonths + 1}-${constructionMonths + saleMonths} mo`}</span>}</div></div>;
+  return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "CronologÃƒÆ’Ã‚Â­a de AcumulaciÃƒÆ’Ã‚Â³n de InterÃƒÆ’Ã‚Â©s" : "Interest Accumulation Timeline"}</p><div className="flex h-44 items-end gap-1.5 rounded-2xl border border-white/5 bg-slate-900/40 p-3 sm:gap-2">{balances.map((balance, index) => <div key={index} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"><div className={`w-full rounded-t-md ${index < constructionMonths ? "bg-gradient-to-t from-cyan-500/45 to-cyan-300" : "bg-gradient-to-t from-indigo-500/45 to-indigo-300"}`} style={{ height: `${Math.max(8, balance / max * 100)}%` }} title={formatMoney(balance)} /><span className="text-center text-[0.62rem] font-bold text-slate-500">{index + 1}</span></div>)}</div><div className="mt-4 flex flex-wrap justify-center gap-5 text-xs font-bold text-slate-400"><span className="text-cyan-300">{language === "es" ? `ConstrucciÃƒÆ’Ã‚Â³n: 1-${constructionMonths} meses` : `Construction: 1-${constructionMonths} mo`}</span>{saleMonths > 0 && <span className="text-indigo-300">{language === "es" ? `Venta: ${constructionMonths + 1}-${constructionMonths + saleMonths} meses` : `Sale: ${constructionMonths + 1}-${constructionMonths + saleMonths} mo`}</span>}</div></div>;
 }
 
 function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
@@ -2276,7 +2288,7 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
     setStatus(isEs ? "Buscando RentCast de forma segura..." : "Searching RentCast securely...");
     try {
       const token = await getAccessToken?.();
-      if (!token) throw new Error(isEs ? "Inicia sesiÃƒÂ³n para continuar." : "Sign in to continue.");
+      if (!token) throw new Error(isEs ? "Inicia sesiÃƒÆ’Ã‚Â³n para continuar." : "Sign in to continue.");
       const response = await fetch("/api/rentcast-search", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -2348,7 +2360,7 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
         </div>
         <div className="mt-6 grid gap-4 xl:grid-cols-[minmax(0,1fr)_260px_170px]">
           <label className="block">
-            <span className="label">{isEs ? "DirecciÃƒÂ³n" : "Address"}</span>
+            <span className="label">{isEs ? "DirecciÃƒÆ’Ã‚Â³n" : "Address"}</span>
             <input value={address} onChange={(event) => setAddress(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") search(); }} className="field" placeholder="123 Main St, City, ST" />
           </label>
           <MoneyInput label={t.mortgageBalance} value={mortgage} setValue={setMortgage} />
@@ -2364,7 +2376,7 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
             <Stat title="ARV" value={formatMoney(arv)} icon={BarChart3} help={t.arvHelp || "Average comparable sale price when comps are available."} />
             <Stat title={t.equity || "Equity"} value={formatMoney(equity)} icon={WalletCards} help={t.equityHelp || "Estimated value minus mortgage balance."} />
             <Stat title={t.pricePerSqft || "Price / Sqft"} value={formatMoney(ppsf)} icon={Calculator} help={t.pricePerSqftHelp || "Sale price divided by square footage."} />
-            <Stat title={isEs ? "Renta Estimada" : "Rent Estimate"} value={rent ? formatMoney(rent) : t.unavailable} icon={Home} help={isEs ? "EstimaciÃƒÂ³n mensual de renta de RentCast." : "Monthly rent estimate from RentCast."} />
+            <Stat title={isEs ? "Renta Estimada" : "Rent Estimate"} value={rent ? formatMoney(rent) : t.unavailable} icon={Home} help={isEs ? "EstimaciÃƒÆ’Ã‚Â³n mensual de renta de RentCast." : "Monthly rent estimate from RentCast."} />
           </div>
 
           <GlassPanel>
@@ -2393,9 +2405,9 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
           </div>
 
           <GlassPanel>
-            <SectionHeader title={isEs ? "CaracterÃƒÂ­sticas y Registros" : "Features & Records"} detail={isEs ? "Datos estructurados del registro de propiedad devuelto por RentCast." : "Structured property record details returned by RentCast."} />
+            <SectionHeader title={isEs ? "CaracterÃƒÆ’Ã‚Â­sticas y Registros" : "Features & Records"} detail={isEs ? "Datos estructurados del registro de propiedad devuelto por RentCast." : "Structured property record details returned by RentCast."} />
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              {features.length ? features.map(([label, value]) => <MiniMetric key={label} label={label} value={value} />) : <MiniMetric label={isEs ? "CaracterÃƒÂ­sticas" : "Features"} value={t.unavailable} />}
+              {features.length ? features.map(([label, value]) => <MiniMetric key={label} label={label} value={value} />) : <MiniMetric label={isEs ? "CaracterÃƒÆ’Ã‚Â­sticas" : "Features"} value={t.unavailable} />}
             </div>
           </GlassPanel>
         </>
@@ -2403,7 +2415,7 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
         <div className="rounded-[2rem] border border-dashed border-white/10 bg-white/[.035] p-10 text-center">
           <Search className="mx-auto text-cyan-300" size={34} />
           <h3 className="mt-4 text-xl font-black text-white">{isEs ? "Busca una propiedad para comenzar" : "Search a property to begin"}</h3>
-          <p className="mx-auto mt-2 max-w-2xl text-slate-400">{isEs ? "Los datos de RentCast se consultan en el servidor para mantener la llave segura y se muestran aquÃƒÂ­ para anÃƒÂ¡lisis de inversiÃƒÂ³n." : "RentCast data is requested on the server to keep the key secure, then displayed here for investor-grade review."}</p>
+          <p className="mx-auto mt-2 max-w-2xl text-slate-400">{isEs ? "Los datos de RentCast se consultan en el servidor para mantener la llave segura y se muestran aquÃƒÆ’Ã‚Â­ para anÃƒÆ’Ã‚Â¡lisis de inversiÃƒÆ’Ã‚Â³n." : "RentCast data is requested on the server to keep the key secure, then displayed here for investor-grade review."}</p>
         </div>
       )}
     </div>
@@ -2418,7 +2430,7 @@ function CompList({ title, items, empty, mode }) {
         <div key={`${item.address}-${index}`} className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-white/10 bg-slate-950/60 p-4">
           <div>
             <p className="font-black text-white">{item.address || "Address unavailable"}</p>
-            <p className="text-sm text-slate-400">{[item.date, item.distance && `${item.distance} mi`, item.sqft && `${formatNumber(item.sqft, 0)} sqft`, item.beds && `${item.beds} bd`].filter(Boolean).join(" Ã‚| ")}</p>
+            <p className="text-sm text-slate-400">{[item.date, item.distance && `${item.distance} mi`, item.sqft && `${formatNumber(item.sqft, 0)} sqft`, item.beds && `${item.beds} bd`].filter(Boolean).join(" Ãƒâ€š| ")}</p>
           </div>
           <p className={`text-lg font-black ${mode === "rent" ? "text-cyan-300" : "text-emerald-300"}`}>{formatMoney(mode === "rent" ? item.rent : item.price)}</p>
         </div>
@@ -2429,24 +2441,189 @@ function CompList({ title, items, empty, mode }) {
 
 function AITakeoff({ language = "en", project }) {
   const isEs = language === "es";
-  const [sqft, setSqft] = useState(510);
-  const [drywallPrice, setDrywallPrice] = useState(14);
-  const [flooringPrice, setFlooringPrice] = useState(3.25);
-  const [baseboardPrice, setBaseboardPrice] = useState(1.85);
-  const [outletPrice, setOutletPrice] = useState(4.5);
-  const [fileName, setFileName] = useState("");
+  const [started, setStarted] = useState(false);
+  const [planUrl, setPlanUrl] = useState("/sample-floor-plan.pdf");
+  const [fileName, setFileName] = useState("download_floor_plan.pdf");
+  const [tool, setTool] = useState("select");
+  const [measureMode, setMeasureMode] = useState("area");
+  const [zoom, setZoom] = useState(41);
+  const [scaleFeet, setScaleFeet] = useState(5);
+  const [scaleLabel, setScaleLabel] = useState("1/4\" = 1'");
+  const [scaleMultiplier, setScaleMultiplier] = useState(1);
+  const [showScaleModal, setShowScaleModal] = useState(false);
+  const [calibrationMode, setCalibrationMode] = useState(false);
+  const [calibrationPoints, setCalibrationPoints] = useState([]);
+  const [calibrationDistance, setCalibrationDistance] = useState("5");
+  const [tourStep, setTourStep] = useState(1);
+  const [showTour, setShowTour] = useState(true);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [activeGroupId, setActiveGroupId] = useState("flooring");
+  const [draftGroup, setDraftGroup] = useState({ name: "Custom", type: "Area (SF)", parent: "None", icon: "Layers", color: "#38bdf8", pitch: "Flat (0/12)", volume: false });
+  const [groups, setGroups] = useState([
+    { id: "flooring", name: "Flooring", type: "Area (SF)", icon: "Layers", color: "#3b82f6", waste: 8, unitCost: 3.25 },
+    { id: "roofing", name: "Roofing", type: "Area (SF)", icon: "Home", color: "#ef4444", waste: 10, unitCost: 4.5 },
+    { id: "siding", name: "Siding", type: "Area (SF)", icon: "Home", color: "#f97316", waste: 8, unitCost: 5.75 },
+    { id: "drywall", name: "Drywall", type: "Area (SF)", icon: "Building2", color: "#a855f7", waste: 10, unitCost: 0.92 },
+    { id: "trim", name: "Interior Trim", type: "Linear (LF)", icon: "Ruler", color: "#22d3ee", waste: 10, unitCost: 1.85 },
+    { id: "electrical", name: "Electrical Fixtures", type: "Count", icon: "Sparkles", color: "#facc15", waste: 0, unitCost: 35 },
+    { id: "concrete", name: "Concrete", type: "Volume (YD3)", icon: "Building2", color: "#94a3b8", waste: 5, unitCost: 155 },
+  ]);
+  const [measurements, setMeasurements] = useState([]);
+  const [draftPoints, setDraftPoints] = useState([]);
+  const [note, setNote] = useState("");
   const reportRef = useRef(null);
-  const drywall = Math.ceil((cleanNumber(sqft) / 32) * 1.1);
-  const flooring = Math.ceil(cleanNumber(sqft) * 1.08);
-  const baseboard = Math.ceil(Math.sqrt(cleanNumber(sqft)) * 3.2 * 1.1);
-  const outlets = 32;
-  const total = drywall * cleanNumber(drywallPrice) + flooring * cleanNumber(flooringPrice) + baseboard * cleanNumber(baseboardPrice) + outlets * cleanNumber(outletPrice);
+  const canvasRef = useRef(null);
 
-  async function exportPdf() {
-    if (!items.length) {
-      setVoiceStatus(isEs ? "Agrega al menos un elemento antes de generar PDF." : "Add at least one item before generating a PDF.");
+  const activeGroup = groups.find((group) => group.id === activeGroupId) || groups[0];
+  const groupMeasurements = measurements.filter((measurement) => measurement.groupId === activeGroupId);
+  const totalsByGroup = groups.map((group) => {
+    const groupItems = measurements.filter((measurement) => measurement.groupId === group.id);
+    const quantity = groupItems.reduce((sum, item) => sum + item.quantity, 0);
+    const withWaste = quantity * (1 + (cleanNumber(group.waste) || 0) / 100);
+    return { ...group, quantity, withWaste, cost: withWaste * cleanNumber(group.unitCost), count: groupItems.length };
+  });
+  const totalCost = totalsByGroup.reduce((sum, group) => sum + group.cost, 0);
+
+  const tour = [
+    { title: "Set Drawing Scale", text: "Choose a preset scale or calibrate manually with two known points." },
+    { title: "Measurement Groups", text: "Create groups for flooring, drywall, roofing, trim, concrete, fixtures, and custom scopes." },
+    { title: "Drawing Tools", text: "Use Select, Pan, Note, Area, Linear, or Count. Click the plan to create measurements." },
+    { title: "AI Takeoff", text: "Generate a material summary from your groups, quantities, waste factors, and unit costs." },
+    { title: "Save Your Work", text: "Export a professional report and keep takeoff notes with the selected project." },
+  ];
+
+  const iconOptions = ["Layers", "Ruler", "Building2", "Home", "Sparkles", "ClipboardCheck"];
+  const colorOptions = ["#ef4444", "#f97316", "#facc15", "#84cc16", "#22c55e", "#14b8a6", "#06b6d4", "#3b82f6", "#6366f1", "#8b5cf6", "#a855f7", "#d946ef", "#ec4899", "#64748b"];
+  const IconByName = { Layers, Ruler, Building2, Home, Sparkles, ClipboardCheck };
+  const scalePresets = [
+    { label: "1/8\" = 1'", detail: "Small residential", feet: 10, multiplier: 0.5 },
+    { label: "3/16\" = 1'", detail: "Site plans", feet: 7, multiplier: 0.75 },
+    { label: "1/4\" = 1'", detail: "Floor plans", feet: 5, multiplier: 1 },
+    { label: "3/8\" = 1'", detail: "Detailed plans", feet: 4, multiplier: 1.5 },
+    { label: "1/2\" = 1'", detail: "Large details", feet: 3, multiplier: 2 },
+    { label: "3/4\" = 1'", detail: "Cabinet details", feet: 2, multiplier: 3 },
+    { label: "1\" = 1'", detail: "Full details", feet: 1, multiplier: 4 },
+    { label: "1 1/2\" = 1'", detail: "Large details", feet: 1, multiplier: 6 },
+    { label: "3\" = 1'", detail: "Full size details", feet: 1, multiplier: 12 },
+  ];
+
+  function handleFile(event) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setFileName(file.name);
+    setPlanUrl(URL.createObjectURL(file));
+    setStarted(true);
+  }
+
+  function pointFromEvent(event) {
+    const rect = canvasRef.current.getBoundingClientRect();
+    return { x: ((event.clientX - rect.left) / rect.width) * 1000, y: ((event.clientY - rect.top) / rect.height) * 1000 };
+  }
+
+  function distance(a, b) {
+    return Math.sqrt(Math.pow(a.x - b.x, 2) + Math.pow(a.y - b.y, 2));
+  }
+
+  function polygonArea(points) {
+    const area = points.reduce((sum, point, index) => {
+      const next = points[(index + 1) % points.length];
+      return sum + point.x * next.y - next.x * point.y;
+    }, 0);
+    return Math.abs(area / 2);
+  }
+
+  function convertQuantity(type, points) {
+    if (type.includes("Count")) return 1;
+    if (type.includes("Linear")) return points.length > 1 ? (distance(points[0], points[1]) / 16) * scaleMultiplier : 0;
+    if (type.includes("Volume")) return points.length > 2 ? ((polygonArea(points) / 260) * Math.pow(scaleMultiplier, 2)) * 0.33 / 27 : 0;
+    return points.length > 2 ? (polygonArea(points) / 12) * Math.pow(scaleMultiplier, 2) : 0;
+  }
+
+  function applyScalePreset(preset) {
+    setScaleLabel(preset.label);
+    setScaleFeet(preset.feet);
+    setScaleMultiplier(preset.multiplier);
+    setShowScaleModal(false);
+    setCalibrationMode(false);
+    setCalibrationPoints([]);
+  }
+
+  function startCalibration() {
+    setShowScaleModal(false);
+    setCalibrationMode(true);
+    setCalibrationPoints([]);
+    setTool("draw");
+    setMeasureMode("linear");
+  }
+
+  function addMeasurement(points) {
+    const quantity = convertQuantity(activeGroup.type, points);
+    if (!quantity) return;
+    setMeasurements((current) => [...current, { id: Date.now(), groupId: activeGroupId, mode: activeGroup.type, points, quantity, label: activeGroup.name }]);
+    setDraftPoints([]);
+  }
+
+  function handlePlanClick(event) {
+    if (calibrationMode) {
+      const point = pointFromEvent(event);
+      const nextPoints = [...calibrationPoints, point];
+      setCalibrationPoints(nextPoints);
+      if (nextPoints.length >= 2) {
+        const drawnFeet = distance(nextPoints[0], nextPoints[1]) / 16;
+        const realFeet = Math.max(cleanNumber(calibrationDistance), 0.1);
+        setScaleMultiplier(realFeet / Math.max(drawnFeet, 0.1));
+        setScaleFeet(realFeet);
+        setScaleLabel(`Custom ${realFeet} ft`);
+        setCalibrationMode(false);
+        setCalibrationPoints([]);
+      }
       return;
     }
+    if (tool === "pan" || tool === "select") return;
+    const point = pointFromEvent(event);
+    if (tool === "note") {
+      setMeasurements((current) => [...current, { id: Date.now(), groupId: activeGroupId, mode: "Note", points: [point], quantity: 0, label: note || "Field note" }]);
+      setNote("");
+      return;
+    }
+    if (measureMode === "count" || activeGroup.type.includes("Count")) {
+      addMeasurement([point]);
+      return;
+    }
+    const nextPoints = [...draftPoints, point];
+    setDraftPoints(nextPoints);
+    if (measureMode === "linear" || activeGroup.type.includes("Linear")) {
+      if (nextPoints.length >= 2) addMeasurement(nextPoints.slice(0, 2));
+    } else if (nextPoints.length >= 4) {
+      addMeasurement(nextPoints);
+    }
+  }
+
+  function finishArea() {
+    if (draftPoints.length >= 3) addMeasurement(draftPoints);
+  }
+
+  function addGroup() {
+    const id = `${draftGroup.name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${Date.now()}`;
+    setGroups((current) => [...current, { id, name: draftGroup.name || "Custom", type: draftGroup.type, icon: draftGroup.icon, color: draftGroup.color, waste: 10, unitCost: 1 }]);
+    setActiveGroupId(id);
+    setShowGroupModal(false);
+  }
+
+  function aiGenerate() {
+    if (!measurements.length) {
+      setMeasurements([
+        { id: Date.now() + 1, groupId: "flooring", mode: "Area (SF)", points: [{ x: 250, y: 620 }, { x: 390, y: 620 }, { x: 390, y: 820 }, { x: 250, y: 820 }], quantity: 324, label: "Living room flooring" },
+        { id: Date.now() + 2, groupId: "trim", mode: "Linear (LF)", points: [{ x: 250, y: 620 }, { x: 390, y: 620 }], quantity: 72, label: "Baseboard trim" },
+        { id: Date.now() + 3, groupId: "electrical", mode: "Count", points: [{ x: 320, y: 650 }], quantity: 14, label: "Outlets" },
+      ]);
+    }
+    setAiOpen(true);
+  }
+
+  async function exportPdf() {
     const [{ default: jsPDF }, { default: html2canvas }] = await Promise.all([import("jspdf"), import("html2canvas")]);
     const canvas = await html2canvas(reportRef.current, { backgroundColor: "#ffffff", scale: 2 });
     const pdf = new jsPDF("p", "mm", "a4");
@@ -2455,48 +2632,88 @@ function AITakeoff({ language = "en", project }) {
     pdf.save("operitron-takeoff-report.pdf");
   }
 
-  return (
-    <ToolShell title={isEs ? "CÃƒÂ¡lculo de Materiales con IA" : "AI Material Takeoff"} subtitle={isEs ? "Sube planos, ingresa medidas y precios, y exporta un informe profesional." : "Upload plans, enter dimensions and unit prices, then export a polished material takeoff report."}>
+  function resetMeasurements() {
+    setMeasurements([]);
+    setDraftPoints([]);
+    setMenuOpen(false);
+  }
+
+  const intro = (
+    <ToolShell title={isEs ? "Material Takeoff" : "Material Takeoff"} subtitle={isEs ? "Sube planos, mide areas y genera cantidades." : "Upload plans, measure areas, and generate quantities."}>
       <ProjectContext project={project} language={language} />
-      <div className="mb-6 mt-5 flex flex-wrap items-start justify-between gap-4">
-        <div><span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-xs font-black text-cyan-200">BETA</span><p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">{isEs ? "Las mediciones asistidas son estimaciones. Verifica dimensiones y factores de desperdicio antes de ordenar materiales." : "AI-assisted measurements are estimates. Verify dimensions and waste factors before ordering materials or awarding bids."}</p></div>
-        <div className="flex gap-3"><MiniMetric label={isEs ? "Planos" : "Sheets"} value={fileName ? "1" : "0"} /><MiniMetric label={isEs ? "CÃƒÂ¡lculos" : "Runs"} value={fileName ? "1" : "0"} /></div>
-      </div>
-      <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
-        <div className="space-y-5">
-          <label className="flex min-h-36 cursor-pointer flex-col items-center justify-center rounded-3xl border border-dashed border-amber-400/40 bg-amber-400/5 p-6 text-center hover:bg-amber-400/10">
-            <Upload className="text-amber-300" />
-            <span className="mt-3 font-black text-white">{fileName || "Upload blueprint PDF or file"}</span>
-            <span className="mt-1 text-sm text-slate-400">PDF, plan image, or quote document</span>
-            <input type="file" className="hidden" accept=".pdf,image/*" onChange={(event) => setFileName(event.target.files?.[0]?.name || "")} />
-          </label>
-          <div className="grid gap-4 md:grid-cols-2">
-            <NumberInput label="Measured Floor Area (sq ft)" value={sqft} setValue={setSqft} />
-            <MoneyInput label="Drywall Sheet Price" value={drywallPrice} setValue={setDrywallPrice} />
-            <MoneyInput label="Flooring Price / Sq Ft" value={flooringPrice} setValue={setFlooringPrice} />
-            <MoneyInput label="Baseboard Price / Lin Ft" value={baseboardPrice} setValue={setBaseboardPrice} />
-            <MoneyInput label="Outlet Unit Price" value={outletPrice} setValue={setOutletPrice} />
+      <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
+        <div className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-300/10 via-slate-950 to-purple-500/10 p-8">
+          <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-cyan-200">AI Takeoff Workspace</span>
+          <h3 className="mt-5 text-4xl font-black text-white">Measure plans, organize scopes, and calculate material costs.</h3>
+          <p className="mt-4 max-w-3xl text-lg leading-8 text-slate-300">Start with the included floor plan or upload your own PDF/image. Create measurement groups, set scale, draw areas, count fixtures, and export a contractor-ready takeoff report.</p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button onClick={() => setStarted(true)} className="primary-button">Get Started</button>
+            <label className="secondary-button cursor-pointer"><Upload size={18} /> Upload Plan<input type="file" className="hidden" accept=".pdf,image/*" onChange={handleFile} /></label>
           </div>
-          <button onClick={exportPdf} className="primary-button">Export Professional Takeoff PDF</button>
         </div>
-        <ResultBox items={[["Drywall 4x8 Sheets", `${drywall} sheets +10% waste`, true], ["LVP Flooring", `${flooring} sq ft +8% waste`, true], ["Electrical Outlets", `${outlets} pcs +0% waste`], ["Baseboard Trim", `${baseboard} lin ft +10% waste`, true], ["Estimated Material Cost", formatMoney(total), true]]} />
-      </div>
-      <div className="mt-7 grid gap-4 lg:grid-cols-3">
-        {[[isEs ? "Hojas de Planos" : "Plan Sheets", fileName || (isEs ? "No se han subido planos" : "No plan sheets uploaded yet"), FileText], [isEs ? "Takeoffs de IA" : "AI Takeoffs", fileName ? (isEs ? "Resumen listo para revisar" : "Summary ready for review") : (isEs ? "Carga un plano para comenzar" : "Upload a plan to begin"), Sparkles], [isEs ? "Takeoffs Manuales" : "Manual Takeoffs", isEs ? "AÃƒÂ±ade mediciones verificadas" : "Add verified measurements", Layers]].map(([title, text, Icon]) => <div key={title} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Icon className="text-cyan-300" /><h4 className="mt-4 text-lg font-black text-white">{title}</h4><p className="mt-2 text-sm text-slate-400">{text}</p></div>)}
-      </div>
-      <div className="mt-7">
-        <LinkedItems language={language} project={project} embedded />
-      </div>
-      <div ref={reportRef} className="fixed -left-[9999px] top-0 w-[794px] bg-white p-10 text-slate-950">
-        <div className="flex justify-between border-b border-slate-300 pb-5"><h1 className="text-3xl font-black">Takeoff Report</h1><p>Apr 12, 2026</p></div>
-        {[["Drywall 4x8 Sheets", `${drywall} sheets`, "+10% waste"], ["LVP Flooring", `${flooring} sq ft`, "+8% waste"], ["Electrical Outlets", `${outlets} pcs`, "+0% waste"], ["Baseboard Trim", `${baseboard} lin ft`, "+10% waste"]].map(([label, qty, waste]) => <div key={label} className="flex justify-between border-b border-slate-200 py-4"><span className="font-bold">{label}</span><span>{qty}<br /><small>{waste}</small></span></div>)}
-        <div className="flex justify-between pt-5 font-black"><span>Total Items</span><span>4 categories</span></div>
-        <p className="mt-8 text-sm text-slate-500">Generated by Operitron</p>
+        <div className="rounded-[2rem] border border-white/10 bg-slate-950/70 p-6">
+          <h4 className="text-xl font-black text-white">What this tool does</h4>
+          {["PDF/image plan viewer", "Measurement groups", "Area, linear, count and volume tools", "AI-style material summary", "PDF report export"].map((item) => <p key={item} className="mt-4 flex gap-3 text-slate-300"><CheckCircle2 className="text-emerald-300" size={18} /> {item}</p>)}
+        </div>
       </div>
     </ToolShell>
   );
-}
 
+  if (!started) return intro;
+
+  return (
+    <div className="fixed inset-0 z-50 flex bg-[#050812] text-slate-100">
+      <aside className="hidden w-28 shrink-0 border-r border-white/10 bg-slate-950/95 p-2 lg:block">
+        <label className="block cursor-pointer rounded-xl border-2 border-amber-400/80 bg-amber-400/10 p-1 text-center text-xs font-bold text-amber-100">
+          <div className="h-28 overflow-hidden rounded-lg bg-white/90"><object data={planUrl} type="application/pdf" className="h-full w-full" aria-label="Plan thumbnail" /></div>
+          <span className="mt-1 block">1</span>
+          <input type="file" className="hidden" accept=".pdf,image/*" onChange={handleFile} />
+        </label>
+      </aside>
+      <main className="flex min-w-0 flex-1 flex-col">
+        <div className="flex h-16 shrink-0 items-center gap-2 border-b border-white/10 bg-slate-950/95 px-3">
+          <button onClick={() => setStarted(false)} className="secondary-button h-11 px-3"><ChevronRight className="rotate-180" size={18} /> Back to Takeoff</button>
+          {[['select', MousePointer2, 'Select'], ['pan', Move, 'Pan'], ['note', StickyNote, 'Note']].map(([id, Icon, label]) => <button key={id} onClick={() => setTool(id)} className={`rounded-xl px-3 py-2 font-bold ${tool === id ? 'bg-cyan-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}><Icon className="mr-2 inline" size={18} />{label}</button>)}
+          <div className="hidden h-8 w-px bg-white/10 sm:block" />
+          {['area', 'linear', 'count'].map((mode) => <button key={mode} onClick={() => { setTool('draw'); setMeasureMode(mode); }} className={`rounded-xl px-3 py-2 text-sm font-black uppercase ${measureMode === mode && tool === 'draw' ? 'bg-amber-400 text-slate-950' : 'border border-white/10 text-slate-300'}`}>{mode}</button>)}
+          <button onClick={() => setShowScaleModal(true)} className="secondary-button h-11 px-3"><Ruler size={18} /> Set Scale</button>
+          <div className="ml-auto flex items-center gap-2"><button onClick={() => setZoom(Math.max(20, zoom - 5))} className="rounded-xl p-2 hover:bg-white/5"><ZoomOut /></button><span className="w-12 text-center font-bold text-slate-400">{zoom}%</span><button onClick={() => setZoom(Math.min(125, zoom + 5))} className="rounded-xl p-2 hover:bg-white/5"><ZoomIn /></button><span className="hidden rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-amber-200 xl:inline-flex"><Ruler className="mr-2" size={16} />{scaleLabel} · {scaleFeet} ft</span><button onClick={finishArea} className="secondary-button h-11 px-3">Finish</button><button onClick={aiGenerate} className="rounded-xl bg-purple-500 px-4 py-3 font-black text-white shadow-lg shadow-purple-500/20"><Bot className="mr-2 inline" size={18} />AI Takeoff</button><div className="relative"><button onClick={() => setMenuOpen(!menuOpen)} className="rounded-xl border border-white/10 p-3"><MoreVertical /></button>{menuOpen && <div className="absolute right-0 top-14 z-20 w-56 rounded-2xl border border-white/10 bg-slate-900 p-2 shadow-2xl"><button onClick={() => setMenuOpen(false)} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><Save size={18} /> Save</button><button onClick={resetMeasurements} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-rose-200 hover:bg-rose-400/10"><Trash2 size={18} /> Reset Measurements</button><button onClick={exportPdf} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><Printer size={18} /> Print / Export</button><button onClick={() => { setShowTour(true); setTourStep(1); setMenuOpen(false); }} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><HelpCircle size={18} /> Start Tour</button></div>}</div></div>
+        </div>
+        <div className="flex min-h-0 flex-1">
+          <section className="relative min-w-0 flex-1 overflow-auto bg-[#070b14] p-5">
+            <div className="mx-auto grid min-h-full place-items-center">
+              <div ref={canvasRef} onClick={handlePlanClick} onDoubleClick={finishArea} className={`relative bg-white shadow-2xl shadow-black/50 ${tool === 'pan' ? 'cursor-move' : tool === 'select' ? 'cursor-default' : 'cursor-crosshair'}`} style={{ width: `${Math.max(520, zoom * 18)}px`, height: `${Math.max(680, zoom * 24)}px` }}>
+                {planUrl.toLowerCase().includes('.pdf') ? <object data={planUrl} type="application/pdf" className="h-full w-full" aria-label="Uploaded floor plan"><div className="grid h-full place-items-center p-8 text-center text-slate-900">PDF preview unavailable. Click the canvas to measure anyway.</div></object> : <img src={planUrl} alt="Uploaded floor plan" className="h-full w-full object-contain" />}
+                <svg viewBox="0 0 1000 1000" className="pointer-events-none absolute inset-0 h-full w-full">
+                  {measurements.map((measurement) => {
+                    const group = groups.find((item) => item.id === measurement.groupId) || activeGroup;
+                    if (measurement.mode === "Note") return <text key={measurement.id} x={measurement.points[0].x} y={measurement.points[0].y} fill={group.color} fontSize="30" fontWeight="800">{measurement.label}</text>;
+                    if (measurement.points.length === 1) return <circle key={measurement.id} cx={measurement.points[0].x} cy={measurement.points[0].y} r="12" fill={group.color} />;
+                    if (measurement.points.length === 2) return <line key={measurement.id} x1={measurement.points[0].x} y1={measurement.points[0].y} x2={measurement.points[1].x} y2={measurement.points[1].y} stroke={group.color} strokeWidth="7" strokeDasharray="14 10" />;
+                    return <polygon key={measurement.id} points={measurement.points.map((point) => `${point.x},${point.y}`).join(" ")} fill={`${group.color}55`} stroke={group.color} strokeWidth="6" />;
+                  })}
+                  {draftPoints.length > 0 && <polyline points={draftPoints.map((point) => `${point.x},${point.y}`).join(" ")} fill="none" stroke="#22d3ee" strokeWidth="6" strokeDasharray="10 8" />}
+                  {calibrationPoints.length > 0 && <polyline points={calibrationPoints.map((point) => `${point.x},${point.y}`).join(" ")} fill="none" stroke="#facc15" strokeWidth="8" strokeDasharray="12 8" />}
+                </svg>
+              </div>
+            </div>
+            {calibrationMode && <div className="absolute bottom-8 left-1/2 z-10 w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 rounded-3xl border border-amber-400/30 bg-slate-950/95 p-4 text-center shadow-2xl"><p className="font-black text-amber-200">Calibration mode</p><p className="mt-1 text-sm text-slate-400">Click two known points on the plan. Distance: {calibrationDistance} ft. {calibrationPoints.length}/2 points selected.</p><button onClick={() => { setCalibrationMode(false); setCalibrationPoints([]); }} className="mt-3 rounded-xl border border-white/10 px-4 py-2 font-bold text-slate-200">Cancel</button></div>}
+            {showTour && <div className="absolute right-8 top-8 z-10 w-[min(420px,calc(100vw-2rem))] rounded-3xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl"><div className="flex justify-between"><div className="flex gap-3"><div className="grid h-10 w-10 place-items-center rounded-full bg-amber-400/15 text-amber-300"><HelpCircle /></div><h3 className="text-xl font-black text-white">{tour[tourStep - 1].title}</h3></div><button onClick={() => setShowTour(false)}><X /></button></div><p className="mt-4 text-lg leading-7 text-slate-400">{tour[tourStep - 1].text}</p><div className="mt-6 flex items-center justify-between"><span className="text-sm text-slate-400">Step {tourStep} of 5</span><div className="flex gap-2">{tourStep > 1 && <button onClick={() => setTourStep(tourStep - 1)} className="secondary-button h-11 px-3">Previous</button>}<button onClick={() => tourStep === 5 ? setShowTour(false) : setTourStep(tourStep + 1)} className="primary-button h-11 px-4">{tourStep === 5 ? "Get Started" : "Next"}</button></div></div><div className="mt-4 flex justify-center gap-2">{tour.map((_, index) => <span key={index} className={`h-2 w-2 rounded-full ${index + 1 === tourStep ? 'bg-amber-400' : 'bg-slate-600'}`} />)}</div></div>}
+          </section>
+          <aside className="hidden w-[380px] shrink-0 overflow-y-auto border-l border-white/10 bg-slate-950/95 lg:block">
+            <div className="border-b border-white/10 p-5"><div className="flex items-center justify-between"><div className="flex items-center gap-3"><Sparkles className="text-amber-300" /><span className="font-black text-white">Manual</span></div><span className="text-slate-500">AI <Bot className="inline" size={18} /></span></div></div>
+            <div className="p-5"><div className="flex items-center justify-between"><h3 className="font-black text-white">Measurement Groups</h3><button onClick={() => setShowGroupModal(true)} className="rounded-xl p-2 text-white hover:bg-white/5"><Plus /></button></div><div className="mt-4 max-h-80 space-y-2 overflow-y-auto rounded-2xl border border-white/10 bg-slate-900/60 p-2">{groups.map((group) => { const Icon = IconByName[group.icon] || Layers; return <button key={group.id} onClick={() => setActiveGroupId(group.id)} className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left ${activeGroupId === group.id ? 'bg-amber-400 text-slate-950' : 'text-slate-200 hover:bg-white/5'}`}><Icon size={18} /><span className="flex-1 font-black">{group.name}</span><span className="h-3 w-3 rounded-full" style={{ backgroundColor: group.color }} /><Eye size={16} /></button>; })}</div><button onClick={() => setShowGroupModal(true)} className="mt-3 w-full rounded-xl border border-white/10 py-3 font-black text-slate-200 hover:border-amber-400/40">Edit / Add Group</button></div>
+            <div className="border-t border-white/10 p-5"><h3 className="text-xl font-black text-white">Project Summary</h3>{measurements.length ? <div className="mt-4 space-y-3">{totalsByGroup.filter((group) => group.count).map((group) => <div key={group.id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"><div className="flex justify-between"><span className="font-black text-white">{group.name}</span><span className="text-cyan-300">{formatMoney(group.cost)}</span></div><p className="mt-1 text-sm text-slate-400">{formatNumber(group.withWaste, 1)} units incl. {group.waste}% waste</p></div>)}<div className="rounded-2xl bg-cyan-300/10 p-4 text-lg font-black text-cyan-100">Total: {formatMoney(totalCost)}</div></div> : <p className="mt-8 text-center text-slate-500">No measurements yet<br />Select a group and start drawing</p>}</div>
+          </aside>
+        </div>
+      </main>
+      {showScaleModal && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-md"><div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><h3 className="flex items-center gap-3 text-2xl font-black text-white"><Ruler className="text-amber-300" /> Set Drawing Scale</h3><p className="mt-3 max-w-2xl text-lg leading-7 text-slate-400">Choose a preset scale or calibrate manually by clicking two points on the plan.</p></div><button onClick={() => setShowScaleModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-white"><X /></button></div><div className="mt-6"><p className="mb-3 font-black text-white">Preset Scales</p><div className="grid gap-3 sm:grid-cols-3">{scalePresets.map((preset) => <button key={preset.label} onClick={() => applyScalePreset(preset)} className={`rounded-2xl border p-4 text-left transition hover:border-amber-400/60 hover:bg-amber-400/10 ${scaleLabel === preset.label ? "border-amber-400 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,.18)]" : "border-white/10 bg-slate-900/60"}`}><p className="text-lg font-black text-white">{preset.label}</p><p className="mt-1 text-sm font-bold text-slate-500">{preset.detail}</p></button>)}</div></div><div className="mt-7"><p className="mb-3 font-black text-white">Custom Calibration</p><div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/50 p-5"><p className="text-slate-400">Click two points on the plan and enter the real-world distance.</p><label className="mt-4 block"><span className="label">Known distance in feet</span><input inputMode="decimal" className="field" value={calibrationDistance} onChange={(event) => setCalibrationDistance(event.target.value)} /></label><button onClick={startCalibration} className="primary-button mt-4 w-full justify-center"><MousePointer2 size={18} /> Start Calibration</button></div></div><div className="mt-6 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-bold text-cyan-200">Current: {scaleLabel} · reference {scaleFeet} ft</p><button onClick={() => setShowScaleModal(false)} className="secondary-button">Cancel</button></div></div></div>}
+      {showGroupModal && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"><div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-2xl font-black text-white">Add Group</h3><button onClick={() => setShowGroupModal(false)}><X /></button></div><div className="mt-5 grid gap-4"><label><span className="label">Name</span><input className="field text-lg" value={draftGroup.name} onChange={(event) => setDraftGroup({ ...draftGroup, name: event.target.value })} /></label><label><span className="label">Type</span><select className="field" value={draftGroup.type} onChange={(event) => setDraftGroup({ ...draftGroup, type: event.target.value })}><option>Area (SF)</option><option>Linear (LF)</option><option>Count</option><option>Volume (YD3)</option></select></label><label><span className="label">Parent Group</span><select className="field" value={draftGroup.parent} onChange={(event) => setDraftGroup({ ...draftGroup, parent: event.target.value })}><option>None</option>{groups.map((group) => <option key={group.id}>{group.name}</option>)}</select></label><div className="grid gap-4 md:grid-cols-2"><div><span className="label">Icon</span><div className="grid grid-cols-6 gap-2 rounded-2xl bg-slate-900 p-3">{iconOptions.map((icon) => { const Icon = IconByName[icon] || Layers; return <button key={icon} onClick={() => setDraftGroup({ ...draftGroup, icon })} className={`grid h-10 place-items-center rounded-xl ${draftGroup.icon === icon ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'}`}><Icon size={18} /></button>; })}</div></div><div><span className="label">Color</span><div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900 p-3">{colorOptions.map((color) => <button key={color} onClick={() => setDraftGroup({ ...draftGroup, color })} className={`h-9 rounded-lg border-2 ${draftGroup.color === color ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: color }} />)}</div></div></div><label><span className="label">Pitch</span><select className="field" value={draftGroup.pitch} onChange={(event) => setDraftGroup({ ...draftGroup, pitch: event.target.value })}><option>Flat (0/12)</option><option>Low slope (3/12)</option><option>Standard (6/12)</option><option>Steep (9/12)</option></select></label><label className="flex items-center gap-3 text-white"><input type="checkbox" checked={draftGroup.volume} onChange={(event) => setDraftGroup({ ...draftGroup, volume: event.target.checked })} /> Calculate volume (yd3)</label></div><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowGroupModal(false)} className="secondary-button">Cancel</button><button onClick={addGroup} className="primary-button">Save</button></div></div></div>}
+      {aiOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"><div className="w-full max-w-3xl rounded-3xl border border-purple-400/25 bg-slate-950 p-6 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-2xl font-black text-white"><Bot className="mr-2 inline text-purple-300" />AI Material Summary</h3><button onClick={() => setAiOpen(false)}><X /></button></div><p className="mt-2 text-slate-400">Generated from your measurement groups, unit prices, and waste factors. Verify before ordering.</p><div className="mt-5 grid gap-3 md:grid-cols-2">{totalsByGroup.filter((group) => group.count).map((group) => <div key={group.id} className="rounded-2xl border border-white/10 bg-slate-900 p-4"><p className="font-black text-white">{group.name}</p><p className="text-sm text-slate-400">{formatNumber(group.withWaste, 1)} units with {group.waste}% waste</p><p className="mt-2 text-xl font-black text-emerald-300">{formatMoney(group.cost)}</p></div>)}</div><div className="mt-5 flex flex-wrap justify-between gap-3 rounded-2xl bg-purple-400/10 p-4"><span className="font-black text-white">Estimated material total</span><span className="text-2xl font-black text-purple-200">{formatMoney(totalCost)}</span></div><div className="mt-5 flex justify-end gap-3"><button onClick={exportPdf} className="secondary-button"><Printer size={18} /> Export PDF</button><button onClick={() => setAiOpen(false)} className="primary-button">Done</button></div></div></div>}
+      <div ref={reportRef} className="fixed -left-[9999px] top-0 w-[794px] bg-white p-10 text-slate-950"><div className="flex justify-between border-b border-slate-300 pb-5"><h1 className="text-3xl font-black">Takeoff Report</h1><p>{new Date().toLocaleDateString()}</p></div>{totalsByGroup.filter((group) => group.count).map((group) => <div key={group.id} className="flex justify-between border-b border-slate-200 py-4"><span><strong>{group.name}</strong><br />{group.count} measurements</span><span>{formatNumber(group.withWaste, 1)} units<br /><small>{group.waste}% waste</small></span></div>)}<div className="flex justify-between pt-5 text-xl font-black"><span>Total</span><span>{formatMoney(totalCost)}</span></div><p className="mt-8 text-sm text-slate-500">Generated by Operitron</p></div>
+    </div>
+  );
+}
 function Checklist({ items, project, language = "en" }) {
   const isEs = language === "es";
   const [tasks, setTasks] = useState(items.map((item, index) => ({ title: item, done: index === 1, priority: index % 2 ? "High" : "Normal", due: index % 2 ? "Friday" : "Next week" })));
@@ -2509,7 +2726,7 @@ function Checklist({ items, project, language = "en" }) {
   };
   const toggleTask = (index) => setTasks((current) => current.map((item, itemIndex) => itemIndex === index ? { ...item, done: !item.done } : item));
   const removeTask = (index) => setTasks((current) => current.filter((_, itemIndex) => itemIndex !== index));
-  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Lista de Tareas" : "To Do List"}</h3><p className="text-slate-400">{isEs ? "Coordina prÃƒÂ³ximos pasos de inversiÃƒÂ³n y obra." : "Coordinate investment and construction next steps."}</p></div><span className="rounded-full bg-cyan-300/10 px-4 py-2 text-sm font-black text-cyan-200">{tasks.filter((task) => !task.done).length} {isEs ? "abiertas" : "open"}</span></div><div className="flex flex-col gap-3 sm:flex-row"><input value={newTask} onChange={(event) => setNewTask(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addTask(); }} className="field" placeholder={isEs ? "Nueva tarea..." : "New task..."} /><button onClick={addTask} className="primary-button shrink-0"><Plus size={18} /> {isEs ? "Agregar" : "Add"}</button></div><div className="space-y-3">{tasks.map((task, index) => <div key={`${task.title}-${index}`} className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-3 transition hover:border-cyan-300/30 hover:bg-cyan-300/[.03] sm:gap-4 sm:p-4"><button type="button" onClick={() => toggleTask(index)} aria-label={task.done ? (isEs ? "Marcar como pendiente" : "Mark task open") : (isEs ? "Marcar como completada" : "Mark task complete")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate-600 transition hover:bg-white/5 hover:text-emerald-300"><CheckCircle2 className={task.done ? "text-emerald-300" : "text-slate-600"} /></button><button type="button" onClick={() => toggleTask(index)} className="min-w-0 flex-1 text-left"><p className={`break-words font-black text-white ${task.done ? "line-through opacity-60" : ""}`}>{task.title}</p><p className="text-sm text-slate-400">{task.priority} Ã‚| {task.due}</p></button><button type="button" onClick={() => removeTask(index)} aria-label={isEs ? `Eliminar ${task.title}` : `Remove ${task.title}`} title={isEs ? "Eliminar tarea" : "Remove task"} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-rose-300/15 text-rose-200 opacity-90 transition hover:border-rose-300/40 hover:bg-rose-400/10 hover:text-rose-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"><Trash2 size={18} /></button></div>)}</div></div>;
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Lista de Tareas" : "To Do List"}</h3><p className="text-slate-400">{isEs ? "Coordina prÃƒÆ’Ã‚Â³ximos pasos de inversiÃƒÆ’Ã‚Â³n y obra." : "Coordinate investment and construction next steps."}</p></div><span className="rounded-full bg-cyan-300/10 px-4 py-2 text-sm font-black text-cyan-200">{tasks.filter((task) => !task.done).length} {isEs ? "abiertas" : "open"}</span></div><div className="flex flex-col gap-3 sm:flex-row"><input value={newTask} onChange={(event) => setNewTask(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") addTask(); }} className="field" placeholder={isEs ? "Nueva tarea..." : "New task..."} /><button onClick={addTask} className="primary-button shrink-0"><Plus size={18} /> {isEs ? "Agregar" : "Add"}</button></div><div className="space-y-3">{tasks.map((task, index) => <div key={`${task.title}-${index}`} className="group flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-3 transition hover:border-cyan-300/30 hover:bg-cyan-300/[.03] sm:gap-4 sm:p-4"><button type="button" onClick={() => toggleTask(index)} aria-label={task.done ? (isEs ? "Marcar como pendiente" : "Mark task open") : (isEs ? "Marcar como completada" : "Mark task complete")} className="grid h-11 w-11 shrink-0 place-items-center rounded-full text-slate-600 transition hover:bg-white/5 hover:text-emerald-300"><CheckCircle2 className={task.done ? "text-emerald-300" : "text-slate-600"} /></button><button type="button" onClick={() => toggleTask(index)} className="min-w-0 flex-1 text-left"><p className={`break-words font-black text-white ${task.done ? "line-through opacity-60" : ""}`}>{task.title}</p><p className="text-sm text-slate-400">{task.priority} Ãƒâ€š| {task.due}</p></button><button type="button" onClick={() => removeTask(index)} aria-label={isEs ? `Eliminar ${task.title}` : `Remove ${task.title}`} title={isEs ? "Eliminar tarea" : "Remove task"} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-rose-300/15 text-rose-200 opacity-90 transition hover:border-rose-300/40 hover:bg-rose-400/10 hover:text-rose-100 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"><Trash2 size={18} /></button></div>)}</div></div>;
 }
 
 function PunchListApp({ language = "en", project }) {
@@ -2739,7 +2956,7 @@ function BudgetEstimator({ language = "en", project }) {
   return <div className="space-y-6"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Estimador de Presupuesto" : "Budget Estimator"}</h3><p className="mt-2 text-slate-400">{isEs ? "Presupuesto editable con decimales, comas, partidas y formulas reales." : "Editable budget with decimals, commas, line items, and real investor formulas."}</p></div><div className="flex flex-wrap gap-3"><button onClick={addRow} className="secondary-button"><Plus size={18} />{isEs ? "Agregar linea" : "Add line"}</button><button onClick={() => setWizardOpen(true)} className="primary-button"><Sparkles size={18} />{isEs ? "Generar desde Especificaciones" : "Generate From Specs"}</button></div></div><div className="grid gap-3 sm:grid-cols-5"><MiniMetric label={isEs ? "Costo Directo" : "Direct Cost"} value={formatMoney(direct)} /><MiniMetric label={isEs ? "Contingencia" : "Contingency"} value={formatMoney(contingency)} /><MiniMetric label={isEs ? "Total Proyecto" : "Total Project Cost"} value={formatMoney(total)} /><MiniMetric label={isEs ? "Costo / Pie2" : "Cost / Sq Ft"} value={formatMoney(total / sqft)} /><label className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"><span className="text-xs font-black uppercase tracking-widest text-slate-500">Contingency %</span><input inputMode="decimal" className="mt-2 w-full bg-transparent text-2xl font-black text-white outline-none" value={contingencyPct} onChange={(event) => setContingencyPct(event.target.value)} /></label></div><p className="rounded-2xl border border-cyan-300/15 bg-cyan-300/[.06] p-4 text-sm font-bold text-cyan-100">{isEs ? "Los campos aceptan comas y decimales: 1,250,000 | 12.5 | 7.25%." : "Fields accept commas and decimals: 1,250,000 | 12.5 | 7.25%."}</p><div className="overflow-x-auto rounded-3xl border border-white/10 bg-slate-950/60 p-4"><table className="min-w-[900px] w-full text-left"><thead className="text-xs uppercase tracking-widest text-slate-500"><tr><th className="pb-4">Category</th><th className="pb-4">Line Item</th><th className="pb-4">Qty</th><th className="pb-4">Unit</th><th className="pb-4">Unit Price</th><th className="pb-4 text-right">Total</th><th className="pb-4 text-right">Remove</th></tr></thead><tbody>{rows.map((row, index) => <tr key={`${row.category}-${index}`} className="border-t border-white/10"><td className="py-3 pr-3"><input className="field min-w-56 py-2 text-sm font-bold text-cyan-100" value={row.category} onChange={(event) => updateRow(index, "category", event.target.value)} /></td><td className="py-3 pr-3"><input className="field min-w-60 py-2" value={row.item} onChange={(event) => updateRow(index, "item", event.target.value)} /></td><td className="py-3 pr-3"><input inputMode="decimal" className="field w-28 py-2" value={row.qty} onChange={(event) => updateRow(index, "qty", event.target.value)} /></td><td className="py-3 pr-3"><input className="field w-28 py-2" value={row.unit} onChange={(event) => updateRow(index, "unit", event.target.value)} /></td><td className="py-3 pr-3"><input inputMode="decimal" className="field w-32 py-2" value={row.price} onChange={(event) => updateRow(index, "price", event.target.value)} /></td><td className="py-3 text-right font-black text-emerald-300">{formatMoney(cleanNumber(row.qty) * cleanNumber(row.price))}</td><td className="py-3 text-right"><button onClick={() => removeRow(index)} className="rounded-xl border border-rose-300/20 p-3 text-rose-200 hover:bg-rose-400/10"><Trash2 size={17} /></button></td></tr>)}</tbody></table></div><section className="rounded-3xl border border-white/10 bg-white/[.04] p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h4 className="text-xl font-black text-white">{isEs ? "Biblioteca de Formulas" : "Investor Formula Library"}</h4><p className="text-sm text-slate-400">{isEs ? "Calculadoras utiles para inversionistas, constructores, Airbnb y financiamiento." : "Useful calculators for investors, builders, Airbnb hosts, land developers, and financing."}</p></div><div className="flex flex-wrap gap-2">{Object.keys(formulaGroups).map((group) => <button key={group} onClick={() => setFormulaGroup(group)} className={`rounded-xl px-3 py-2 text-xs font-black uppercase tracking-widest transition ${formulaGroup === group ? "bg-cyan-300 text-slate-950" : "border border-white/10 text-slate-400 hover:text-white"}`}>{group}</button>)}</div></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{formulaGroups[formulaGroup].map(([name, formula, result]) => <div key={name} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4"><p className="font-black text-white">{name}</p><p className="mt-1 text-xs text-slate-500">{formula}</p><p className="mt-3 text-xl font-black text-cyan-200">{result}</p></div>)}</div><details className="mt-5 rounded-2xl border border-white/10 bg-slate-950/60 p-4"><summary className="cursor-pointer font-black text-white">{isEs ? "Editar supuestos de formulas" : "Edit formula assumptions"}</summary><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{Object.entries(assumptions).map(([key, value]) => <label key={key}><span className="label capitalize">{key.replace(/([A-Z])/g, " $1")}</span><input inputMode="decimal" className="field" value={value} onChange={(event) => patchAssumption(key, event.target.value)} /></label>)}</div></details></section>{wizardOpen && <div className="rounded-3xl border border-cyan-300/25 bg-cyan-300/[.05] p-5"><div className="flex justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? `Paso ${specStep} de 3` : `Step ${specStep} of 3`}</p><h4 className="mt-2 text-xl font-black text-white">{isEs ? "Generar Estimacion desde Especificaciones" : "Generate Estimate from Specs"}</h4></div><button onClick={() => setWizardOpen(false)}><X /></button></div><div className="mt-5 grid gap-3 sm:grid-cols-3">{specStep === 1 && <><select className="field" value={spec.type} onChange={(event) => setSpec({ ...spec, type: event.target.value })}><option>New Construction</option><option>Remodel</option><option>Addition</option></select><input className="field" value={spec.city} onChange={(event) => setSpec({ ...spec, city: event.target.value })} placeholder="City / State" /><NumberInput label="Living Sq Ft" value={spec.sqft} setValue={(value) => setSpec({ ...spec, sqft: value })} /></>}{specStep === 2 && <><select className="field" value={spec.foundation} onChange={(event) => setSpec({ ...spec, foundation: event.target.value })}><option>Slab</option><option>Crawlspace</option><option>Basement</option><option>Pier / Raised</option></select><select className="field" value={spec.finish} onChange={(event) => setSpec({ ...spec, finish: event.target.value })}><option>Standard</option><option>Upgraded</option><option>Luxury</option></select></>}{specStep === 3 && <Info title={isEs ? "Listo para Calcular" : "Ready to Calculate"} text={`${spec.type} | ${spec.city} | ${formatNumber(spec.sqft, 0)} sq ft | ${spec.foundation} | ${spec.finish}`} />}</div><div className="mt-5 flex justify-between"><button onClick={() => setSpecStep(Math.max(1, specStep - 1))} className="secondary-button">{isEs ? "Anterior" : "Previous"}</button>{specStep < 3 ? <button onClick={() => setSpecStep(specStep + 1)} className="primary-button">{isEs ? "Siguiente" : "Next"}</button> : <button onClick={generateEstimate} className="primary-button">{isEs ? "Generar Presupuesto" : "Generate Budget"}</button>}</div></div>}</div>;
 }function SubsQuotes({ language, project }) {
   const label = language === "es"
-    ? { review: "Revisar CotizaciÃƒÂ³n", trade: "Oficio", vendor: "Proveedor", bid: "Monto de Oferta", scope: "Alcance", status: "Estado", quoteStatus: "Estado de cotizaciÃƒÂ³n", pending: "Pendiente", approved: "Aprobada", rejected: "Rechazada", total: "Total de Ofertas", contingency: "Contingencia 10%", budget: "Presupuesto con Contingencia", selected: "Oferta Seleccionada" }
+    ? { review: "Revisar CotizaciÃƒÆ’Ã‚Â³n", trade: "Oficio", vendor: "Proveedor", bid: "Monto de Oferta", scope: "Alcance", status: "Estado", quoteStatus: "Estado de cotizaciÃƒÆ’Ã‚Â³n", pending: "Pendiente", approved: "Aprobada", rejected: "Rechazada", total: "Total de Ofertas", contingency: "Contingencia 10%", budget: "Presupuesto con Contingencia", selected: "Oferta Seleccionada" }
     : { review: "Review Quote", trade: "Trade", vendor: "Vendor", bid: "Bid Amount", scope: "Scope", status: "Status", quoteStatus: "Quote status", pending: "Pending", approved: "Approved", rejected: "Rejected", total: "Bid Total", contingency: "10% Contingency", budget: "Budget With Contingency", selected: "Selected Bid" };
   const isEs = language === "es";
   const [subcontractors, setSubcontractors] = useState([]);
@@ -2758,11 +2975,11 @@ function BudgetEstimator({ language = "en", project }) {
   const updateQuote = (field, value) => setQuotes(quotes.map((item, index) => index === active ? { ...item, [field]: value } : item));
   const addSub = () => { if (!newSub.name.trim()) return; setSubcontractors([...subcontractors, { ...newSub, id: Date.now() }]); setAddSubOpen(false); setNewSub({ name: "", trade: "Other", customTrade: "", email: "", phone: "", notes: "" }); };
   const filtered = subcontractors.filter((sub) => `${sub.name} ${sub.email} ${sub.phone}`.toLowerCase().includes(search.toLowerCase()));
-  return <div className="space-y-6"><ProjectContext project={project} language={language} /><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Subcontratistas" : "Subcontractors"}</h3><p className="text-sm text-slate-400">{subcontractors.length} {isEs ? "subcontratistas" : "subcontractors"}</p></div><button onClick={() => setAddSubOpen(true)} className="primary-button"><Plus size={18} />{isEs ? "Agregar Subcontratista" : "Add Subcontractor"}</button></div><input className="field mt-5" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={isEs ? "Buscar por nombre, correo o telÃƒÂ©fono..." : "Search by name, email, phone..."} />{filtered.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{filtered.map((sub) => <div key={sub.id} className="rounded-2xl border border-white/10 p-4"><p className="font-black text-white">{sub.name}</p><p className="text-sm text-cyan-200">{sub.customTrade || sub.trade}</p><p className="mt-2 text-sm text-slate-400">{sub.email} {sub.phone}</p></div>)}</div> : <div className="py-10 text-center"><Users className="mx-auto text-slate-600" size={42} /><p className="mt-4 font-black text-white">{isEs ? "No se encontraron subcontratistas" : "No subcontractors found"}</p><p className="mt-2 text-sm text-slate-400">{isEs ? "Agrega tu primer subcontratista para comenzar." : "Add your first subcontractor to get started."}</p></div>}</section><div className="grid gap-5 xl:grid-cols-[1fr_390px]"><div className="space-y-3"><h3 className="mb-4 text-xl font-black text-white">{isEs ? "Ofertas / ComparaciÃƒÂ³n" : "Bids / Comparison"}</h3>{quotes.map((item, index) => <button key={item.trade} onClick={() => setActive(index)} className={`glow-card flex w-full items-center justify-between rounded-3xl border p-5 text-left transition ${active === index ? "border-cyan-300/50 bg-cyan-300/10" : "border-white/10 bg-slate-950/60 hover:border-cyan-300/30"}`}><div><p className="font-black text-white">{item.trade}</p><p className="text-sm text-slate-500">{item.vendor} Ã‚| {label.quoteStatus}: {item.status}</p></div><p className="text-xl font-black text-cyan-200">{formatMoney(item.price)}</p></button>)}</div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><h3 className="text-xl font-black text-white">{label.review}</h3><div className="mt-4 space-y-3"><label className="block"><span className="label">{label.trade}</span><input className="field" value={quote.trade} onChange={(e) => updateQuote("trade", e.target.value)} /></label><label className="block"><span className="label">{label.vendor}</span><input className="field" value={quote.vendor} onChange={(e) => updateQuote("vendor", e.target.value)} /></label><MoneyInput label={label.bid} value={quote.price} setValue={(value) => updateQuote("price", value)} /><label className="block"><span className="label">{label.scope}</span><textarea className="field min-h-24" value={quote.scope} onChange={(e) => updateQuote("scope", e.target.value)} /></label><label className="block"><span className="label">{label.status}</span><select className="field" value={quote.status} onChange={(e) => updateQuote("status", e.target.value)}><option>{label.pending}</option><option>Review</option><option>{label.approved}</option><option>{label.rejected}</option></select></label></div><ResultBox items={[[label.total, formatMoney(total), true], [label.contingency, formatMoney(total * 0.1)], [label.budget, formatMoney(total * 1.1), true], [label.selected, formatMoney(quote.price)]]} /></div></div>{addSubOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4"><div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#10182b] p-6"><div className="flex justify-between"><h3 className="text-xl font-black text-white">{isEs ? "Agregar Subcontratista" : "Add Subcontractor"}</h3><button onClick={() => setAddSubOpen(false)}><X /></button></div><div className="mt-5 grid gap-4"><input className="field" value={newSub.name} onChange={(event) => setNewSub({ ...newSub, name: event.target.value })} placeholder={isEs ? "Nombre de empresa o persona" : "Company or person name"} /><select className="field" value={newSub.trade} onChange={(event) => setNewSub({ ...newSub, trade: event.target.value })}><option>Other</option><option>Electrical</option><option>Plumbing</option><option>Concrete</option><option>Framing</option><option>Roofing</option></select>{newSub.trade === "Other" && <input className="field" value={newSub.customTrade} onChange={(event) => setNewSub({ ...newSub, customTrade: event.target.value })} placeholder={isEs ? "Oficio personalizado" : "Custom trade"} />}<div className="grid gap-3 sm:grid-cols-2"><input className="field" value={newSub.email} onChange={(event) => setNewSub({ ...newSub, email: event.target.value })} placeholder="Email" /><input className="field" value={newSub.phone} onChange={(event) => setNewSub({ ...newSub, phone: event.target.value })} placeholder={isEs ? "TelÃƒÂ©fono" : "Phone"} /></div><textarea className="field min-h-24" value={newSub.notes} onChange={(event) => setNewSub({ ...newSub, notes: event.target.value })} placeholder={isEs ? "Notas" : "Notes"} /></div><div className="mt-5 flex justify-end gap-3"><button onClick={() => setAddSubOpen(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={addSub} className="primary-button">{isEs ? "Agregar" : "Add"}</button></div></div></div>}</div>;
+  return <div className="space-y-6"><ProjectContext project={project} language={language} /><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Subcontratistas" : "Subcontractors"}</h3><p className="text-sm text-slate-400">{subcontractors.length} {isEs ? "subcontratistas" : "subcontractors"}</p></div><button onClick={() => setAddSubOpen(true)} className="primary-button"><Plus size={18} />{isEs ? "Agregar Subcontratista" : "Add Subcontractor"}</button></div><input className="field mt-5" value={search} onChange={(event) => setSearch(event.target.value)} placeholder={isEs ? "Buscar por nombre, correo o telÃƒÆ’Ã‚Â©fono..." : "Search by name, email, phone..."} />{filtered.length ? <div className="mt-4 grid gap-3 md:grid-cols-2">{filtered.map((sub) => <div key={sub.id} className="rounded-2xl border border-white/10 p-4"><p className="font-black text-white">{sub.name}</p><p className="text-sm text-cyan-200">{sub.customTrade || sub.trade}</p><p className="mt-2 text-sm text-slate-400">{sub.email} {sub.phone}</p></div>)}</div> : <div className="py-10 text-center"><Users className="mx-auto text-slate-600" size={42} /><p className="mt-4 font-black text-white">{isEs ? "No se encontraron subcontratistas" : "No subcontractors found"}</p><p className="mt-2 text-sm text-slate-400">{isEs ? "Agrega tu primer subcontratista para comenzar." : "Add your first subcontractor to get started."}</p></div>}</section><div className="grid gap-5 xl:grid-cols-[1fr_390px]"><div className="space-y-3"><h3 className="mb-4 text-xl font-black text-white">{isEs ? "Ofertas / ComparaciÃƒÆ’Ã‚Â³n" : "Bids / Comparison"}</h3>{quotes.map((item, index) => <button key={item.trade} onClick={() => setActive(index)} className={`glow-card flex w-full items-center justify-between rounded-3xl border p-5 text-left transition ${active === index ? "border-cyan-300/50 bg-cyan-300/10" : "border-white/10 bg-slate-950/60 hover:border-cyan-300/30"}`}><div><p className="font-black text-white">{item.trade}</p><p className="text-sm text-slate-500">{item.vendor} Ãƒâ€š| {label.quoteStatus}: {item.status}</p></div><p className="text-xl font-black text-cyan-200">{formatMoney(item.price)}</p></button>)}</div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><h3 className="text-xl font-black text-white">{label.review}</h3><div className="mt-4 space-y-3"><label className="block"><span className="label">{label.trade}</span><input className="field" value={quote.trade} onChange={(e) => updateQuote("trade", e.target.value)} /></label><label className="block"><span className="label">{label.vendor}</span><input className="field" value={quote.vendor} onChange={(e) => updateQuote("vendor", e.target.value)} /></label><MoneyInput label={label.bid} value={quote.price} setValue={(value) => updateQuote("price", value)} /><label className="block"><span className="label">{label.scope}</span><textarea className="field min-h-24" value={quote.scope} onChange={(e) => updateQuote("scope", e.target.value)} /></label><label className="block"><span className="label">{label.status}</span><select className="field" value={quote.status} onChange={(e) => updateQuote("status", e.target.value)}><option>{label.pending}</option><option>Review</option><option>{label.approved}</option><option>{label.rejected}</option></select></label></div><ResultBox items={[[label.total, formatMoney(total), true], [label.contingency, formatMoney(total * 0.1)], [label.budget, formatMoney(total * 1.1), true], [label.selected, formatMoney(quote.price)]]} /></div></div>{addSubOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4"><div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#10182b] p-6"><div className="flex justify-between"><h3 className="text-xl font-black text-white">{isEs ? "Agregar Subcontratista" : "Add Subcontractor"}</h3><button onClick={() => setAddSubOpen(false)}><X /></button></div><div className="mt-5 grid gap-4"><input className="field" value={newSub.name} onChange={(event) => setNewSub({ ...newSub, name: event.target.value })} placeholder={isEs ? "Nombre de empresa o persona" : "Company or person name"} /><select className="field" value={newSub.trade} onChange={(event) => setNewSub({ ...newSub, trade: event.target.value })}><option>Other</option><option>Electrical</option><option>Plumbing</option><option>Concrete</option><option>Framing</option><option>Roofing</option></select>{newSub.trade === "Other" && <input className="field" value={newSub.customTrade} onChange={(event) => setNewSub({ ...newSub, customTrade: event.target.value })} placeholder={isEs ? "Oficio personalizado" : "Custom trade"} />}<div className="grid gap-3 sm:grid-cols-2"><input className="field" value={newSub.email} onChange={(event) => setNewSub({ ...newSub, email: event.target.value })} placeholder="Email" /><input className="field" value={newSub.phone} onChange={(event) => setNewSub({ ...newSub, phone: event.target.value })} placeholder={isEs ? "TelÃƒÆ’Ã‚Â©fono" : "Phone"} /></div><textarea className="field min-h-24" value={newSub.notes} onChange={(event) => setNewSub({ ...newSub, notes: event.target.value })} placeholder={isEs ? "Notas" : "Notes"} /></div><div className="mt-5 flex justify-end gap-3"><button onClick={() => setAddSubOpen(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={addSub} className="primary-button">{isEs ? "Agregar" : "Add"}</button></div></div></div>}</div>;
 }
 
 function LinkedItems({ language, project, embedded = false }) {
-  const ui = language === "es" ? { linked: "Registro Vinculado", review: "RevisiÃƒÂ³n de Inversionista", linkedText: "Adjunta documentos, cÃƒÂ¡lculos, contactos o notas del proyecto para mantener el espacio organizado.", reviewText: "Usa elementos vinculados para preparar paquetes para prestamistas, actualizaciones de inversionistas o revisiones de alcance.", attach: "Adjuntar Elemento" } : { linked: "Linked Record", review: "Investor Review", linkedText: "Attach documents, calculations, contacts, or project notes to keep the workspace organized.", reviewText: "Use linked items when preparing a lender packet, investor update, or contractor scope review.", attach: "Attach Item" };
+  const ui = language === "es" ? { linked: "Registro Vinculado", review: "RevisiÃƒÆ’Ã‚Â³n de Inversionista", linkedText: "Adjunta documentos, cÃƒÆ’Ã‚Â¡lculos, contactos o notas del proyecto para mantener el espacio organizado.", reviewText: "Usa elementos vinculados para preparar paquetes para prestamistas, actualizaciones de inversionistas o revisiones de alcance.", attach: "Adjuntar Elemento" } : { linked: "Linked Record", review: "Investor Review", linkedText: "Attach documents, calculations, contacts, or project notes to keep the workspace organized.", reviewText: "Use linked items when preparing a lender packet, investor update, or contractor scope review.", attach: "Attach Item" };
   const items = [["Reports", "CMA PDF, lender summary, takeoff report", FileText], ["Comps", "Comparable sales, ARV range, price per sqft", Search], ["Quotes", "Subcontractor bids and awarded scopes", Users], ["Permits", "Permit numbers, inspection milestones, notes", ClipboardCheck], ["Dropbox Files", "Plans, photos, contracts, draw packets", Cloud], ["Loan Docs", "Term sheets, DSCR assumptions, payoff letters", WalletCards]];
   const [active, setActive] = useState(items[0]);
   const Icon = active[2];
@@ -2770,7 +2987,7 @@ function LinkedItems({ language, project, embedded = false }) {
 }
 
 function Collaborators({ language, project, embedded = false }) {
-  const ui = language === "es" ? { invite: "Invitar Colaborador", text: "Invita socios, prestamistas, contratistas o gerentes de proyecto con un rol claro.", owner: "Propietario", manager: "Gerente de Proyecto", finance: "Finanzas", construction: "ConstrucciÃƒÂ³n", viewer: "Solo Lectura" } : { invite: "Invite Collaborator", text: "Invite partners, lenders, contractors, or project managers with a clear role.", owner: "Owner", manager: "Project Manager", finance: "Finance", construction: "Construction", viewer: "Viewer" };
+  const ui = language === "es" ? { invite: "Invitar Colaborador", text: "Invita socios, prestamistas, contratistas o gerentes de proyecto con un rol claro.", owner: "Propietario", manager: "Gerente de Proyecto", finance: "Finanzas", construction: "ConstrucciÃƒÆ’Ã‚Â³n", viewer: "Solo Lectura" } : { invite: "Invite Collaborator", text: "Invite partners, lenders, contractors, or project managers with a clear role.", owner: "Owner", manager: "Project Manager", finance: "Finance", construction: "Construction", viewer: "Viewer" };
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("Project Manager");
   const [tab, setTab] = useState("members");
@@ -2778,7 +2995,7 @@ function Collaborators({ language, project, embedded = false }) {
   const [people, setPeople] = useState([]);
   const invite = () => { if (!email.trim()) return; setPeople([{ name: email.split("@")[0], email, role }, ...people]); setEmail(""); };
   const isEs = language === "es";
-  return <div className="space-y-5">{!embedded && <ProjectContext project={project} language={language} />}<div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className={`${embedded ? "text-2xl" : "text-3xl"} font-black text-white`}>{isEs ? "Colaboradores" : "Collaborators"}</h3><p className="mt-2 text-slate-400">{embedded ? (isEs ? "Integrado con subcontratistas y cotizaciones para controlar quiÃƒÂ©n ve cada paquete." : "Integrated with subs and quotes so each package has the right people attached.") : ui.text}</p></div><button onClick={() => setModalOpen(true)} className="primary-button"><Plus size={18} />{ui.invite}</button></div><div className="inline-flex rounded-2xl bg-slate-900 p-1"><button onClick={() => setTab("members")} className={`rounded-xl px-5 py-3 font-black ${tab === "members" ? "bg-cyan-300 text-slate-950" : "text-slate-400"}`}>{isEs ? "Miembros" : "Members"}</button><button onClick={() => setTab("access")} className={`rounded-xl px-5 py-3 font-black ${tab === "access" ? "bg-cyan-300 text-slate-950" : "text-slate-400"}`}>{isEs ? "Acceso a Proyectos" : "Project Access"}</button></div>{tab === "members" && (people.length ? <div className="grid gap-4 md:grid-cols-2">{people.map((person) => <div key={person.email} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Users className="text-cyan-300" /><p className="mt-4 text-lg font-black text-white">{person.name}</p><p className="text-sm text-slate-400">{person.email}</p><p className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-black text-cyan-200">{person.role}</p></div>)}</div> : <div className="rounded-3xl border border-dashed border-white/10 py-16 text-center"><Users className="mx-auto text-slate-600" size={42} /><p className="mt-4 font-black text-white">{isEs ? "TodavÃƒÂ­a no hay miembros" : "No team members yet"}</p><button onClick={() => setModalOpen(true)} className="primary-button mt-5"><Plus size={18} />{ui.invite}</button></div>)}{tab === "access" && <div className="rounded-3xl border border-dashed border-white/10 p-8"><p className="font-black text-white">{isEs ? "Permisos por Proyecto" : "Project Permissions"}</p><p className="mt-2 text-slate-400">{isEs ? "Invita miembros para asignar permisos de lectura, ediciÃƒÂ³n, finanzas y campo." : "Invite members to assign viewer, editor, finance, and field access."}</p></div>}{modalOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4"><div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#10182b] p-6"><div className="flex justify-between"><h3 className="text-xl font-black text-white">{ui.invite}</h3><button onClick={() => setModalOpen(false)}><X /></button></div><input className="field mt-5" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@company.com" /><select className="field mt-3" value={role} onChange={(e) => setRole(e.target.value)}><option>{ui.owner}</option><option>{ui.manager}</option><option>{ui.finance}</option><option>{ui.construction}</option><option>{ui.viewer}</option></select><div className="mt-5 flex justify-end gap-3"><button onClick={() => setModalOpen(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={() => { invite(); setModalOpen(false); }} className="primary-button">{ui.invite}</button></div></div></div>}</div>;
+  return <div className="space-y-5">{!embedded && <ProjectContext project={project} language={language} />}<div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className={`${embedded ? "text-2xl" : "text-3xl"} font-black text-white`}>{isEs ? "Colaboradores" : "Collaborators"}</h3><p className="mt-2 text-slate-400">{embedded ? (isEs ? "Integrado con subcontratistas y cotizaciones para controlar quiÃƒÆ’Ã‚Â©n ve cada paquete." : "Integrated with subs and quotes so each package has the right people attached.") : ui.text}</p></div><button onClick={() => setModalOpen(true)} className="primary-button"><Plus size={18} />{ui.invite}</button></div><div className="inline-flex rounded-2xl bg-slate-900 p-1"><button onClick={() => setTab("members")} className={`rounded-xl px-5 py-3 font-black ${tab === "members" ? "bg-cyan-300 text-slate-950" : "text-slate-400"}`}>{isEs ? "Miembros" : "Members"}</button><button onClick={() => setTab("access")} className={`rounded-xl px-5 py-3 font-black ${tab === "access" ? "bg-cyan-300 text-slate-950" : "text-slate-400"}`}>{isEs ? "Acceso a Proyectos" : "Project Access"}</button></div>{tab === "members" && (people.length ? <div className="grid gap-4 md:grid-cols-2">{people.map((person) => <div key={person.email} className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Users className="text-cyan-300" /><p className="mt-4 text-lg font-black text-white">{person.name}</p><p className="text-sm text-slate-400">{person.email}</p><p className="mt-3 inline-flex rounded-full border border-cyan-300/20 bg-cyan-300/10 px-3 py-1 text-xs font-black text-cyan-200">{person.role}</p></div>)}</div> : <div className="rounded-3xl border border-dashed border-white/10 py-16 text-center"><Users className="mx-auto text-slate-600" size={42} /><p className="mt-4 font-black text-white">{isEs ? "TodavÃƒÆ’Ã‚Â­a no hay miembros" : "No team members yet"}</p><button onClick={() => setModalOpen(true)} className="primary-button mt-5"><Plus size={18} />{ui.invite}</button></div>)}{tab === "access" && <div className="rounded-3xl border border-dashed border-white/10 p-8"><p className="font-black text-white">{isEs ? "Permisos por Proyecto" : "Project Permissions"}</p><p className="mt-2 text-slate-400">{isEs ? "Invita miembros para asignar permisos de lectura, ediciÃƒÆ’Ã‚Â³n, finanzas y campo." : "Invite members to assign viewer, editor, finance, and field access."}</p></div>}{modalOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4"><div className="w-full max-w-md rounded-3xl border border-white/10 bg-[#10182b] p-6"><div className="flex justify-between"><h3 className="text-xl font-black text-white">{ui.invite}</h3><button onClick={() => setModalOpen(false)}><X /></button></div><input className="field mt-5" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@company.com" /><select className="field mt-3" value={role} onChange={(e) => setRole(e.target.value)}><option>{ui.owner}</option><option>{ui.manager}</option><option>{ui.finance}</option><option>{ui.construction}</option><option>{ui.viewer}</option></select><div className="mt-5 flex justify-end gap-3"><button onClick={() => setModalOpen(false)} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={() => { invite(); setModalOpen(false); }} className="primary-button">{ui.invite}</button></div></div></div>}</div>;
 }
 
 function DropboxPage({ t }) {
@@ -2787,32 +3004,32 @@ function DropboxPage({ t }) {
 }
 
 function Tours({ t, language }) {
-  const titles = language === "es" ? ["Analiza un flip en 5 minutos", "Configura un proyecto de construcciÃƒÂ³n", "Exporta tu primer reporte para inversionistas"] : ["Analyze a flip in 5 minutes", "Set up a construction project", "Export your first investor report"];
-  return <div className="grid gap-5 md:grid-cols-3">{titles.map((title, index) => <GlassPanel key={title}><PlayCircle className="text-amber-300" /><p className="mt-5 text-xl font-black text-white">{title}</p><p className="mt-2 text-slate-400">{language === "es" ? `Recorrido guiado ${index + 1} con pasos prÃƒÂ¡cticos y puntos de control.` : `Guided tour ${index + 1} with practical steps and checkpoints.`}</p><button className="secondary-button mt-5">{t.startTour}</button></GlassPanel>)}</div>;
+  const titles = language === "es" ? ["Analiza un flip en 5 minutos", "Configura un proyecto de construcciÃƒÆ’Ã‚Â³n", "Exporta tu primer reporte para inversionistas"] : ["Analyze a flip in 5 minutes", "Set up a construction project", "Export your first investor report"];
+  return <div className="grid gap-5 md:grid-cols-3">{titles.map((title, index) => <GlassPanel key={title}><PlayCircle className="text-amber-300" /><p className="mt-5 text-xl font-black text-white">{title}</p><p className="mt-2 text-slate-400">{language === "es" ? `Recorrido guiado ${index + 1} con pasos prÃƒÆ’Ã‚Â¡cticos y puntos de control.` : `Guided tour ${index + 1} with practical steps and checkpoints.`}</p><button className="secondary-button mt-5">{t.startTour}</button></GlassPanel>)}</div>;
 }
 
 function Tutorials({ language }) {
   const isEs = language === "es";
-  const groups = isEs ? [["General", ["Comenzando con Operitron", "Crear y organizar proyectos"]], ["AnÃƒÂ¡lisis de Deals", ["Analizador de Deals: vista general", "Analizar un flip", "AnÃƒÂ¡lisis avanzado"]], ["ConstrucciÃƒÂ³n", ["Gestionar subcontratistas", "Lista de pendientes", "Asistente de construcciÃƒÂ³n"]], ["Takeoffs", ["Configurar el mÃƒÂ³dulo de cÃƒÂ¡lculo", "Exportar el informe PDF"]]] : [["General", ["Getting Started with Operitron", "Create and organize projects"]], ["Deal Underwriter", ["Deal Underwriter overview", "Analyze a flip", "Advanced deal analysis"]], ["Construction Tools", ["Managing subcontractors", "Punch lists", "Construction wizard"]], ["Takeoffs", ["Configure material takeoff", "Export PDF report"]]];
-  return <div className="space-y-7"><div><h2 className="text-3xl font-black text-white">{isEs ? "Tutoriales" : "Tutorials"}</h2><p className="mt-2 text-slate-400">{isEs ? "Aprende a obtener el mÃƒÂ¡ximo valor de cada herramienta." : "Learn how to get the most out of every Operitron workflow."}</p></div>{groups.map(([group, videos]) => <section key={group}><h3 className="mb-4 text-lg font-black text-cyan-200">{group}</h3><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{videos.map((title, index) => <button key={title} className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 text-left hover:border-cyan-300/35"><div className="grid h-32 place-items-center bg-gradient-to-br from-blue-500/15 to-purple-500/10"><PlayCircle className="text-cyan-300" size={38} /></div><div className="p-4"><p className="font-black text-white">{title}</p><p className="mt-2 text-xs text-slate-500">{index === videos.length - 1 ? (isEs ? "PrÃƒÂ³ximamente" : "Coming Soon") : (isEs ? "Ver tutorial" : "Watch tutorial")}</p></div></button>)}</div></section>)}</div>;
+  const groups = isEs ? [["General", ["Comenzando con Operitron", "Crear y organizar proyectos"]], ["AnÃƒÆ’Ã‚Â¡lisis de Deals", ["Analizador de Deals: vista general", "Analizar un flip", "AnÃƒÆ’Ã‚Â¡lisis avanzado"]], ["ConstrucciÃƒÆ’Ã‚Â³n", ["Gestionar subcontratistas", "Lista de pendientes", "Asistente de construcciÃƒÆ’Ã‚Â³n"]], ["Takeoffs", ["Configurar el mÃƒÆ’Ã‚Â³dulo de cÃƒÆ’Ã‚Â¡lculo", "Exportar el informe PDF"]]] : [["General", ["Getting Started with Operitron", "Create and organize projects"]], ["Deal Underwriter", ["Deal Underwriter overview", "Analyze a flip", "Advanced deal analysis"]], ["Construction Tools", ["Managing subcontractors", "Punch lists", "Construction wizard"]], ["Takeoffs", ["Configure material takeoff", "Export PDF report"]]];
+  return <div className="space-y-7"><div><h2 className="text-3xl font-black text-white">{isEs ? "Tutoriales" : "Tutorials"}</h2><p className="mt-2 text-slate-400">{isEs ? "Aprende a obtener el mÃƒÆ’Ã‚Â¡ximo valor de cada herramienta." : "Learn how to get the most out of every Operitron workflow."}</p></div>{groups.map(([group, videos]) => <section key={group}><h3 className="mb-4 text-lg font-black text-cyan-200">{group}</h3><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">{videos.map((title, index) => <button key={title} className="overflow-hidden rounded-3xl border border-white/10 bg-slate-950/60 text-left hover:border-cyan-300/35"><div className="grid h-32 place-items-center bg-gradient-to-br from-blue-500/15 to-purple-500/10"><PlayCircle className="text-cyan-300" size={38} /></div><div className="p-4"><p className="font-black text-white">{title}</p><p className="mt-2 text-xs text-slate-500">{index === videos.length - 1 ? (isEs ? "PrÃƒÆ’Ã‚Â³ximamente" : "Coming Soon") : (isEs ? "Ver tutorial" : "Watch tutorial")}</p></div></button>)}</div></section>)}</div>;
 }
 
 function LearningCenter({ t, language, go }) {
   const articles = language === "es"
-    ? [["AnÃƒÂ¡lisis de Deals", "7 min", "CÃƒÂ³mo Analizar un Deal Inmobiliario MÃƒÂ¡s RÃƒÂ¡pido"], ["Financiamiento", "8 min", "DSCR vs BRRR: Lo Que Deben Saber los Inversionistas"], ["AnÃƒÂ¡lisis de Deals", "12 min", "GuÃƒÂ­a Completa de AnÃƒÂ¡lisis de Deals Inmobiliarios"], ["ConstrucciÃƒÂ³n", "9 min", "CÃƒÂ³mo Estimar Costos de ConstrucciÃƒÂ³n Desde Planos"], ["Financiamiento", "14 min", "Estrategias DSCR y BRRR para Inversionistas"], ["Takeoffs", "6 min", "Errores Comunes de Takeoff que DaÃƒÂ±an tu Ganancia"], ["ConstrucciÃƒÂ³n", "11 min", "Presupuestos y Estimaciones de ConstrucciÃƒÂ³n"], ["GestiÃƒÂ³n de Proyecto", "8 min", "QuÃƒÂ© Rastrear Durante una ConstrucciÃƒÂ³n Desde Cero"], ["Takeoffs", "10 min", "Takeoffs de ConstrucciÃƒÂ³n y EstimaciÃƒÂ³n con Planos"], ["Cierre", "7 min", "CÃƒÂ³mo las Punch Lists Reducen Retrasos"], ["GestiÃƒÂ³n de Proyecto", "13 min", "GestiÃƒÂ³n de ConstrucciÃƒÂ³n Desde Cero"], ["Cierre", "9 min", "Punch Lists y Cierre de ConstrucciÃƒÂ³n"]]
+    ? [["AnÃƒÆ’Ã‚Â¡lisis de Deals", "7 min", "CÃƒÆ’Ã‚Â³mo Analizar un Deal Inmobiliario MÃƒÆ’Ã‚Â¡s RÃƒÆ’Ã‚Â¡pido"], ["Financiamiento", "8 min", "DSCR vs BRRR: Lo Que Deben Saber los Inversionistas"], ["AnÃƒÆ’Ã‚Â¡lisis de Deals", "12 min", "GuÃƒÆ’Ã‚Â­a Completa de AnÃƒÆ’Ã‚Â¡lisis de Deals Inmobiliarios"], ["ConstrucciÃƒÆ’Ã‚Â³n", "9 min", "CÃƒÆ’Ã‚Â³mo Estimar Costos de ConstrucciÃƒÆ’Ã‚Â³n Desde Planos"], ["Financiamiento", "14 min", "Estrategias DSCR y BRRR para Inversionistas"], ["Takeoffs", "6 min", "Errores Comunes de Takeoff que DaÃƒÆ’Ã‚Â±an tu Ganancia"], ["ConstrucciÃƒÆ’Ã‚Â³n", "11 min", "Presupuestos y Estimaciones de ConstrucciÃƒÆ’Ã‚Â³n"], ["GestiÃƒÆ’Ã‚Â³n de Proyecto", "8 min", "QuÃƒÆ’Ã‚Â© Rastrear Durante una ConstrucciÃƒÆ’Ã‚Â³n Desde Cero"], ["Takeoffs", "10 min", "Takeoffs de ConstrucciÃƒÆ’Ã‚Â³n y EstimaciÃƒÆ’Ã‚Â³n con Planos"], ["Cierre", "7 min", "CÃƒÆ’Ã‚Â³mo las Punch Lists Reducen Retrasos"], ["GestiÃƒÆ’Ã‚Â³n de Proyecto", "13 min", "GestiÃƒÆ’Ã‚Â³n de ConstrucciÃƒÆ’Ã‚Â³n Desde Cero"], ["Cierre", "9 min", "Punch Lists y Cierre de ConstrucciÃƒÆ’Ã‚Â³n"]]
     : learningArticles;
   const [active, setActive] = useState(null);
-  if (active) return <div className="space-y-6"><button onClick={() => setActive(null)} className="secondary-button">Ã¢â€ Â {t.back}</button><GlassPanel><p className="text-sm font-black text-amber-300">{active[0]} Ã‚| {active[1]}</p><h2 className="mt-3 text-4xl font-black text-white">{active[2]}</h2><div className="mt-6 grid gap-4 md:grid-cols-3"><Info title={language === "es" ? "FÃƒÂ³rmulas" : "Formulas"} text="ARV, ROI, cap rate, cash-on-cash, DSCR, 70% rule, max offer, mortgage payment, and rent cash flow." /><Info title={language === "es" ? "Proceso" : "Process"} text="Start with fast screening, verify comps, stress-test costs, document assumptions, and export a clean investor packet." /><Info title={language === "es" ? "Checklist" : "Checklist"} text="Comps, scope, permits, financing, insurance, taxes, contractor bids, timeline, exit strategy, and risk buffer." /></div><p className="mt-6 max-w-4xl text-lg leading-8 text-slate-300">{language === "es" ? "Esta guÃƒÂ­a convierte el tema en pasos prÃƒÂ¡cticos para operadores. Usa los cÃƒÂ¡lculos de Operitron para revisar nÃƒÂºmeros, guardar supuestos, comparar escenarios y preparar decisiones con menos ruido." : "This guide turns the topic into practical operator steps. Use Operitron calculations to review numbers, save assumptions, compare scenarios, and prepare cleaner decisions with less noise."}</p><button onClick={() => go("projectTools")} className="primary-button mt-6">{language === "es" ? "Abrir herramientas" : "Open tools"}</button></GlassPanel></div>;
-  return <div className="space-y-7"><GlassPanel><p className="text-sm font-black uppercase tracking-widest text-amber-300">{t.learning}</p><h2 className="mt-2 text-4xl font-black text-white">{language === "es" ? "GuÃƒÂ­as para Inversionistas y Constructores" : "Guides for Real Estate Investors & Builders"}</h2><p className="mt-3 max-w-3xl text-slate-400">{language === "es" ? "Estrategias prÃƒÂ¡cticas, marcos de trabajo y herramientas para analizar deals, gestionar construcciÃƒÂ³n y operar proyectos rentables." : "Practical strategies, frameworks, and tools for analyzing deals, managing construction, and operating profitable projects."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{t.startTrial}</button></GlassPanel><div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{articles.map((article) => <button key={article[2]} onClick={() => setActive(article)} className="glow-card rounded-[2rem] border border-white/10 bg-white/[.055] p-6 text-left shadow-2xl shadow-black/20 backdrop-blur-xl hover:border-amber-400/40"><p className="text-sm font-black text-amber-300">{article[0]} Ã‚| {article[1]}</p><h3 className="mt-3 text-xl font-black text-white">{article[2]}</h3><p className="mt-3 text-sm leading-6 text-slate-400">{language === "es" ? "Una guÃƒÂ­a prÃƒÂ¡ctica para operadores con ejemplos, fÃƒÂ³rmulas y puntos de control del proyecto." : "A practical operator-focused guide with examples, formulas, and project checkpoints."}</p><span className="mt-5 inline-flex font-black text-amber-300">{t.readGuide} Ã¢â€ â€™</span></button>)}</div></div>;
+  if (active) return <div className="space-y-6"><button onClick={() => setActive(null)} className="secondary-button">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â {t.back}</button><GlassPanel><p className="text-sm font-black text-amber-300">{active[0]} Ãƒâ€š| {active[1]}</p><h2 className="mt-3 text-4xl font-black text-white">{active[2]}</h2><div className="mt-6 grid gap-4 md:grid-cols-3"><Info title={language === "es" ? "FÃƒÆ’Ã‚Â³rmulas" : "Formulas"} text="ARV, ROI, cap rate, cash-on-cash, DSCR, 70% rule, max offer, mortgage payment, and rent cash flow." /><Info title={language === "es" ? "Proceso" : "Process"} text="Start with fast screening, verify comps, stress-test costs, document assumptions, and export a clean investor packet." /><Info title={language === "es" ? "Checklist" : "Checklist"} text="Comps, scope, permits, financing, insurance, taxes, contractor bids, timeline, exit strategy, and risk buffer." /></div><p className="mt-6 max-w-4xl text-lg leading-8 text-slate-300">{language === "es" ? "Esta guÃƒÆ’Ã‚Â­a convierte el tema en pasos prÃƒÆ’Ã‚Â¡cticos para operadores. Usa los cÃƒÆ’Ã‚Â¡lculos de Operitron para revisar nÃƒÆ’Ã‚Âºmeros, guardar supuestos, comparar escenarios y preparar decisiones con menos ruido." : "This guide turns the topic into practical operator steps. Use Operitron calculations to review numbers, save assumptions, compare scenarios, and prepare cleaner decisions with less noise."}</p><button onClick={() => go("projectTools")} className="primary-button mt-6">{language === "es" ? "Abrir herramientas" : "Open tools"}</button></GlassPanel></div>;
+  return <div className="space-y-7"><GlassPanel><p className="text-sm font-black uppercase tracking-widest text-amber-300">{t.learning}</p><h2 className="mt-2 text-4xl font-black text-white">{language === "es" ? "GuÃƒÆ’Ã‚Â­as para Inversionistas y Constructores" : "Guides for Real Estate Investors & Builders"}</h2><p className="mt-3 max-w-3xl text-slate-400">{language === "es" ? "Estrategias prÃƒÆ’Ã‚Â¡cticas, marcos de trabajo y herramientas para analizar deals, gestionar construcciÃƒÆ’Ã‚Â³n y operar proyectos rentables." : "Practical strategies, frameworks, and tools for analyzing deals, managing construction, and operating profitable projects."}</p><button onClick={() => go("pricing")} className="primary-button mt-6">{t.startTrial}</button></GlassPanel><div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{articles.map((article) => <button key={article[2]} onClick={() => setActive(article)} className="glow-card rounded-[2rem] border border-white/10 bg-white/[.055] p-6 text-left shadow-2xl shadow-black/20 backdrop-blur-xl hover:border-amber-400/40"><p className="text-sm font-black text-amber-300">{article[0]} Ãƒâ€š| {article[1]}</p><h3 className="mt-3 text-xl font-black text-white">{article[2]}</h3><p className="mt-3 text-sm leading-6 text-slate-400">{language === "es" ? "Una guÃƒÆ’Ã‚Â­a prÃƒÆ’Ã‚Â¡ctica para operadores con ejemplos, fÃƒÆ’Ã‚Â³rmulas y puntos de control del proyecto." : "A practical operator-focused guide with examples, formulas, and project checkpoints."}</p><span className="mt-5 inline-flex font-black text-amber-300">{t.readGuide} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</span></button>)}</div></div>;
 }
 
 function KnowledgeBase({ t, language }) {
   const faqs = language === "es"
     ? [
-      ["Ã‚Â¿CÃƒÂ³mo automatiza la IA los cÃƒÂ¡lculos de materiales a partir de planos?", "La IA puede leer planos subidos, aplicar una escala, convertir mediciones a dimensiones reales y organizar cantidades por categorÃƒÂ­a con factores de desperdicio configurables."],
-      ["Ã‚Â¿CuÃƒÂ¡l es el beneficio del rastreador de construcciÃƒÂ³n por fases?", "Un rastreador por fases ayuda a visualizar dependencias crÃƒÂ­ticas, evitar cuadrillas inactivas y reducir costos de financiamiento causados por retrasos."],
-      ["Ã‚Â¿CÃƒÂ³mo maneja el Analizador de Deals la estrategia BRRR?", "Modela compra, rehabilitaciÃƒÂ³n, renta, refinanciamiento, extracciÃƒÂ³n de capital, DSCR y flujo de caja posterior al refinanciamiento."],
-      ["Ã‚Â¿CÃƒÂ³mo mejora la herramienta de punch list el cierre de proyectos?", "Organiza deficiencias por oficio, prioridad, responsable y estado para cerrar pendientes con menos fricciÃƒÂ³n."],
+      ["Ãƒâ€šÃ‚Â¿CÃƒÆ’Ã‚Â³mo automatiza la IA los cÃƒÆ’Ã‚Â¡lculos de materiales a partir de planos?", "La IA puede leer planos subidos, aplicar una escala, convertir mediciones a dimensiones reales y organizar cantidades por categorÃƒÆ’Ã‚Â­a con factores de desperdicio configurables."],
+      ["Ãƒâ€šÃ‚Â¿CuÃƒÆ’Ã‚Â¡l es el beneficio del rastreador de construcciÃƒÆ’Ã‚Â³n por fases?", "Un rastreador por fases ayuda a visualizar dependencias crÃƒÆ’Ã‚Â­ticas, evitar cuadrillas inactivas y reducir costos de financiamiento causados por retrasos."],
+      ["Ãƒâ€šÃ‚Â¿CÃƒÆ’Ã‚Â³mo maneja el Analizador de Deals la estrategia BRRR?", "Modela compra, rehabilitaciÃƒÆ’Ã‚Â³n, renta, refinanciamiento, extracciÃƒÆ’Ã‚Â³n de capital, DSCR y flujo de caja posterior al refinanciamiento."],
+      ["Ãƒâ€šÃ‚Â¿CÃƒÆ’Ã‚Â³mo mejora la herramienta de punch list el cierre de proyectos?", "Organiza deficiencias por oficio, prioridad, responsable y estado para cerrar pendientes con menos fricciÃƒÆ’Ã‚Â³n."],
     ]
     : [
       ["How does AI help estimate materials from plans?", "AI-assisted workflows can read uploaded plans, apply scale, convert measurements into real dimensions, and organize quantities by category with configurable waste factors."],
@@ -2820,7 +3037,7 @@ function KnowledgeBase({ t, language }) {
       ["How does the Deal Underwriter handle BRRR strategy?", "It models purchase, rehab, rent, refinance, equity capture, DSCR, and post-refinance cash flow."],
       ["How does the punch list tool improve closeout?", "It organizes deficiencies by trade, priority, owner, and status so final items close with less friction."],
     ];
-  return <GlassPanel><h2 className="text-4xl font-black text-white">{t.knowledge}</h2><p className="mt-3 text-slate-400">{language === "es" ? `Respuestas detalladas sobre cÃƒÂ³mo ${t.brand} potencia cada fase de la inversiÃƒÂ³n inmobiliaria.` : `Detailed answers about how ${t.brand} supports each phase of real estate investing.`}</p><div className="mt-8 space-y-4">{faqs.map(([q, a]) => <details key={q} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><summary className="cursor-pointer text-lg font-black text-white">{q}</summary><p className="mt-4 leading-7 text-slate-300">{a}</p></details>)}</div></GlassPanel>;
+  return <GlassPanel><h2 className="text-4xl font-black text-white">{t.knowledge}</h2><p className="mt-3 text-slate-400">{language === "es" ? `Respuestas detalladas sobre cÃƒÆ’Ã‚Â³mo ${t.brand} potencia cada fase de la inversiÃƒÆ’Ã‚Â³n inmobiliaria.` : `Detailed answers about how ${t.brand} supports each phase of real estate investing.`}</p><div className="mt-8 space-y-4">{faqs.map(([q, a]) => <details key={q} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><summary className="cursor-pointer text-lg font-black text-white">{q}</summary><p className="mt-4 leading-7 text-slate-300">{a}</p></details>)}</div></GlassPanel>;
 }
 
 function AdminCheckoutDiagnostics({ diagnostics, language }) {
@@ -2830,15 +3047,15 @@ function AdminCheckoutDiagnostics({ diagnostics, language }) {
     [isEs ? "Estado de Stripe" : "Stripe initialization status", diagnostics.stripeInitializationStatus],
     [isEs ? "Price ID usado" : "Price ID being used", diagnostics.priceIdBeingUsed],
     [isEs ? "Estado del usuario Supabase" : "Supabase user status", diagnostics.supabaseUserStatus],
-    [isEs ? "CÃƒÂ³digo de respuesta API" : "API response code", diagnostics.apiResponseCode],
+    [isEs ? "CÃƒÆ’Ã‚Â³digo de respuesta API" : "API response code", diagnostics.apiResponseCode],
     [isEs ? "Mensaje de error" : "Error message", diagnostics.errorMessage],
   ];
-  if (diagnostics.missingConfiguration?.length) rows.push([isEs ? "ConfiguraciÃƒÂ³n faltante" : "Missing configuration", diagnostics.missingConfiguration.join(", ")]);
+  if (diagnostics.missingConfiguration?.length) rows.push([isEs ? "ConfiguraciÃƒÆ’Ã‚Â³n faltante" : "Missing configuration", diagnostics.missingConfiguration.join(", ")]);
   if (diagnostics.stripeErrorType) rows.push(["Stripe error type", diagnostics.stripeErrorType]);
   if (diagnostics.stripeErrorCode) rows.push(["Stripe error code", diagnostics.stripeErrorCode]);
   if (diagnostics.stripeRequestId) rows.push(["Stripe request ID", diagnostics.stripeRequestId]);
   return <div className="rounded-2xl border border-amber-300/30 bg-amber-300/[.08] p-4 text-left shadow-[0_0_30px_rgba(251,191,36,.08)]">
-    <p className="text-sm font-black uppercase tracking-widest text-amber-200">{isEs ? "DiagnÃƒÂ³stico administrativo de checkout" : "Admin checkout diagnostics"}</p>
+    <p className="text-sm font-black uppercase tracking-widest text-amber-200">{isEs ? "DiagnÃƒÆ’Ã‚Â³stico administrativo de checkout" : "Admin checkout diagnostics"}</p>
     <div className="mt-4 grid gap-2">
       {rows.map(([label, value]) => <div key={label} className="grid gap-1 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm sm:grid-cols-[220px_1fr]">
         <span className="font-bold text-slate-400">{label}</span>
@@ -2854,14 +3071,14 @@ function PricingPlans({ language, user, go }) {
   const [billingLoading, setBillingLoading] = useState("");
   const [checkoutDiagnostics, setCheckoutDiagnostics] = useState(null);
   const monthlyFeatures = isEs
-    ? ["Proyectos y deals ilimitados", "Analizador de deals y fix-and-flip", "Calculadoras DSCR, BRRR y cash-out", "Rastreador de construcciÃƒÂ³n", "Takeoff de materiales con IA", "Punch list", "GestiÃƒÂ³n de subcontratistas y ofertas", "Compartir proyectos y colaborar", "Asistente IA en cada herramienta"]
+    ? ["Proyectos y deals ilimitados", "Analizador de deals y fix-and-flip", "Calculadoras DSCR, BRRR y cash-out", "Rastreador de construcciÃƒÆ’Ã‚Â³n", "Takeoff de materiales con IA", "Punch list", "GestiÃƒÆ’Ã‚Â³n de subcontratistas y ofertas", "Compartir proyectos y colaborar", "Asistente IA en cada herramienta"]
     : ["Unlimited projects & deals", "Deal & Fix-and-Flip underwriter", "DSCR, BRRR & Cash-Out calculators", "Construction tracker", "AI material takeoff", "Punch list", "Subcontractor & bid management", "Project sharing & collaboration", "AI assistant on every tool"];
   const annualFeatures = isEs
     ? ["Todo lo incluido en Mensual", "Soporte prioritario", "Acceso anticipado a funciones nuevas", "Historial de datos extendido"]
     : ["Everything in Monthly", "Priority support", "Early access to new features", "Extended data history"];
   const plans = [
-    { id: "monthly", name: isEs ? "Mensual" : "Monthly", price: "$29.99", cadence: isEs ? "/mes" : "/month", note: isEs ? "Prueba gratis de 3 dÃƒÂ­as" : "3-day free trial", detail: isEs ? "Acceso flexible mes a mes." : "Flexible month-to-month access.", features: monthlyFeatures },
-    { id: "annual", name: isEs ? "Anual" : "Annual", price: "$249.99", cadence: isEs ? "/aÃƒÂ±o" : "/year", note: isEs ? "Ahorra mÃƒÂ¡s de 30% Ã‚| Prueba gratis de 3 dÃƒÂ­as" : "Save over 30% Ã‚| 3-day free trial", detail: isEs ? "El mejor valor para operadores activos." : "Best value for active operators.", features: annualFeatures, featured: true },
+    { id: "monthly", name: isEs ? "Mensual" : "Monthly", price: "$29.99", cadence: isEs ? "/mes" : "/month", note: isEs ? "Prueba gratis de 3 dÃƒÆ’Ã‚Â­as" : "3-day free trial", detail: isEs ? "Acceso flexible mes a mes." : "Flexible month-to-month access.", features: monthlyFeatures },
+    { id: "annual", name: isEs ? "Anual" : "Annual", price: "$249.99", cadence: isEs ? "/aÃƒÆ’Ã‚Â±o" : "/year", note: isEs ? "Ahorra mÃƒÆ’Ã‚Â¡s de 30% Ãƒâ€š| Prueba gratis de 3 dÃƒÆ’Ã‚Â­as" : "Save over 30% Ãƒâ€š| 3-day free trial", detail: isEs ? "El mejor valor para operadores activos." : "Best value for active operators.", features: annualFeatures, featured: true },
   ];
   async function beginCheckout(plan) {
     if (!user) {
@@ -2886,12 +3103,12 @@ function PricingPlans({ language, user, go }) {
       window.location.assign(result.url);
     } catch (error) {
       const genericServerError = error.message === "A server error occurred. Please try again or contact support@operitron.com.";
-      setBillingStatus(genericServerError && isEs ? "OcurriÃƒÂ³ un error del servidor. Intenta de nuevo o escribe a support@operitron.com." : (error.message || (isEs ? "No se pudo iniciar el pago. Intenta de nuevo." : "Checkout could not start. Please try again.")));
+      setBillingStatus(genericServerError && isEs ? "OcurriÃƒÆ’Ã‚Â³ un error del servidor. Intenta de nuevo o escribe a support@operitron.com." : (error.message || (isEs ? "No se pudo iniciar el pago. Intenta de nuevo." : "Checkout could not start. Please try again.")));
     } finally {
       setBillingLoading("");
     }
   }
-  return <div className="space-y-8"><section className="mx-auto max-w-3xl text-center"><p className="text-sm font-black uppercase tracking-widest text-cyan-300">{isEs ? "Precios simples" : "Simple Pricing"}</p><h2 className="mt-3 text-4xl font-black text-white md:text-5xl">{isEs ? "Elige cÃƒÂ³mo quieres crecer con Operitron" : "Choose how you want to grow with Operitron"}</h2><p className="mt-4 text-lg leading-8 text-slate-400">{isEs ? "Dos planes claros para analizar deals, gestionar construcciÃƒÂ³n y colaborar con tu equipo." : "Two clean plans for analyzing deals, managing construction, and collaborating with your team."}</p></section><div className="grid gap-6 lg:grid-cols-2">{plans.map((plan) => <motion.div key={plan.name} whileHover={{ y: -6 }} className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-2xl backdrop-blur-xl ${plan.featured ? "border-cyan-300/50 bg-gradient-to-br from-cyan-400/15 via-purple-500/10 to-white/[.055] shadow-cyan-500/10" : "border-white/10 bg-white/[.055] shadow-black/20"}`}>{plan.featured && <div className="absolute right-5 top-5 rounded-full border border-cyan-300/30 bg-cyan-300 px-4 py-1 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">{isEs ? "Mejor Valor" : "Best Value"}</div>}<div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/20 blur-3xl" /><div className="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" /><div className="relative z-10"><p className="text-2xl font-black text-white">{plan.name}</p><p className="mt-2 min-h-12 max-w-md text-slate-400">{plan.detail}</p><div className="mt-6 flex items-end gap-2"><span className={`text-5xl font-black ${plan.featured ? "text-cyan-200" : "text-amber-300"}`}>{plan.price}</span><span className="pb-2 font-bold text-slate-500">{plan.cadence}</span></div><p className="mt-3 font-bold text-emerald-300">{plan.note}</p><button disabled={billingLoading === plan.id} onClick={() => beginCheckout(plan)} className={`mt-7 w-full rounded-2xl py-4 font-black transition disabled:cursor-wait disabled:opacity-70 ${plan.featured ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.28)] hover:bg-cyan-200" : "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.22)] hover:bg-amber-300"}`}>{billingLoading === plan.id ? (isEs ? "Cargando..." : "Loading...") : (isEs ? "Comenzar" : "Get Started")}</button><ul className="mt-7 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-3 text-slate-300"><CheckCircle2 className={plan.featured ? "text-cyan-300" : "text-emerald-400"} size={19} /><span>{feature}</span></li>)}</ul></div></motion.div>)}</div>{billingStatus && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-center text-sm text-cyan-100">{billingStatus}</p>}<AdminCheckoutDiagnostics diagnostics={checkoutDiagnostics} language={language} /></div>;
+  return <div className="space-y-8"><section className="mx-auto max-w-3xl text-center"><p className="text-sm font-black uppercase tracking-widest text-cyan-300">{isEs ? "Precios simples" : "Simple Pricing"}</p><h2 className="mt-3 text-4xl font-black text-white md:text-5xl">{isEs ? "Elige cÃƒÆ’Ã‚Â³mo quieres crecer con Operitron" : "Choose how you want to grow with Operitron"}</h2><p className="mt-4 text-lg leading-8 text-slate-400">{isEs ? "Dos planes claros para analizar deals, gestionar construcciÃƒÆ’Ã‚Â³n y colaborar con tu equipo." : "Two clean plans for analyzing deals, managing construction, and collaborating with your team."}</p></section><div className="grid gap-6 lg:grid-cols-2">{plans.map((plan) => <motion.div key={plan.name} whileHover={{ y: -6 }} className={`relative overflow-hidden rounded-[2rem] border p-7 shadow-2xl backdrop-blur-xl ${plan.featured ? "border-cyan-300/50 bg-gradient-to-br from-cyan-400/15 via-purple-500/10 to-white/[.055] shadow-cyan-500/10" : "border-white/10 bg-white/[.055] shadow-black/20"}`}>{plan.featured && <div className="absolute right-5 top-5 rounded-full border border-cyan-300/30 bg-cyan-300 px-4 py-1 text-xs font-black uppercase tracking-widest text-slate-950 shadow-[0_0_30px_rgba(34,211,238,.35)]">{isEs ? "Mejor Valor" : "Best Value"}</div>}<div className="absolute -right-16 -top-16 h-44 w-44 rounded-full bg-purple-500/20 blur-3xl" /><div className="absolute -bottom-16 left-10 h-40 w-40 rounded-full bg-cyan-400/20 blur-3xl" /><div className="relative z-10"><p className="text-2xl font-black text-white">{plan.name}</p><p className="mt-2 min-h-12 max-w-md text-slate-400">{plan.detail}</p><div className="mt-6 flex items-end gap-2"><span className={`text-5xl font-black ${plan.featured ? "text-cyan-200" : "text-amber-300"}`}>{plan.price}</span><span className="pb-2 font-bold text-slate-500">{plan.cadence}</span></div><p className="mt-3 font-bold text-emerald-300">{plan.note}</p><button disabled={billingLoading === plan.id} onClick={() => beginCheckout(plan)} className={`mt-7 w-full rounded-2xl py-4 font-black transition disabled:cursor-wait disabled:opacity-70 ${plan.featured ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.28)] hover:bg-cyan-200" : "bg-amber-400 text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.22)] hover:bg-amber-300"}`}>{billingLoading === plan.id ? (isEs ? "Cargando..." : "Loading...") : (isEs ? "Comenzar" : "Get Started")}</button><ul className="mt-7 space-y-3">{plan.features.map((feature) => <li key={feature} className="flex gap-3 text-slate-300"><CheckCircle2 className={plan.featured ? "text-cyan-300" : "text-emerald-400"} size={19} /><span>{feature}</span></li>)}</ul></div></motion.div>)}</div>{billingStatus && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-4 text-center text-sm text-cyan-100">{billingStatus}</p>}<AdminCheckoutDiagnostics diagnostics={checkoutDiagnostics} language={language} /></div>;
 }
 
 function PasswordField({ value, onChange, placeholder, autoComplete, visible, onToggle, language }) {
@@ -2910,11 +3127,11 @@ function PasswordField({ value, onChange, placeholder, autoComplete, visible, on
         type={visible ? "text" : "password"}
         placeholder={placeholder}
       />
-      <button type="button" onClick={onToggle} aria-label={visible ? (language === "es" ? "Ocultar contraseÃƒÂ±a" : "Hide password") : (language === "es" ? "Mostrar contraseÃƒÂ±a" : "Show password")} className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-cyan-200">{visible ? <EyeOff size={20} /> : <Eye size={20} />}</button>
+      <button type="button" onClick={onToggle} aria-label={visible ? (language === "es" ? "Ocultar contraseÃƒÆ’Ã‚Â±a" : "Hide password") : (language === "es" ? "Mostrar contraseÃƒÆ’Ã‚Â±a" : "Show password")} className="absolute right-2 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-cyan-200">{visible ? <EyeOff size={20} /> : <Eye size={20} />}</button>
     </div>
     <div className="mt-2 flex flex-wrap items-center gap-2 text-xs font-bold">
-      <span className="text-slate-500">{language === "es" ? "Las contraseÃƒÂ±as distinguen mayÃƒÂºsculas y minÃƒÂºsculas." : "Passwords are case-sensitive."}</span>
-      {capsLock && <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-amber-200">{language === "es" ? "Bloq MayÃƒÂºs activado" : "Caps Lock is on"}</span>}
+      <span className="text-slate-500">{language === "es" ? "Las contraseÃƒÆ’Ã‚Â±as distinguen mayÃƒÆ’Ã‚Âºsculas y minÃƒÆ’Ã‚Âºsculas." : "Passwords are case-sensitive."}</span>
+      {capsLock && <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-amber-200">{language === "es" ? "Bloq MayÃƒÆ’Ã‚Âºs activado" : "Caps Lock is on"}</span>}
     </div>
   </div>;
 }
@@ -2934,7 +3151,7 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const ui = isEs
-    ? { register: "Registrarse", login: "Iniciar sesiÃƒÂ³n", details: "Crea tu cuenta de Operitron. Las herramientas se activan al iniciar una suscripciÃƒÂ³n o prueba mediante Stripe.", recoveryDetails: "Crea una nueva contraseÃƒÂ±a segura para tu cuenta.", fullName: "Nombre completo", company: "Empresa", phone: "TelÃƒÂ©fono", dashboard: "Volver al panel", signOut: "Cerrar sesiÃƒÂ³n", back: "Volver", save: "Crear cuenta", secure: "Tu cuenta se protege mediante autenticaciÃƒÂ³n segura y verificaciÃƒÂ³n por correo." }
+    ? { register: "Registrarse", login: "Iniciar sesiÃƒÆ’Ã‚Â³n", details: "Crea tu cuenta de Operitron. Las herramientas se activan al iniciar una suscripciÃƒÆ’Ã‚Â³n o prueba mediante Stripe.", recoveryDetails: "Crea una nueva contraseÃƒÆ’Ã‚Â±a segura para tu cuenta.", fullName: "Nombre completo", company: "Empresa", phone: "TelÃƒÆ’Ã‚Â©fono", dashboard: "Volver al panel", signOut: "Cerrar sesiÃƒÆ’Ã‚Â³n", back: "Volver", save: "Crear cuenta", secure: "Tu cuenta se protege mediante autenticaciÃƒÆ’Ã‚Â³n segura y verificaciÃƒÆ’Ã‚Â³n por correo." }
     : { register: "Register", login: "Login", details: "Create your Operitron account. Tools activate after starting a subscription or trial through Stripe.", recoveryDetails: "Create a new secure password for your account.", fullName: "Full name", company: "Company", phone: "Phone", dashboard: "Go to Dashboard", signOut: "Sign Out", back: "Back", save: "Create Account", secure: "Your account is protected with secure authentication and email verification." };
 
   useEffect(() => {
@@ -2973,7 +3190,7 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
 
   async function resetPassword() {
     if (!supabase) return setStatus(t.authUnavailable);
-    if (!email.trim()) return setStatus(isEs ? "Ingresa tu correo electrÃƒÂ³nico primero." : "Enter your email address first.");
+    if (!email.trim()) return setStatus(isEs ? "Ingresa tu correo electrÃƒÆ’Ã‚Â³nico primero." : "Enter your email address first.");
     setSubmitting(true);
     const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${productionUrl}/dashboard` });
     setStatus(error ? error.message : t.resetSent);
@@ -3012,7 +3229,7 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
           <h2 className="text-3xl font-black text-white">{mode === "recover" ? t.updatePassword : mode === "register" ? ui.register : ui.login}</h2>
           <p className="mt-2 max-w-xl leading-7 text-slate-400">{mode === "recover" ? ui.recoveryDetails : ui.details}</p>
         </div>
-        <button onClick={back} className="secondary-button">Ã¢â€ Â {ui.back}</button>
+        <button onClick={back} className="secondary-button">ÃƒÂ¢Ã¢â‚¬Â Ã‚Â {ui.back}</button>
       </div>
       <div className="mt-7 grid gap-6 lg:grid-cols-[minmax(280px,36rem)_1fr]">
         <form onSubmit={submitAuth} className="grid gap-3">
@@ -3028,17 +3245,17 @@ function SettingsPage({ t, language, user, setUser, go, back, signOut, passwordR
           {mode === "recover"
             ? <button type="submit" disabled={submitting} className="primary-button disabled:cursor-wait disabled:opacity-70">{t.updatePassword}</button>
             : <button type="submit" disabled={submitting} className="primary-button disabled:cursor-wait disabled:opacity-70">{submitting ? (mode === "register" ? t.creatingAccount : t.signingIn) : (mode === "register" ? ui.save : ui.login)}</button>}
-          {mode === "login" && <div className="mt-1 rounded-2xl border border-white/10 bg-slate-950/40 p-3"><p className="text-sm font-bold text-slate-300">{t.forgotPassword}</p><button type="button" disabled={submitting} onClick={resetPassword} className="mt-2 text-left text-sm font-black text-cyan-300 hover:text-cyan-200">{t.resetPassword} Ã¢â€ â€™</button></div>}
+          {mode === "login" && <div className="mt-1 rounded-2xl border border-white/10 bg-slate-950/40 p-3"><p className="text-sm font-bold text-slate-300">{t.forgotPassword}</p><button type="button" disabled={submitting} onClick={resetPassword} className="mt-2 text-left text-sm font-black text-cyan-300 hover:text-cyan-200">{t.resetPassword} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢</button></div>}
           {status && <p role="status" className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm leading-6 text-cyan-100">{status}</p>}
-          <p className="pt-2 text-sm text-slate-400">{isEs ? "Ã‚Â¿Necesitas ayuda?" : "Need help?"} <a className="font-bold text-cyan-300 hover:text-cyan-200" href="mailto:support@operitron.com">support@operitron.com</a></p>
+          <p className="pt-2 text-sm text-slate-400">{isEs ? "Ãƒâ€šÃ‚Â¿Necesitas ayuda?" : "Need help?"} <a className="font-bold text-cyan-300 hover:text-cyan-200" href="mailto:support@operitron.com">support@operitron.com</a></p>
         </form>
         <div className="hidden rounded-3xl border border-white/10 bg-gradient-to-br from-cyan-400/10 via-slate-950 to-purple-500/10 p-7 lg:block">
           <h3 className="text-2xl font-black text-white">{isEs ? "Cuenta segura de Operitron" : "Secure Operitron account"}</h3>
           <p className="mt-3 leading-7 text-slate-300">{ui.secure}</p>
           <ul className="mt-6 space-y-3 text-sm font-bold text-slate-300">
             <li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "Proyectos privados protegidos por usuario" : "Private projects protected per user"}</li>
-            <li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "FacturaciÃƒÂ³n segura mediante Stripe" : "Secure billing through Stripe"}</li>
-            <li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "RecuperaciÃƒÂ³n de contraseÃƒÂ±a por correo" : "Email password recovery"}</li>
+            <li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "FacturaciÃƒÆ’Ã‚Â³n segura mediante Stripe" : "Secure billing through Stripe"}</li>
+            <li className="flex gap-2"><CheckCircle2 className="text-cyan-300" size={18} />{isEs ? "RecuperaciÃƒÆ’Ã‚Â³n de contraseÃƒÆ’Ã‚Â±a por correo" : "Email password recovery"}</li>
           </ul>
         </div>
       </div>
@@ -3057,7 +3274,7 @@ function ProfilePage({ t, language, user, isAdmin, go }) {
   const [plan, setPlan] = useState("No subscription");
   const [company, setCompany] = useState(user?.user_metadata?.company || "");
   const [phone, setPhone] = useState(user?.user_metadata?.phone || "");
-  const ui = language === "es" ? { company: "CompaÃƒÂ±ÃƒÂ­a", phone: "TelÃƒÂ©fono", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "La prueba inicia al suscribirte", save: "Guardar perfil", billing: "Administrar facturaciÃƒÂ³n", billingError: "Primero inicia una suscripciÃƒÂ³n.", serverError: "OcurriÃƒÂ³ un error del servidor. Intenta de nuevo o escribe a support@operitron.com." } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved.", trialEnds: "Trial starts after checkout", save: "Save Profile", billing: "Manage billing", billingError: "Start a subscription first.", serverError: "A server error occurred. Please try again or contact support@operitron.com." };
+  const ui = language === "es" ? { company: "CompaÃƒÆ’Ã‚Â±ÃƒÆ’Ã‚Â­a", phone: "TelÃƒÆ’Ã‚Â©fono", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "La prueba inicia al suscribirte", save: "Guardar perfil", billing: "Administrar facturaciÃƒÆ’Ã‚Â³n", billingError: "Primero inicia una suscripciÃƒÆ’Ã‚Â³n.", serverError: "OcurriÃƒÆ’Ã‚Â³ un error del servidor. Intenta de nuevo o escribe a support@operitron.com." } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved.", trialEnds: "Trial starts after checkout", save: "Save Profile", billing: "Manage billing", billingError: "Start a subscription first.", serverError: "A server error occurred. Please try again or contact support@operitron.com." };
   const [status, setStatus] = useState(ui.ready);
   useEffect(() => {
     if (!supabase || !user) return;
@@ -3087,8 +3304,8 @@ function ProfilePage({ t, language, user, isAdmin, go }) {
       setStatus(error.message === "Start a subscription first." ? ui.billingError : (error.message === "A server error occurred. Please try again or contact support@operitron.com." ? ui.serverError : (error.message || ui.billingError)));
     }
   }
-  const displayPlan = isAdmin ? (language === "es" ? "Administrador Ã‚| Acceso total" : "Administrator Ã‚| Full Access") : subscriptionPlanLabel(plan, language);
-  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} />{isAdmin && <div className="mb-6 flex flex-col justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-300/[.07] p-4 sm:flex-row sm:items-center"><p className="font-bold text-cyan-100">{language === "es" ? "Acceso administrativo activo: herramientas premium y control de producciÃƒÂ³n habilitados." : "Administrator access active: premium tools and production control are enabled."}</p><button onClick={() => go("admin")} className="secondary-button whitespace-nowrap">{language === "es" ? "Control del Propietario" : "Owner Console"}</button></div>}<div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={displayPlan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={displayPlan} green /><MiniMetric label={t.trial} value={isAdmin ? (language === "es" ? "Omitida para administrador" : "Bypassed for administrator") : ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button>{!isAdmin && <button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button>}<p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
+  const displayPlan = isAdmin ? (language === "es" ? "Administrador Ãƒâ€š| Acceso total" : "Administrator Ãƒâ€š| Full Access") : subscriptionPlanLabel(plan, language);
+  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} />{isAdmin && <div className="mb-6 flex flex-col justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-300/[.07] p-4 sm:flex-row sm:items-center"><p className="font-bold text-cyan-100">{language === "es" ? "Acceso administrativo activo: herramientas premium y control de producciÃƒÆ’Ã‚Â³n habilitados." : "Administrator access active: premium tools and production control are enabled."}</p><button onClick={() => go("admin")} className="secondary-button whitespace-nowrap">{language === "es" ? "Control del Propietario" : "Owner Console"}</button></div>}<div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={displayPlan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={displayPlan} green /><MiniMetric label={t.trial} value={isAdmin ? (language === "es" ? "Omitida para administrador" : "Bypassed for administrator") : ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button>{!isAdmin && <button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button>}<p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
 }
 
 function LegalPage({ type, language }) {
@@ -3115,13 +3332,13 @@ function LegalPage({ type, language }) {
     },
   };
   const spanish = {
-    privacy: { title: "PolÃƒÂ­tica de Privacidad", intro: "Esta PolÃƒÂ­tica de Privacidad explica cÃƒÂ³mo OPERITRON.COM recopila, usa y protege informaciÃƒÂ³n al usar nuestro software inmobiliario y de construcciÃƒÂ³n.", sections: [["InformaciÃƒÂ³n que Recopilamos", "Podemos recopilar datos de cuenta, correo, empresa, telÃƒÂ©fono, actividad de autenticaciÃƒÂ³n, proyectos guardados, cÃƒÂ¡lculos, documentos, colaboradores y comunicaciones de soporte."], ["Uso de la InformaciÃƒÂ³n", "Usamos la informaciÃƒÂ³n para autenticar usuarios, operar espacios de trabajo, guardar anÃƒÂ¡lisis, habilitar facturaciÃƒÂ³n, brindar soporte y mantener la seguridad del servicio."], ["Pagos y Proveedores", "Stripe procesa los pagos. Supabase puede administrar autenticaciÃƒÂ³n y datos guardados. Los proveedores autorizados de datos procesan bÃƒÂºsquedas solicitadas por usted bajo sus propias polÃƒÂ­ticas."], ["Seguridad y RetenciÃƒÂ³n", "Usamos controles de acceso y polÃƒÂ­ticas a nivel de fila para limitar el acceso de cada usuario a sus propios registros. NingÃƒÂºn servicio en lÃƒÂ­nea garantiza seguridad absoluta."], ["Sus Opciones", "Puede solicitar acceso, correcciÃƒÂ³n o eliminaciÃƒÂ³n de informaciÃƒÂ³n de su cuenta comunicÃƒÂ¡ndose con soporte de Operitron."]]},
-    terms: { title: "TÃƒÂ©rminos de Servicio", intro: "Estos TÃƒÂ©rminos regulan el uso de OPERITRON.COM, una plataforma para inversionistas y operadores de construcciÃƒÂ³n.", sections: [["Responsabilidad de Cuenta", "Debe proporcionar informaciÃƒÂ³n precisa, proteger sus credenciales y responsabilizarse por la actividad de su cuenta y colaboradores invitados."], ["Uso Permitido", "Puede usar Operitron para organizar proyectos, analizar inversiones, estimar construcciÃƒÂ³n y preparar reportes. No puede interrumpir el servicio ni intentar acceso no autorizado."], ["Suscripciones y Pruebas", "El acceso pagado se ofrece mediante planes mensuales y anuales con prueba gratis de tres dÃƒÂ­as cuando se muestre en checkout. Stripe controla la facturaciÃƒÂ³n aceptada por usted."], ["Datos del Cliente", "Usted conserva propiedad de su contenido y autoriza su procesamiento limitado para prestar el servicio."], ["LimitaciÃƒÂ³n de Responsabilidad", "En la medida permitida por ley, Operitron no responde por pÃƒÂ©rdidas de inversiÃƒÂ³n, sobrecostos de construcciÃƒÂ³n o resultados de financiamiento basados en resultados de la plataforma."]]},
-    refund: { title: "PolÃƒÂ­tica de Reembolsos", intro: "Buscamos que la facturaciÃƒÂ³n de Operitron sea clara y predecible.", sections: [["Prueba Gratis de Tres DÃƒÂ­as", "Las nuevas suscripciones elegibles pueden incluir una prueba de tres dÃƒÂ­as segÃƒÂºn se muestre en checkout. Cancele antes del fin de la prueba para evitar el primer cargo."], ["Cancelaciones", "Puede cancelar en el portal de facturaciÃƒÂ³n. La cancelaciÃƒÂ³n evita renovaciones futuras y normalmente mantiene acceso hasta terminar el perÃƒÂ­odo pagado actual."], ["Solicitudes de Reembolso", "Los cargos de suscripciÃƒÂ³n generalmente no son reembolsables una vez iniciado el perÃƒÂ­odo, salvo exigencia legal o error de facturaciÃƒÂ³n."], ["Promociones", "Los descuentos se aplican mediante Stripe Checkout y no se cambian por efectivo ni se aplican retroactivamente."]]},
-    disclaimer: { title: "Aviso Legal", intro: "Operitron es software de apoyo para decisiones, no asesorÃƒÂ­a profesional ni garantÃƒÂ­a de resultados.", sections: [["Estimaciones Financieras", "ARV, ROI, cap rate, cash-on-cash, DSCR, pagos hipotecarios, ofertas mÃƒÂ¡ximas, flujos de efectivo y presupuestos dependen de datos y supuestos del usuario."], ["Datos PÃƒÂºblicos y de Propiedad", "Registros, comparables, impuestos y datos pÃƒÂºblicos pueden estar incompletos o atrasados. Confirme hechos importantes en fuentes autorizadas."], ["Resultados de ConstrucciÃƒÂ³n", "Takeoffs, cronogramas, punch lists, alcances, estimaciones y resÃƒÂºmenes asistidos por IA son ayudas de planeaciÃƒÂ³n. Consulte profesionales licenciados."], ["Sin RelaciÃƒÂ³n Profesional", "Operitron no proporciona asesorÃƒÂ­a legal, fiscal, de avalÃƒÂºo, corretaje, prÃƒÂ©stamo, arquitectura, ingenierÃƒÂ­a o construcciÃƒÂ³n."]]},
+    privacy: { title: "PolÃƒÆ’Ã‚Â­tica de Privacidad", intro: "Esta PolÃƒÆ’Ã‚Â­tica de Privacidad explica cÃƒÆ’Ã‚Â³mo OPERITRON.COM recopila, usa y protege informaciÃƒÆ’Ã‚Â³n al usar nuestro software inmobiliario y de construcciÃƒÆ’Ã‚Â³n.", sections: [["InformaciÃƒÆ’Ã‚Â³n que Recopilamos", "Podemos recopilar datos de cuenta, correo, empresa, telÃƒÆ’Ã‚Â©fono, actividad de autenticaciÃƒÆ’Ã‚Â³n, proyectos guardados, cÃƒÆ’Ã‚Â¡lculos, documentos, colaboradores y comunicaciones de soporte."], ["Uso de la InformaciÃƒÆ’Ã‚Â³n", "Usamos la informaciÃƒÆ’Ã‚Â³n para autenticar usuarios, operar espacios de trabajo, guardar anÃƒÆ’Ã‚Â¡lisis, habilitar facturaciÃƒÆ’Ã‚Â³n, brindar soporte y mantener la seguridad del servicio."], ["Pagos y Proveedores", "Stripe procesa los pagos. Supabase puede administrar autenticaciÃƒÆ’Ã‚Â³n y datos guardados. Los proveedores autorizados de datos procesan bÃƒÆ’Ã‚Âºsquedas solicitadas por usted bajo sus propias polÃƒÆ’Ã‚Â­ticas."], ["Seguridad y RetenciÃƒÆ’Ã‚Â³n", "Usamos controles de acceso y polÃƒÆ’Ã‚Â­ticas a nivel de fila para limitar el acceso de cada usuario a sus propios registros. NingÃƒÆ’Ã‚Âºn servicio en lÃƒÆ’Ã‚Â­nea garantiza seguridad absoluta."], ["Sus Opciones", "Puede solicitar acceso, correcciÃƒÆ’Ã‚Â³n o eliminaciÃƒÆ’Ã‚Â³n de informaciÃƒÆ’Ã‚Â³n de su cuenta comunicÃƒÆ’Ã‚Â¡ndose con soporte de Operitron."]]},
+    terms: { title: "TÃƒÆ’Ã‚Â©rminos de Servicio", intro: "Estos TÃƒÆ’Ã‚Â©rminos regulan el uso de OPERITRON.COM, una plataforma para inversionistas y operadores de construcciÃƒÆ’Ã‚Â³n.", sections: [["Responsabilidad de Cuenta", "Debe proporcionar informaciÃƒÆ’Ã‚Â³n precisa, proteger sus credenciales y responsabilizarse por la actividad de su cuenta y colaboradores invitados."], ["Uso Permitido", "Puede usar Operitron para organizar proyectos, analizar inversiones, estimar construcciÃƒÆ’Ã‚Â³n y preparar reportes. No puede interrumpir el servicio ni intentar acceso no autorizado."], ["Suscripciones y Pruebas", "El acceso pagado se ofrece mediante planes mensuales y anuales con prueba gratis de tres dÃƒÆ’Ã‚Â­as cuando se muestre en checkout. Stripe controla la facturaciÃƒÆ’Ã‚Â³n aceptada por usted."], ["Datos del Cliente", "Usted conserva propiedad de su contenido y autoriza su procesamiento limitado para prestar el servicio."], ["LimitaciÃƒÆ’Ã‚Â³n de Responsabilidad", "En la medida permitida por ley, Operitron no responde por pÃƒÆ’Ã‚Â©rdidas de inversiÃƒÆ’Ã‚Â³n, sobrecostos de construcciÃƒÆ’Ã‚Â³n o resultados de financiamiento basados en resultados de la plataforma."]]},
+    refund: { title: "PolÃƒÆ’Ã‚Â­tica de Reembolsos", intro: "Buscamos que la facturaciÃƒÆ’Ã‚Â³n de Operitron sea clara y predecible.", sections: [["Prueba Gratis de Tres DÃƒÆ’Ã‚Â­as", "Las nuevas suscripciones elegibles pueden incluir una prueba de tres dÃƒÆ’Ã‚Â­as segÃƒÆ’Ã‚Âºn se muestre en checkout. Cancele antes del fin de la prueba para evitar el primer cargo."], ["Cancelaciones", "Puede cancelar en el portal de facturaciÃƒÆ’Ã‚Â³n. La cancelaciÃƒÆ’Ã‚Â³n evita renovaciones futuras y normalmente mantiene acceso hasta terminar el perÃƒÆ’Ã‚Â­odo pagado actual."], ["Solicitudes de Reembolso", "Los cargos de suscripciÃƒÆ’Ã‚Â³n generalmente no son reembolsables una vez iniciado el perÃƒÆ’Ã‚Â­odo, salvo exigencia legal o error de facturaciÃƒÆ’Ã‚Â³n."], ["Promociones", "Los descuentos se aplican mediante Stripe Checkout y no se cambian por efectivo ni se aplican retroactivamente."]]},
+    disclaimer: { title: "Aviso Legal", intro: "Operitron es software de apoyo para decisiones, no asesorÃƒÆ’Ã‚Â­a profesional ni garantÃƒÆ’Ã‚Â­a de resultados.", sections: [["Estimaciones Financieras", "ARV, ROI, cap rate, cash-on-cash, DSCR, pagos hipotecarios, ofertas mÃƒÆ’Ã‚Â¡ximas, flujos de efectivo y presupuestos dependen de datos y supuestos del usuario."], ["Datos PÃƒÆ’Ã‚Âºblicos y de Propiedad", "Registros, comparables, impuestos y datos pÃƒÆ’Ã‚Âºblicos pueden estar incompletos o atrasados. Confirme hechos importantes en fuentes autorizadas."], ["Resultados de ConstrucciÃƒÆ’Ã‚Â³n", "Takeoffs, cronogramas, punch lists, alcances, estimaciones y resÃƒÆ’Ã‚Âºmenes asistidos por IA son ayudas de planeaciÃƒÆ’Ã‚Â³n. Consulte profesionales licenciados."], ["Sin RelaciÃƒÆ’Ã‚Â³n Profesional", "Operitron no proporciona asesorÃƒÆ’Ã‚Â­a legal, fiscal, de avalÃƒÆ’Ã‚Âºo, corretaje, prÃƒÆ’Ã‚Â©stamo, arquitectura, ingenierÃƒÆ’Ã‚Â­a o construcciÃƒÆ’Ã‚Â³n."]]},
   };
   const data = (language === "es" ? spanish : english)[type];
-  return <article className="mx-auto max-w-4xl rounded-[1.5rem] border border-white/10 bg-white/[.055] p-5 shadow-2xl shadow-black/20 sm:rounded-[2rem] sm:p-6 md:p-10"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300 sm:text-sm">OPERITRON.COM</p><h1 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl">{data.title}</h1><p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">{data.intro}</p><p className="mt-4 text-sm font-bold text-slate-500">{language === "es" ? "Vigente: 25 de mayo de 2026" : "Effective: May 25, 2026"}</p><div className="mt-8 space-y-7 sm:mt-10 sm:space-y-8">{data.sections.map(([heading, text]) => <section key={heading} className="border-t border-white/10 pt-6 sm:pt-7"><h2 className="text-xl font-black text-white">{heading}</h2><p className="mt-3 whitespace-normal break-words text-base leading-7 text-slate-300 sm:leading-8">{text}</p></section>)}</div><p className="mt-8 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-4 text-sm leading-7 text-slate-400 sm:mt-10">{language === "es" ? "Contacto: Para preguntas sobre estas polÃƒÂ­ticas, escriba a " : "Contact: For questions about these policies, email "}<a href="mailto:support@operitron.com" className="font-bold text-cyan-300 hover:text-cyan-200">support@operitron.com</a>.</p></article>;
+  return <article className="mx-auto max-w-4xl rounded-[1.5rem] border border-white/10 bg-white/[.055] p-5 shadow-2xl shadow-black/20 sm:rounded-[2rem] sm:p-6 md:p-10"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300 sm:text-sm">OPERITRON.COM</p><h1 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl">{data.title}</h1><p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">{data.intro}</p><p className="mt-4 text-sm font-bold text-slate-500">{language === "es" ? "Vigente: 25 de mayo de 2026" : "Effective: May 25, 2026"}</p><div className="mt-8 space-y-7 sm:mt-10 sm:space-y-8">{data.sections.map(([heading, text]) => <section key={heading} className="border-t border-white/10 pt-6 sm:pt-7"><h2 className="text-xl font-black text-white">{heading}</h2><p className="mt-3 whitespace-normal break-words text-base leading-7 text-slate-300 sm:leading-8">{text}</p></section>)}</div><p className="mt-8 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-4 text-sm leading-7 text-slate-400 sm:mt-10">{language === "es" ? "Contacto: Para preguntas sobre estas polÃƒÆ’Ã‚Â­ticas, escriba a " : "Contact: For questions about these policies, email "}<a href="mailto:support@operitron.com" className="font-bold text-cyan-300 hover:text-cyan-200">support@operitron.com</a>.</p></article>;
 }
 
 function AIAssistant({ t = enhancedCopy.en, large }) {
