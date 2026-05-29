@@ -962,7 +962,7 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
       <div className={`mx-auto flex items-center justify-between gap-2 sm:gap-4 ${user ? "" : "max-w-7xl"}`}>
         <div className="flex min-w-0 items-center gap-3">
           {user && hasProductAccess && <button onClick={() => setMobileOpen(true)} className="rounded-xl border border-white/10 p-2 text-white lg:hidden"><Menu /></button>}
-          <div className={user && hasProductAccess && !collapsed ? "lg:hidden" : ""}>
+          <div className={user && hasProductAccess ? "lg:hidden" : ""}>
             <BrandLogo onClick={() => go(user && hasProductAccess ? "dashboard" : "home")} compact />
           </div>
         </div>
@@ -1006,18 +1006,24 @@ function MobileNavigation({ t, language, activePage, go, user, hasProductAccess 
 
 function BrandLogo({ onClick, compact = false, size = "default" }) {
   const isFull = size === "splash";
-  const usesWordmark = isFull || compact;
-  const logoSize = size === "splash" ? "h-auto w-[min(82vw,34rem)]" : compact ? "h-16 w-[min(58vw,18rem)] sm:h-20 sm:w-[23rem]" : size === "sidebar" ? "h-14 w-14" : "h-14 w-14";
-  const wrapperClass = isFull ? "inline-flex justify-center rounded-3xl p-1" : "group flex min-w-0 shrink-0 items-center gap-3 rounded-2xl px-1 py-1 text-left transition hover:bg-white/[.04]";
-  const imageClass = isFull ? "rounded-2xl object-contain shadow-[0_0_45px_rgba(37,99,235,.15)]" : "shrink-0 rounded-2xl object-contain shadow-[0_0_28px_rgba(37,99,235,.18)] transition duration-300 group-hover:shadow-[0_0_40px_rgba(34,211,238,.35)]";
-  const imageSrc = usesWordmark ? "/operitron-logo-original.png" : "/operitron-mark.png";
+  if (isFull) {
+    return (
+      <button type="button" onClick={onClick} className="inline-flex justify-center rounded-3xl p-1" aria-label="Operitron home">
+        <img src="/operitron-logo-original.png" alt="OPERITRON.COM" width="1536" height="1024" decoding="async" loading="eager" className="h-auto w-[min(82vw,34rem)] rounded-2xl object-contain shadow-[0_0_45px_rgba(37,99,235,.15)]" />
+      </button>
+    );
+  }
+
+  const iconSize = compact ? "h-14 w-14 sm:h-16 sm:w-16" : "h-14 w-14";
+  const titleSize = compact ? "text-xl sm:text-2xl" : "text-lg xl:text-xl";
+  const subtitleSize = compact ? "text-[0.6rem] sm:text-[0.68rem]" : "text-[0.58rem] xl:text-[0.62rem]";
   return (
-    <button type="button" onClick={onClick} className={wrapperClass} aria-label="Operitron home">
-      <img src={imageSrc} alt={usesWordmark ? "OPERITRON.COM" : ""} width={usesWordmark ? "1536" : "256"} height={usesWordmark ? "1024" : "256"} decoding="async" loading="eager" className={`${logoSize} ${imageClass}`} />
-      {!isFull && !compact && <span className="block min-w-0">
-        <span className="block truncate text-lg font-black tracking-wide text-white xl:text-xl">OPERITRON.COM</span>
-        <span className="block truncate text-[0.58rem] font-bold uppercase tracking-[0.18em] text-cyan-300 xl:text-[0.62rem] xl:tracking-[0.24em]">AI Real Estate Operating System</span>
-      </span>}
+    <button type="button" onClick={onClick} className="group flex min-w-0 shrink-0 items-center gap-3 rounded-2xl px-1 py-1 text-left transition hover:bg-white/[.04]" aria-label="Operitron home">
+      <img src="/operitron-mark.png" alt="" width="512" height="512" decoding="async" loading="eager" className={`${iconSize} shrink-0 rounded-2xl object-contain shadow-[0_0_28px_rgba(37,99,235,.18)] transition duration-300 group-hover:scale-105 group-hover:shadow-[0_0_40px_rgba(34,211,238,.35)]`} />
+      <span className="block min-w-0">
+        <span className={`block truncate font-black tracking-wide text-white ${titleSize}`}>OPERITRON.COM</span>
+        <span className={`block truncate font-bold uppercase tracking-[0.18em] text-cyan-300 xl:tracking-[0.24em] ${subtitleSize}`}>AI Real Estate Operating System</span>
+      </span>
     </button>
   );
 }
