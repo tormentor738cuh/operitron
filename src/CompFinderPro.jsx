@@ -2467,6 +2467,7 @@ function Checklist({ items, project, language = "en" }) {
 function PunchListApp({ language = "en", project }) {
   const isEs = language === "es";
   const [guideStep, setGuideStep] = useState(0);
+  const [guideDismissed, setGuideDismissed] = useState(false);
   const guide = isEs ? [["Crear Lista", "Crea una lista por recorrido o fase de cierre."], ["Agregar Problemas", "Registra descripción, oficio, responsable y fotos."], ["Filtrar por Oficio", "Comparte solo los pendientes de cada subcontratista."], ["Entrada por Voz", "Registra pendientes en el sitio con manos libres."], ["Exportar y Compartir", "Entrega un PDF profesional al equipo."]] : [["Create a Punch List", "Create a list for each walkthrough or closeout phase."], ["Add Issues", "Capture description, trade, assignee, and photos."], ["Filter by Trade", "Share each contractor's relevant open items."], ["Voice Input", "Log site observations hands-free."], ["Export & Share", "Deliver a professional PDF to the team."]];
   const [items, setItems] = useState([
     { title: "Leaking Kitchen Sink", trade: "Plumbing", location: "Unit B", status: "Open", color: "red", done: false },
@@ -2488,10 +2489,10 @@ function PunchListApp({ language = "en", project }) {
     <ToolShell title="Construction Punch List App" subtitle="Close out projects faster with mobile-first issue tracking, photos, voice input, trade assignments, and PDF reports.">
       <ProjectContext project={project} language={language} />
       <div className="mb-6 mt-5 flex flex-wrap items-center justify-between gap-3"><h3 className="text-2xl font-black text-white">{isEs ? "Recorrido de Cierre" : "Closeout Walkthrough"}</h3><button className="primary-button"><Plus size={18} />{isEs ? "Crear Lista" : "Create List"}</button></div>
-      <div className="mb-7 rounded-3xl border border-cyan-300/20 bg-cyan-300/[.06] p-5">
+      {!guideDismissed && <div className="mb-7 rounded-3xl border border-cyan-300/20 bg-cyan-300/[.06] p-5">
         <div className="flex items-start justify-between gap-3"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? `Paso ${guideStep + 1} de ${guide.length}` : `Step ${guideStep + 1} of ${guide.length}`}</p><h4 className="mt-2 text-lg font-black text-white">{guide[guideStep][0]}</h4><p className="mt-2 text-sm text-slate-300">{guide[guideStep][1]}</p></div></div>
-        <div className="mt-5 flex items-center justify-between"><div className="flex gap-2">{guide.map((_, index) => <span key={index} className={`h-2 w-2 rounded-full ${index === guideStep ? "bg-cyan-300" : "bg-slate-700"}`} />)}</div><div className="flex gap-2"><button onClick={() => setGuideStep(Math.max(0, guideStep - 1))} className="secondary-button">{isEs ? "Anterior" : "Previous"}</button><button onClick={() => setGuideStep(Math.min(guide.length - 1, guideStep + 1))} className="primary-button">{guideStep === guide.length - 1 ? (isEs ? "Comenzar" : "Get Started") : (isEs ? "Siguiente" : "Next")}</button></div></div>
-      </div>
+        <div className="mt-5 flex items-center justify-between"><div className="flex gap-2">{guide.map((_, index) => <span key={index} className={`h-2 w-2 rounded-full ${index === guideStep ? "bg-cyan-300" : "bg-slate-700"}`} />)}</div><div className="flex gap-2"><button onClick={() => setGuideStep(Math.max(0, guideStep - 1))} className="secondary-button">{isEs ? "Anterior" : "Previous"}</button><button onClick={() => guideStep === guide.length - 1 ? setGuideDismissed(true) : setGuideStep(Math.min(guide.length - 1, guideStep + 1))} className="primary-button">{guideStep === guide.length - 1 ? (isEs ? "Comenzar" : "Get Started") : (isEs ? "Siguiente" : "Next")}</button></div></div>
+      </div>}
       <div className="grid gap-7 xl:grid-cols-[390px_1fr]">
         <div className="rounded-[2rem] border border-white/10 bg-slate-950 p-4 shadow-2xl">
           <div className="rounded-[1.6rem] bg-[#0b1225] p-4">
