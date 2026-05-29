@@ -150,9 +150,6 @@ async function rentcast(path, params, warnings, debug = []) {
 export default async function handler(request, response) {
   if (request.method !== "POST") return json(response, 405, { error: "Method not allowed." });
 
-  const apiKey = process.env.RENTCAST_API_KEY;
-  if (!apiKey) return json(response, 503, { error: "Property data is temporarily unavailable. Please contact support@operitron.com." });
-
   const { authClient, adminClient } = serverClients();
   if (!authClient) return json(response, 503, { error: "Account services are not configured. Please contact support@operitron.com." });
 
@@ -160,13 +157,42 @@ export default async function handler(request, response) {
   if (!token) return json(response, 401, { error: "Sign in required." });
   const { data, error: authError } = await authClient.auth.getUser(token);
   if (authError || !data.user) return json(response, 401, { error: "Invalid session." });
+  const email = String(data.user.email || "").toLowerCase();
+  const ownerOverride = adminEmails().includes(email);
+  const customerOverride = bypassCustomerEmails().includes(email);
+
+  const apiKey = process.env.RENTCAST_API_KEY;
+  if (!apiKey) {
+    console.error("[rentcast] Missing RENTCAST_API_KEY.", {
+      userId: data.user.id,
+      email,
+      hasViteRentcastKey: Boolean(process.env.VITE_RENTCAST_API_KEY),
+    });
+    return json(response, 503, {
+      error: ownerOverride
+        ? "Missing RENTCAST_API_KEY on the server. Vercel must define RENTCAST_API_KEY, not VITE_RENTCAST_API_KEY."
+        : "Property data is temporarily unavailable. Please contact support@operitron.com.",
+      adminDebug: ownerOverride ? { expectedEnv: "RENTCAST_API_KEY", viteEnvPresent: Boolean(process.env.VITE_RENTCAST_API_KEY) } : undefined,
+    });
+  }
 
   let access;
   try {
     access = await getAccess(adminClient, data.user);
   } catch (error) {
-    console.error("[rentcast] Access lookup failed.", { code: error?.code, message: error?.message, userId: data.user.id });
-    return json(response, 503, { error: "Account setup is not ready. Please contact support@operitron.com." });
+    console.error("[rentcast] Access lookup failed.", { code: error?.code, message: error?.message, userId: data.user.id, email });
+    if (ownerOverride || customerOverride) {
+      access = {
+        allowed: true,
+        isAdmin: ownerOverride,
+        isTestCustomer: customerOverride,
+        warning: `Access override used because profile lookup failed: ${error?.message || "Unknown Supabase error."}`,
+      };
+    } else {
+      return json(response, 503, {
+        error: "Account setup is not ready. Please contact support@operitron.com.",
+      });
+    }
   }
   if (!access.allowed) return json(response, 403, { error: "Start your 3-day free trial to access property intelligence." });
 

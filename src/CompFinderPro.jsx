@@ -1012,8 +1012,28 @@ function Sidebar({ t, user, activePage, go, mobileOpen, setMobileOpen, collapsed
   );
 }
 
-function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, hasProductAccess, isAdmin, collapsed }) {
+function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, hasProductAccess, isAdmin, collapsed, openContact }) {
   const [accountOpen, setAccountOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [featureOpen, setFeatureOpen] = useState(false);
+  const [billingStatus, setBillingStatus] = useState("");
+  async function manageBilling() {
+    if (!supabase || !user) {
+      setBillingStatus(language === "es" ? "Inicia sesion primero." : "Sign in first.");
+      return;
+    }
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error(language === "es" ? "Sesion no encontrada." : "Session not found.");
+      const response = await fetch(portalEndpoint, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      const result = await readApiJson(response);
+      if (!response.ok) throw new Error(result.error || (language === "es" ? "Primero inicia una suscripcion." : "Start a subscription first."));
+      window.location.assign(result.url);
+    } catch (error) {
+      setBillingStatus(error.message || (language === "es" ? "No se pudo abrir facturacion." : "Billing portal could not be opened."));
+    }
+  }
   return (
     <header className={`sticky top-0 z-30 border-b border-white/10 bg-slate-950/90 px-3 py-3 backdrop-blur-xl transition-[margin] duration-300 sm:px-5 ${user && hasProductAccess ? (collapsed ? "lg:ml-20" : "lg:ml-72") : ""}`}>
       <div className={`mx-auto flex items-center justify-between gap-2 sm:gap-4 ${user ? "" : "max-w-7xl"}`}>
@@ -1024,8 +1044,8 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "EspaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±ol" : "English"} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">
-            <Languages size={17} /><span className="hidden md:inline">{language === "en" ? "EspaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±ol" : "English"}</span><span className="md:hidden">{language === "en" ? "ES" : "EN"}</span>
+          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "Español" : "English"} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">
+            <span aria-hidden="true">{language === "en" ? "🇪🇸" : "🇺🇸"}</span><Languages size={17} /><span className="hidden md:inline">{language === "en" ? "Español" : "English"}</span><span className="md:hidden">{language === "en" ? "ES" : "EN"}</span>
           </button>
           {user ? <div className="relative">
             <button onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} className="flex items-center gap-2 rounded-xl border border-white/10 p-2 text-slate-300 hover:border-cyan-300/50 hover:text-white sm:px-3"><UserCircle /><span className="hidden max-w-40 truncate text-sm font-bold xl:block">{user.email}</span></button>
@@ -1033,21 +1053,126 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
               <p className="truncate px-3 py-2 text-xs font-bold text-slate-500">{user.email}</p>
               {hasProductAccess && <button onClick={() => { setAccountOpen(false); go("dashboard"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.dashboard}</button>}
               {isAdmin && <button onClick={() => { setAccountOpen(false); go("admin"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-cyan-200 hover:bg-cyan-300/10">Owner Console</button>}
-              <button onClick={() => { setAccountOpen(false); go("profile"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.profile}</button>
+              <button onClick={() => { setAccountOpen(false); go("profile"); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5"><UserCircle size={16} />{language === "es" ? "Editar perfil" : "Edit Profile"}</button>
+              <button onClick={() => { setAccountOpen(false); manageBilling(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5"><WalletCards size={16} />{language === "es" ? "Administrar suscripcion" : "Manage Subscription"}{(hasProductAccess || isAdmin) && <span className="ml-auto rounded-full bg-emerald-400/15 px-2 py-0.5 text-xs text-emerald-300">{isAdmin ? "Admin" : "Active"}</span>}</button>
+              <button onClick={() => { setAccountOpen(false); setFeedbackOpen(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5"><StickyNote size={16} />{language === "es" ? "Enviar comentarios" : "Send Feedback"}</button>
+              <button onClick={() => { setAccountOpen(false); setFeatureOpen(true); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5"><Sparkles size={16} />{language === "es" ? "Solicitar funcion" : "Request a Feature"}</button>
+              <button onClick={() => { setAccountOpen(false); openContact?.(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5"><Mail size={16} />{language === "es" ? "Contactanos" : "Contact Us"}</button>
               <button onClick={() => { setAccountOpen(false); go("pricing"); }} className="w-full rounded-xl px-3 py-2 text-left font-bold text-slate-200 hover:bg-white/5">{t.pricing}</button>
               <div className="my-2 border-t border-white/10" />
               <button onClick={() => { setAccountOpen(false); go("privacy"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.privacy}</button>
               <button onClick={() => { setAccountOpen(false); go("terms"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.terms}</button>
               <button onClick={() => { setAccountOpen(false); go("refund"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.refund}</button>
               <button onClick={() => { setAccountOpen(false); go("disclaimer"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.disclaimer}</button>
-              <button onClick={() => { setAccountOpen(false); signOut(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-red-300 hover:bg-red-400/10"><LogOut size={16} />{language === "es" ? "Cerrar sesiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n" : "Sign out"}</button>
+              <button onClick={() => setLanguage(language === "en" ? "es" : "en")} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-slate-300 hover:bg-white/5"><span>{language === "en" ? "🇪🇸" : "🇺🇸"}</span>{language === "en" ? "Language: English → Español" : "Idioma: Español → English"}</button>
+              <button onClick={() => { setAccountOpen(false); signOut(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-red-300 hover:bg-red-400/10"><LogOut size={16} />{language === "es" ? "Cerrar sesión" : "Sign out"}</button>
             </div>}
           </div> : <button onClick={() => go("settings")} className="whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">{t.login}</button>}
           {!user && <button onClick={() => go("pricing")} className="hidden whitespace-nowrap rounded-2xl bg-amber-400 px-4 py-3 text-sm font-black text-slate-950 shadow-[0_0_35px_rgba(251,191,36,.35)] transition hover:-translate-y-0.5 hover:bg-amber-300 lg:block xl:px-5 xl:text-base">{language === "es" ? "Prueba gratis de 3 dÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­as" : t.startTrial}</button>}
         </div>
       </div>
+      {billingStatus && <button onClick={() => setBillingStatus("")} className="fixed right-4 top-20 z-[80] max-w-sm rounded-2xl border border-amber-300/30 bg-slate-950 p-4 text-left text-sm font-bold text-amber-100 shadow-2xl">{billingStatus}</button>}
+      {feedbackOpen && <FeedbackModal language={language} user={user} onClose={() => setFeedbackOpen(false)} />}
+      {featureOpen && <FeatureRequestModal language={language} user={user} onClose={() => setFeatureOpen(false)} />}
     </header>
   );
+}
+
+function SupportModalFrame({ title, subtitle, icon: Icon = Mail, children, onClose }) {
+  return (
+    <div className="fixed inset-0 z-[90] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-2xl rounded-3xl border border-cyan-200/15 bg-slate-950 p-6 shadow-[0_24px_90px_rgba(0,0,0,.65)] sm:p-8">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="flex items-center gap-3 text-2xl font-black text-white"><Icon className="text-amber-300" />{title}</h3>
+            {subtitle && <p className="mt-3 text-lg leading-7 text-slate-400">{subtitle}</p>}
+          </div>
+          <button onClick={onClose} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-slate-400 hover:bg-white/5 hover:text-white" aria-label="Close"><X /></button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ContactModal({ language, user, onClose }) {
+  const isEs = language === "es";
+  const [form, setForm] = useState({ name: user?.user_metadata?.full_name || "", email: user?.email || "", message: "" });
+  const [status, setStatus] = useState("");
+  async function submit() {
+    if (!form.email.trim() || !form.message.trim()) {
+      setStatus(isEs ? "Agrega tu correo y mensaje." : "Add your email and message.");
+      return;
+    }
+    if (supabase) {
+      await supabase.from("contact_messages").insert({ name: form.name, email: form.email, message: form.message, type: "contact", recipient: "support@operitron.com" });
+    }
+    setStatus(isEs ? "Mensaje enviado. Te responderemos en support@operitron.com." : "Message sent. We will reply from support@operitron.com.");
+    setTimeout(onClose, 900);
+  }
+  return <SupportModalFrame title={isEs ? "Contactanos" : "Contact Us"} subtitle={isEs ? "Tienes una pregunta o comentario? Nos encantaria escucharte." : "Have a question or feedback? We'd love to hear from you."} icon={Mail} onClose={onClose}>
+    <div className="mt-8 grid gap-5">
+      <label><span className="label">{isEs ? "Nombre" : "Name"}</span><input className="field text-lg" value={form.name} onChange={(event) => setForm({ ...form, name: event.target.value })} placeholder={isEs ? "Tu nombre" : "Your name"} /></label>
+      <label><span className="label">Email</span><input className="field text-lg" value={form.email} onChange={(event) => setForm({ ...form, email: event.target.value })} placeholder="your@email.com" /></label>
+      <label><span className="label">{isEs ? "Mensaje" : "Message"}</span><textarea maxLength={1000} className="field min-h-40 text-lg" value={form.message} onChange={(event) => setForm({ ...form, message: event.target.value })} placeholder={isEs ? "Como podemos ayudarte?" : "How can we help you?"} /><span className="mt-2 block text-right text-sm text-slate-500">{form.message.length}/1000</span></label>
+    </div>
+    {status && <p className="mt-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm font-bold text-cyan-100">{status}</p>}
+    <button onClick={submit} className="primary-button mt-6 w-full justify-center"><Mail size={18} />{isEs ? "Enviar mensaje" : "Send Message"}</button>
+  </SupportModalFrame>;
+}
+
+function FeedbackModal({ language, user, onClose }) {
+  const isEs = language === "es";
+  const [category, setCategory] = useState("General");
+  const [rating, setRating] = useState(0);
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState("");
+  async function submit() {
+    if (!message.trim()) {
+      setStatus(isEs ? "Escribe tu comentario antes de enviar." : "Write your feedback before submitting.");
+      return;
+    }
+    if (supabase) {
+      await supabase.from("contact_messages").insert({ name: user?.user_metadata?.full_name || "", email: user?.email || "", message, type: "feedback", category, rating, recipient: "support@operitron.com" });
+    }
+    setStatus(isEs ? "Gracias. Tu comentario fue recibido." : "Thanks. Your feedback was received.");
+    setTimeout(onClose, 900);
+  }
+  return <SupportModalFrame title={isEs ? "Enviar comentarios" : "Send Feedback"} subtitle={isEs ? "Ayudanos a mejorar Operitron compartiendo tus ideas." : "Help us improve Operitron by sharing your thoughts."} icon={StickyNote} onClose={onClose}>
+    <div className="mt-8 space-y-6">
+      <div><p className="label">{isEs ? "Categoria" : "Category"}</p><div className="mt-3 flex flex-wrap gap-3">{["Bug Report", "General"].map((item) => <button key={item} onClick={() => setCategory(item)} className={`rounded-2xl border px-5 py-3 font-bold ${category === item ? "border-amber-400 bg-amber-400/15 text-amber-200" : "border-white/10 text-slate-400 hover:bg-white/5"}`}>{isEs && item === "Bug Report" ? "Reporte de error" : item}</button>)}</div></div>
+      <div><p className="label">{isEs ? "Como calificas tu experiencia?" : "How would you rate your experience?"}</p><div className="mt-3 flex gap-2">{[1,2,3,4,5].map((value) => <button key={value} onClick={() => setRating(value)} className={`text-4xl ${rating >= value ? "text-amber-300" : "text-slate-600"}`}>☆</button>)}</div></div>
+      <label><span className="label">{isEs ? "Tu comentario" : "Your feedback"}</span><textarea className="field min-h-44 text-lg" value={message} onChange={(event) => setMessage(event.target.value)} placeholder={isEs ? "Cuéntanos que piensas..." : "Tell us what you think..."} /></label>
+    </div>
+    {status && <p className="mt-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm font-bold text-cyan-100">{status}</p>}
+    <div className="mt-6 flex justify-end gap-3"><button onClick={onClose} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={submit} className="primary-button">{isEs ? "Enviar comentarios" : "Submit Feedback"}</button></div>
+  </SupportModalFrame>;
+}
+
+function FeatureRequestModal({ language, user, onClose }) {
+  const isEs = language === "es";
+  const [title, setTitle] = useState("");
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState("");
+  async function submit() {
+    if (!title.trim() || !message.trim()) {
+      setStatus(isEs ? "Agrega titulo y descripcion." : "Add a title and description.");
+      return;
+    }
+    if (supabase) {
+      await supabase.from("contact_messages").insert({ name: user?.user_metadata?.full_name || "", email: user?.email || "", message, type: "feature_request", category: title, recipient: "support@operitron.com" });
+    }
+    setStatus(isEs ? "Solicitud enviada. Gracias por ayudar a mejorar Operitron." : "Request submitted. Thanks for helping improve Operitron.");
+    setTimeout(onClose, 900);
+  }
+  return <SupportModalFrame title={isEs ? "Solicitar una funcion" : "Request a Feature"} subtitle={isEs ? "Tienes una idea para mejorar Operitron? Queremos escucharla." : "Have an idea to make Operitron better? We'd love to hear it."} icon={Sparkles} onClose={onClose}>
+    <div className="mt-8 grid gap-5">
+      <label><span className="label">{isEs ? "Titulo de la funcion" : "Feature Title"}</span><input className="field text-lg" value={title} onChange={(event) => setTitle(event.target.value)} placeholder={isEs ? "Dale un nombre corto..." : "Give your idea a short name..."} /></label>
+      <label><span className="label">{isEs ? "Describe tu idea" : "Describe your idea"}</span><textarea className="field min-h-52 text-lg" value={message} onChange={(event) => setMessage(event.target.value)} placeholder={isEs ? "Que haria esta funcion? Como ayudaria?" : "What would this feature do? How would it help you?"} /></label>
+    </div>
+    {status && <p className="mt-4 rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm font-bold text-cyan-100">{status}</p>}
+    <div className="mt-6 flex justify-end gap-3"><button onClick={onClose} className="secondary-button">{isEs ? "Cancelar" : "Cancel"}</button><button onClick={submit} className="primary-button">{isEs ? "Enviar solicitud" : "Submit Request"}</button></div>
+  </SupportModalFrame>;
 }
 
 function MobileNavigation({ t, language, activePage, go, user, hasProductAccess }) {
@@ -3390,7 +3515,7 @@ function ProfilePage({ t, language, user, isAdmin, go }) {
   const [plan, setPlan] = useState("No subscription");
   const [company, setCompany] = useState(user?.user_metadata?.company || "");
   const [phone, setPhone] = useState(user?.user_metadata?.phone || "");
-  const ui = language === "es" ? { company: "CompaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â±ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­a", phone: "TelÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©fono", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "La prueba inicia al suscribirte", save: "Guardar perfil", billing: "Administrar facturaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n", billingError: "Primero inicia una suscripciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n.", serverError: "OcurriÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ un error del servidor. Intenta de nuevo o escribe a support@operitron.com." } : { company: "Company", phone: "Phone", ready: "Profile ready", saved: "Profile saved.", trialEnds: "Trial starts after checkout", save: "Save Profile", billing: "Manage billing", billingError: "Start a subscription first.", serverError: "A server error occurred. Please try again or contact support@operitron.com." };
+  const ui = language === "es" ? { title: "Editar perfil", detail: "Actualiza tu informacion personal", displayName: "Nombre visible", namePlaceholder: "Ingresa tu nombre", company: "Empresa", companyPlaceholder: "Ingresa el nombre de tu empresa", phone: "Telefono", phonePlaceholder: "Ingresa tu numero de telefono", cancel: "Cancelar", ready: "Perfil listo", saved: "Perfil guardado.", trialEnds: "La prueba inicia al suscribirte", save: "Guardar cambios", billing: "Administrar suscripcion", billingError: "Primero inicia una suscripcion.", serverError: "Ocurrio un error del servidor. Intenta de nuevo o escribe a support@operitron.com." } : { title: "Edit Profile", detail: "Update your personal information", displayName: "Display Name", namePlaceholder: "Enter your name", company: "Company", companyPlaceholder: "Enter your company name", phone: "Phone", phonePlaceholder: "Enter your phone number", cancel: "Cancel", ready: "Profile ready", saved: "Profile saved.", trialEnds: "Trial starts after checkout", save: "Save Changes", billing: "Manage Subscription", billingError: "Start a subscription first.", serverError: "A server error occurred. Please try again or contact support@operitron.com." };
   const [status, setStatus] = useState(ui.ready);
   useEffect(() => {
     if (!supabase || !user) return;
@@ -3421,7 +3546,7 @@ function ProfilePage({ t, language, user, isAdmin, go }) {
     }
   }
   const displayPlan = isAdmin ? (language === "es" ? "Administrador ÃƒÆ’Ã¢â‚¬Å¡| Acceso total" : "Administrator ÃƒÆ’Ã¢â‚¬Å¡| Full Access") : subscriptionPlanLabel(plan, language);
-  return <div className="space-y-6"><GlassPanel><SectionHeader title={t.profile} detail={t.profileDetail} />{isAdmin && <div className="mb-6 flex flex-col justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-300/[.07] p-4 sm:flex-row sm:items-center"><p className="font-bold text-cyan-100">{language === "es" ? "Acceso administrativo activo: herramientas premium y control de producciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n habilitados." : "Administrator access active: premium tools and production control are enabled."}</p><button onClick={() => go("admin")} className="secondary-button whitespace-nowrap">{language === "es" ? "Control del Propietario" : "Owner Console"}</button></div>}<div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.name}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} /></label><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} /></label><label className="block"><span className="label">{t.plan}</span><input className="field opacity-70" value={displayPlan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={displayPlan} green /><MiniMetric label={t.trial} value={isAdmin ? (language === "es" ? "Omitida para administrador" : "Bypassed for administrator") : ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><button onClick={saveProfile} className="primary-button mt-5 w-full">{ui.save}</button>{!isAdmin && <button onClick={manageBilling} className="secondary-button mt-3 w-full">{ui.billing}</button>}<p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
+  return <div className="space-y-6"><GlassPanel><SectionHeader title={ui.title} detail={ui.detail} />{isAdmin && <div className="mb-6 flex flex-col justify-between gap-3 rounded-2xl border border-cyan-300/25 bg-cyan-300/[.07] p-4 sm:flex-row sm:items-center"><p className="font-bold text-cyan-100">{language === "es" ? "Acceso administrativo activo: herramientas premium y control de produccion habilitados." : "Administrator access active: premium tools and production control are enabled."}</p><button onClick={() => go("admin")} className="secondary-button whitespace-nowrap">{language === "es" ? "Control del Propietario" : "Owner Console"}</button></div>}<div className="grid gap-6 xl:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><label className="block"><span className="label">{t.email}</span><input className="field opacity-70" value={email} readOnly /></label><label className="block"><span className="label">{ui.displayName}</span><input className="field" value={name} onChange={(e) => setName(e.target.value)} placeholder={ui.namePlaceholder} /></label><label className="block"><span className="label">{ui.phone}</span><input className="field" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder={ui.phonePlaceholder} /></label><label className="block"><span className="label">{ui.company}</span><input className="field" value={company} onChange={(e) => setCompany(e.target.value)} placeholder={ui.companyPlaceholder} /></label><label className="block md:col-span-2"><span className="label">{t.plan}</span><input className="field opacity-70" value={displayPlan} readOnly /></label></div><div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5"><UserCircle className="text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">{name || email}</h3><p className="break-all text-slate-400">{email}</p><div className="mt-5 grid gap-3"><MiniMetric label={t.plan} value={displayPlan} green /><MiniMetric label={t.trial} value={isAdmin ? (language === "es" ? "Omitida para administrador" : "Bypassed for administrator") : ui.trialEnds} /><MiniMetric label={t.workspace} value={company || "-"} /></div><div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-1"><button onClick={() => go("dashboard")} className="secondary-button w-full justify-center">{ui.cancel}</button><button onClick={saveProfile} className="primary-button w-full justify-center">{ui.save}</button></div>{!isAdmin && <button onClick={manageBilling} className="secondary-button mt-3 w-full justify-center">{ui.billing}</button>}<p className="mt-3 text-sm text-slate-500">{status}</p></div></div></GlassPanel></div>;
 }
 
 function LegalPage({ type, language }) {
