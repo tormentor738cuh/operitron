@@ -1044,8 +1044,11 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "Switch to Spanish" : "Cambiar a inglés"} className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">
-            <span aria-hidden="true">{language === "es" ? "🇪🇸" : "🇺🇸"}</span><span className="hidden md:inline">{language === "es" ? "ES Español" : "US English"}</span><span className="md:hidden">{language === "es" ? "ES" : "US"}</span>
+          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "Switch to Spanish" : "Cambiar a inglés"} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-white/10 bg-slate-950/55 px-3 py-2.5 text-sm font-black text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] transition hover:border-cyan-300/45 hover:bg-cyan-300/[.07] hover:text-white hover:shadow-[0_0_22px_rgba(34,211,238,.12)] sm:px-4">
+            <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-white text-base shadow-sm">{language === "es" ? "🇪🇸" : "🇺🇸"}</span>
+            <span className="text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/80">{language === "es" ? "ES" : "US"}</span>
+            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-cyan-300/50 transition group-hover:bg-cyan-200" />
+            <span className="hidden sm:inline">{language === "es" ? "Español" : "English"}</span>
           </button>
           {user ? <div className="relative">
             <button onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} className="flex items-center gap-2 rounded-xl border border-white/10 p-2 text-slate-300 hover:border-cyan-300/50 hover:text-white sm:px-3"><UserCircle /><span className="hidden max-w-40 truncate text-sm font-bold xl:block">{user.email}</span></button>
@@ -2604,6 +2607,14 @@ function AITakeoff({ language = "en", project }) {
   const [measurements, setMeasurements] = useState([]);
   const [draftPoints, setDraftPoints] = useState([]);
   const [note, setNote] = useState("");
+  const [takeoffNotes, setTakeoffNotes] = useState("Reference model: tile takeoff, shower walls, bathroom floors, laundry floors, and engineered hardwood by floor.");
+  const [takeoffItems, setTakeoffItems] = useState([
+    { id: "ref-shower-wall", description: "Tile - Shower Walls", quantity: 486, unit: "ft2", area: "Bathrooms / shower surrounds", materialType: "Tile", waste: 10, unitCost: 4.75, laborCost: 7.5 },
+    { id: "ref-bath-floor", description: "Bathroom Floor Tile", quantity: 218, unit: "ft2", area: "Main + upper bath floors", materialType: "Tile", waste: 10, unitCost: 3.85, laborCost: 6.25 },
+    { id: "ref-laundry-floor", description: "Laundry Floor Tile", quantity: 74, unit: "ft2", area: "Laundry rooms", materialType: "Tile", waste: 8, unitCost: 3.65, laborCost: 5.5 },
+    { id: "ref-hardwood-main", description: "Engineered Hardwood - Main Floor", quantity: 1260, unit: "ft2", area: "Main floor living areas", materialType: "Engineered Hardwood", waste: 8, unitCost: 5.9, laborCost: 3.75 },
+    { id: "ref-hardwood-upper", description: "Engineered Hardwood - Upper Floor", quantity: 980, unit: "ft2", area: "Upper floor bedrooms / halls", materialType: "Engineered Hardwood", waste: 8, unitCost: 5.9, laborCost: 3.75 },
+  ]);
   const reportRef = useRef(null);
   const canvasRef = useRef(null);
 
@@ -2616,6 +2627,28 @@ function AITakeoff({ language = "en", project }) {
     return { ...group, quantity, withWaste, cost: withWaste * cleanNumber(group.unitCost), count: groupItems.length };
   });
   const totalCost = totalsByGroup.reduce((sum, group) => sum + group.cost, 0);
+  const takeoffRows = takeoffItems.map((item) => {
+    const quantity = cleanNumber(item.quantity);
+    const waste = cleanNumber(item.waste);
+    const unitCost = cleanNumber(item.unitCost);
+    const laborCost = cleanNumber(item.laborCost);
+    const orderQuantity = quantity * (1 + waste / 100);
+    return {
+      ...item,
+      quantity,
+      waste,
+      unitCost,
+      laborCost,
+      orderQuantity,
+      materialTotal: orderQuantity * unitCost,
+      laborTotal: quantity * laborCost,
+      total: orderQuantity * unitCost + quantity * laborCost,
+    };
+  });
+  const takeoffTotal = takeoffRows.reduce((sum, item) => sum + item.total, 0);
+  const materialTotal = takeoffRows.reduce((sum, item) => sum + item.materialTotal, 0);
+  const laborTotal = takeoffRows.reduce((sum, item) => sum + item.laborTotal, 0);
+  const wasteTotal = takeoffRows.reduce((sum, item) => sum + Math.max(item.orderQuantity - item.quantity, 0), 0);
 
   const tour = [
     { title: "Set Drawing Scale", text: "Choose a preset scale or calibrate manually with two known points." },
@@ -3652,4 +3685,3 @@ function toolGradient(index) {
 export default function CompFinderPro() {
   return <AppShell />;
 }
-
