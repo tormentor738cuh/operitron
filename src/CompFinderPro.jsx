@@ -474,7 +474,7 @@ const enhancedCopy = {
     checkEmail: "Check your email to confirm your account.",
     loggedIn: "Logged in.",
     confirmEmail: "Confirm email address",
-    forgotPassword: "¿Olvidaste tu contraseña?",
+    forgotPassword: "Forgot password?",
     resetPassword: "Send reset link",
     resetSent: "Password reset instructions have been sent to your email.",
     newPassword: "New password",
@@ -574,7 +574,7 @@ const enhancedCopy = {
     heroText: "Creado para inversionistas, constructores y operadores que necesitan números claros y ejecución más ordenada.",
     viewLearning: "Ver Centro de Aprendizaje",
     whatsInside: "Qué incluye",
-    everyCard: "Cada tarjeta abre un panel de herramienta funciónal.",
+    everyCard: "Cada tarjeta abre un panel de herramienta funcional.",
     activeProject: "Proyecto Activo",
     projectToolsDetail: "Haz clic en cualquier herramienta para abrir su panel. Pasa el cursor sobre ? para ver ayuda.",
     profileDetail: "Administra tu identidad de operador, estado de cuenta y preferencias del espacio de trabajo.",
@@ -1044,11 +1044,9 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "Switch to Spanish" : "Cambiar a inglés"} className="group flex items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-white/10 bg-slate-950/55 px-3 py-2.5 text-sm font-black text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] transition hover:border-cyan-300/45 hover:bg-cyan-300/[.07] hover:text-white hover:shadow-[0_0_22px_rgba(34,211,238,.12)] sm:px-4">
-            <span aria-hidden="true" className="grid h-6 w-6 place-items-center rounded-full bg-white text-base shadow-sm">{language === "es" ? "🇪🇸" : "🇺🇸"}</span>
-            <span className="text-[0.62rem] uppercase tracking-[0.18em] text-cyan-200/80">{language === "es" ? "ES" : "US"}</span>
-            <span aria-hidden="true" className="h-1 w-1 rounded-full bg-cyan-300/50 transition group-hover:bg-cyan-200" />
-            <span className="hidden sm:inline">{language === "es" ? "Español" : "English"}</span>
+          <button onClick={() => setLanguage(language === "en" ? "es" : "en")} aria-label={language === "en" ? "Switch to Spanish" : "Cambiar a inglés"} className="group flex min-h-11 items-center justify-center gap-2 whitespace-nowrap rounded-2xl border border-white/10 bg-slate-950/55 px-3 py-2 text-sm font-black text-slate-200 shadow-[inset_0_1px_0_rgba(255,255,255,.04)] transition hover:border-cyan-300/45 hover:bg-cyan-300/[.07] hover:text-white hover:shadow-[0_0_22px_rgba(34,211,238,.12)] sm:px-4">
+            <span aria-hidden="true" className="grid h-7 w-7 place-items-center rounded-full bg-white text-base shadow-sm ring-1 ring-white/20">{language === "es" ? "🇪🇸" : "🇺🇸"}</span>
+            <span>{language === "es" ? "Español" : "English"}</span>
           </button>
           {user ? <div className="relative">
             <button onClick={() => setAccountOpen((open) => !open)} aria-expanded={accountOpen} className="flex items-center gap-2 rounded-xl border border-white/10 p-2 text-slate-300 hover:border-cyan-300/50 hover:text-white sm:px-3"><UserCircle /><span className="hidden max-w-40 truncate text-sm font-bold xl:block">{user.email}</span></button>
@@ -1067,7 +1065,7 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
               <button onClick={() => { setAccountOpen(false); go("terms"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.terms}</button>
               <button onClick={() => { setAccountOpen(false); go("refund"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.refund}</button>
               <button onClick={() => { setAccountOpen(false); go("disclaimer"); }} className="w-full rounded-xl px-3 py-2 text-left text-sm font-bold text-slate-400 hover:bg-white/5 hover:text-white">{t.disclaimer}</button>
-              <button onClick={() => setLanguage(language === "en" ? "es" : "en")} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-slate-300 hover:bg-white/5"><span>{language === "es" ? "🇪🇸" : "🇺🇸"}</span>{language === "es" ? "Idioma: ES Español" : "Language: US English"}</button>
+              <button onClick={() => setLanguage(language === "en" ? "es" : "en")} className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left font-bold text-slate-300 hover:bg-white/5"><span className="grid h-7 w-7 place-items-center rounded-full bg-white text-base shadow-sm">{language === "es" ? "🇪🇸" : "🇺🇸"}</span><span>{language === "es" ? "Español" : "English"}</span></button>
               <button onClick={() => { setAccountOpen(false); signOut(); }} className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left font-bold text-red-300 hover:bg-red-400/10"><LogOut size={16} />{language === "es" ? "Cerrar sesión" : "Sign out"}</button>
             </div>}
           </div> : <button onClick={() => go("settings")} className="whitespace-nowrap rounded-xl border border-white/10 px-3 py-2.5 text-sm font-bold text-slate-300 hover:border-cyan-300/50 hover:text-white sm:rounded-2xl sm:px-4 sm:py-3">{t.login}</button>}
