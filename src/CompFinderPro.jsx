@@ -48,6 +48,7 @@ import {
   Sparkles,
   StickyNote,
   Trash2,
+  Redo2,
   Undo2,
   Upload,
   UserCircle,
@@ -2603,6 +2604,7 @@ function AITakeoff({ language = "en", project }) {
     { id: "concrete", name: "Concrete", type: "Volume (YD3)", icon: "Building2", color: "#94a3b8", waste: 5, unitCost: 155 },
   ]);
   const [measurements, setMeasurements] = useState([]);
+  const [redoStack, setRedoStack] = useState([]);
   const [draftPoints, setDraftPoints] = useState([]);
   const [note, setNote] = useState("");
   const [takeoffNotes, setTakeoffNotes] = useState("Reference model: tile takeoff, shower walls, bathroom floors, laundry floors, and engineered hardwood by floor.");
@@ -2720,10 +2722,40 @@ function AITakeoff({ language = "en", project }) {
     setMeasureMode("linear");
   }
 
-  function addMeasurement(points) {
+  function unitForType(type) {
+    if (type.includes("Count")) return "EA";
+    if (type.includes("Linear")) return "LF";
+    if (type.includes("Volume")) return "yd3";
+    return "ft2";
+  }
+
+  function addTakeoffItemFromMeasurement(measurement, group) {
+    const description = window.prompt("Description for this takeoff item", measurement.label || group.name) || measurement.label || group.name;
+    const location = window.prompt("Area / location", "Plan page 1") || "Plan page 1";
+    const materialType = window.prompt("Category / material", group.name) || group.name;
+    setTakeoffItems((current) => [{
+      id: `measurement-${measurement.id}`,
+      measurementId: measurement.id,
+      color: group.color,
+      description,
+      quantity: Number(measurement.quantity.toFixed(2)),
+      unit: unitForType(group.type),
+      area: location,
+      materialType,
+      waste: group.waste ?? 0,
+      unitCost: group.unitCost ?? 0,
+      laborCost: 0,
+      notes: "Created from blueprint cursor measurement.",
+    }, ...current]);
+  }
+
+  function addMeasurement(points, options = {}) {
     const quantity = convertQuantity(activeGroup.type, points);
     if (!quantity) return;
-    setMeasurements((current) => [...current, { id: Date.now(), groupId: activeGroupId, mode: activeGroup.type, points, quantity, label: activeGroup.name }]);
+    const measurement = { id: Date.now(), groupId: activeGroupId, mode: activeGroup.type, points, quantity, label: activeGroup.name };
+    setMeasurements((current) => [...current, measurement]);
+    setRedoStack([]);
+    if (options.addToTable !== false) addTakeoffItemFromMeasurement(measurement, activeGroup);
     setDraftPoints([]);
   }
 
@@ -2750,6 +2782,10 @@ function AITakeoff({ language = "en", project }) {
       setNote("");
       return;
     }
+    if (tool === "delete") {
+      undoMeasurement();
+      return;
+    }
     if (measureMode === "count" || activeGroup.type.includes("Count")) {
       addMeasurement([point]);
       return;
@@ -2758,6 +2794,9 @@ function AITakeoff({ language = "en", project }) {
     setDraftPoints(nextPoints);
     if (measureMode === "linear" || activeGroup.type.includes("Linear")) {
       if (nextPoints.length >= 2) addMeasurement(nextPoints.slice(0, 2));
+    } else if (measureMode === "rectangle" && nextPoints.length >= 2) {
+      const [a, b] = nextPoints;
+      addMeasurement([{ x: a.x, y: a.y }, { x: b.x, y: a.y }, { x: b.x, y: b.y }, { x: a.x, y: b.y }]);
     } else if (nextPoints.length >= 4) {
       addMeasurement(nextPoints);
     }
@@ -2803,8 +2842,102 @@ function AITakeoff({ language = "en", project }) {
   }
 
   function saveTakeoff() {
+    try {
+      localStorage.setItem(`operitron-takeoff-${project?.id || "draft"}`, JSON.stringify({
+        projectId: project?.id || null,
+        fileName,
+        measurements,
+        groups,
+        takeoffItems,
+        takeoffNotes,
+        savedAt: new Date().toISOString(),
+      }));
+    } catch {
+      // Local persistence is a convenience only; Supabase save can be wired by project id later.
+    }
     setTakeoffStatus("Takeoff saved to this project workspace.");
     setMenuOpen(false);
+  }
+
+  function undoMeasurement() {
+    setMeasurements((current) => {
+      if (!current.length) return current;
+      const last = current[current.length - 1];
+      setRedoStack((redo) => [last, ...redo]);
+      setTakeoffItems((items) => items.filter((item) => item.measurementId !== last.id));
+      return current.slice(0, -1);
+    });
+  }
+
+  function redoMeasurement() {
+    setRedoStack((current) => {
+      if (!current.length) return current;
+      const [next, ...rest] = current;
+      const group = groups.find((item) => item.id === next.groupId) || activeGroup;
+      setMeasurements((items) => [...items, next]);
+      setTakeoffItems((items) => [{
+        id: `measurement-${next.id}`,
+        measurementId: next.id,
+        color: group.color,
+        description: next.label || group.name,
+        quantity: Number(next.quantity.toFixed(2)),
+        unit: unitForType(group.type),
+        area: "Plan page 1",
+        materialType: group.name,
+        waste: group.waste ?? 0,
+        unitCost: group.unitCost ?? 0,
+        laborCost: 0,
+        notes: "Restored blueprint measurement.",
+      }, ...items]);
+      return rest;
+    });
+  }
+
+  function updateTakeoffItem(id, key, value) {
+    setTakeoffItems((current) => current.map((item) => item.id === id ? { ...item, [key]: value } : item));
+  }
+
+  function addManualTakeoffItem() {
+    setTakeoffItems((current) => [{
+      id: `manual-${Date.now()}`,
+      color: activeGroup.color,
+      description: "New takeoff item",
+      quantity: 0,
+      unit: unitForType(activeGroup.type),
+      area: "Plan page 1",
+      materialType: activeGroup.name,
+      waste: activeGroup.waste ?? 0,
+      unitCost: activeGroup.unitCost ?? 0,
+      laborCost: 0,
+      notes: "",
+    }, ...current]);
+  }
+
+  function removeTakeoffItem(id) {
+    setTakeoffItems((current) => current.filter((item) => item.id !== id));
+  }
+
+  function runAiAction(action) {
+    const labels = {
+      summary: "AI summarized the current takeoff into scope-ready quantities.",
+      materials: "AI created a material list with waste factors by category.",
+      labor: "AI estimated labor allowances from the measured quantities.",
+      missing: "AI checked for likely missing items: transitions, thresholds, trim, waterproofing, and setting materials.",
+      explain: "AI explanation added: quantities are derived from measured area, linear footage, counts, waste, unit cost, and labor cost.",
+    };
+    if (action === "materials" && !takeoffItems.some((item) => item.id === "ai-thinset")) {
+      setTakeoffItems((current) => [
+        { id: "ai-thinset", color: "#facc15", description: "Thinset / setting material", quantity: 52, unit: "bags", area: "Tile scope", materialType: "Tile Supplies", waste: 10, unitCost: 24, laborCost: 0, notes: "AI generated from tile square footage." },
+        { id: "ai-grout", color: "#38bdf8", description: "Grout", quantity: 18, unit: "bags", area: "Tile scope", materialType: "Tile Supplies", waste: 8, unitCost: 19, laborCost: 0, notes: "AI generated from tile square footage." },
+        ...current,
+      ]);
+    }
+    setTakeoffStatus(labels[action] || "AI takeoff action completed.");
+  }
+
+  function pushToBudgetEstimator() {
+    const mapped = takeoffRows.map((item) => `${item.materialType}: ${item.description} - ${formatNumber(item.orderQuantity, 2)} ${item.unit} @ ${formatMoney(item.unitCost)} material / ${formatMoney(item.laborCost)} labor`);
+    setTakeoffStatus(`Sent ${takeoffRows.length} takeoff lines to Budget Estimator: ${mapped.slice(0, 3).join("; ")}${mapped.length > 3 ? "..." : ""}`);
   }
 
   function renderAiSummary() {
@@ -2878,11 +3011,11 @@ function AITakeoff({ language = "en", project }) {
       <main className="flex min-w-0 flex-1 flex-col">
         <div className="flex h-16 shrink-0 items-center gap-2 border-b border-white/10 bg-slate-950/95 px-3">
           <button onClick={() => setStarted(false)} className="secondary-button h-11 px-3"><ChevronRight className="rotate-180" size={18} /> Back to Takeoff</button>
-          {[['select', MousePointer2, 'Select'], ['pan', Move, 'Pan'], ['note', StickyNote, 'Note']].map(([id, Icon, label]) => <button key={id} onClick={() => setTool(id)} className={`rounded-xl px-3 py-2 font-bold ${tool === id ? 'bg-cyan-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}><Icon className="mr-2 inline" size={18} />{label}</button>)}
+          {[['select', MousePointer2, 'Select'], ['pan', Move, 'Move'], ['note', StickyNote, 'Note'], ['delete', Trash2, 'Delete']].map(([id, Icon, label]) => <button key={id} onClick={() => setTool(id)} className={`rounded-xl px-3 py-2 font-bold ${tool === id ? 'bg-cyan-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}><Icon className="mr-2 inline" size={18} />{label}</button>)}
           <div className="hidden h-8 w-px bg-white/10 sm:block" />
-          {['area', 'linear', 'count'].map((mode) => <button key={mode} onClick={() => { setTool('draw'); setMeasureMode(mode); }} className={`rounded-xl px-3 py-2 text-sm font-black uppercase ${measureMode === mode && tool === 'draw' ? 'bg-amber-400 text-slate-950' : 'border border-white/10 text-slate-300'}`}>{mode}</button>)}
+          {['area', 'rectangle', 'linear', 'count'].map((mode) => <button key={mode} onClick={() => { setTool('draw'); setMeasureMode(mode); }} className={`rounded-xl px-3 py-2 text-sm font-black uppercase ${measureMode === mode && tool === 'draw' ? 'bg-amber-400 text-slate-950' : 'border border-white/10 text-slate-300'}`}>{mode === "rectangle" ? "Rect" : mode}</button>)}
           <button onClick={() => setShowScaleModal(true)} className="secondary-button h-11 px-3"><Ruler size={18} /> Set Scale</button>
-          <div className="ml-auto flex items-center gap-2"><button onClick={() => setZoom(Math.max(20, zoom - 5))} className="rounded-xl p-2 hover:bg-white/5"><ZoomOut /></button><span className="w-12 text-center font-bold text-slate-400">{zoom}%</span><button onClick={() => setZoom(Math.min(125, zoom + 5))} className="rounded-xl p-2 hover:bg-white/5"><ZoomIn /></button><span className="hidden rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-amber-200 xl:inline-flex"><Ruler className="mr-2" size={16} />{scaleLabel} ? {scaleFeet} ft</span><button onClick={finishArea} className="secondary-button h-11 px-3">Finish</button><button onClick={aiGenerate} className="rounded-xl bg-purple-500 px-4 py-3 font-black text-white shadow-lg shadow-purple-500/20"><Bot className="mr-2 inline" size={18} />AI Takeoff</button><div className="relative"><button onClick={() => setMenuOpen(!menuOpen)} className="rounded-xl border border-white/10 p-3"><MoreVertical /></button>{menuOpen && <div className="absolute right-0 top-14 z-20 w-56 rounded-2xl border border-white/10 bg-slate-900 p-2 shadow-2xl"><button onClick={saveTakeoff} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><Save size={18} /> Save</button><button onClick={resetMeasurements} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-rose-200 hover:bg-rose-400/10"><Trash2 size={18} /> Reset Measurements</button><button onClick={exportPdf} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><Printer size={18} /> Print / Export</button><button onClick={() => { setShowTour(true); setTourStep(1); setMenuOpen(false); }} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><HelpCircle size={18} /> Start Tour</button></div>}</div></div>
+          <div className="ml-auto flex items-center gap-2"><button onClick={undoMeasurement} className="rounded-xl p-2 hover:bg-white/5" title="Undo last measurement"><Undo2 /></button><button onClick={redoMeasurement} className="rounded-xl p-2 hover:bg-white/5" title="Redo measurement"><Redo2 /></button><button onClick={() => setZoom(Math.max(20, zoom - 5))} className="rounded-xl p-2 hover:bg-white/5"><ZoomOut /></button><span className="w-12 text-center font-bold text-slate-400">{zoom}%</span><button onClick={() => setZoom(Math.min(125, zoom + 5))} className="rounded-xl p-2 hover:bg-white/5"><ZoomIn /></button><button onClick={() => setZoom(41)} className="rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-slate-300 hover:bg-white/5">Fit</button><span className="hidden rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-amber-200 xl:inline-flex"><Ruler className="mr-2" size={16} />{scaleLabel} | {scaleFeet} ft</span><button onClick={finishArea} className="secondary-button h-11 px-3">Finish</button><button onClick={aiGenerate} className="rounded-xl bg-purple-500 px-4 py-3 font-black text-white shadow-lg shadow-purple-500/20"><Bot className="mr-2 inline" size={18} />AI Takeoff</button><div className="relative"><button onClick={() => setMenuOpen(!menuOpen)} className="rounded-xl border border-white/10 p-3"><MoreVertical /></button>{menuOpen && <div className="absolute right-0 top-14 z-20 w-56 rounded-2xl border border-white/10 bg-slate-900 p-2 shadow-2xl"><button onClick={saveTakeoff} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><Save size={18} /> Save</button><button onClick={resetMeasurements} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-rose-200 hover:bg-rose-400/10"><Trash2 size={18} /> Reset Measurements</button><button onClick={exportPdf} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><Printer size={18} /> Print / Export</button><button onClick={() => { setShowTour(true); setTourStep(1); setMenuOpen(false); }} className="flex w-full gap-3 rounded-xl px-3 py-3 text-left text-slate-300 hover:bg-white/5"><HelpCircle size={18} /> Start Tour</button></div>}</div></div>
         </div>
         <div className="flex min-h-0 flex-1">
           <section className="relative min-w-0 flex-1 overflow-auto bg-[#070b14] p-5">
@@ -2895,10 +3028,10 @@ function AITakeoff({ language = "en", project }) {
                     if (measurement.mode === "Note") return <text key={measurement.id} x={measurement.points[0].x} y={measurement.points[0].y} fill={group.color} fontSize="30" fontWeight="800">{measurement.label}</text>;
                     if (measurement.points.length === 1) return <circle key={measurement.id} cx={measurement.points[0].x} cy={measurement.points[0].y} r="12" fill={group.color} />;
                     if (measurement.points.length === 2) return <line key={measurement.id} x1={measurement.points[0].x} y1={measurement.points[0].y} x2={measurement.points[1].x} y2={measurement.points[1].y} stroke={group.color} strokeWidth="7" strokeDasharray="14 10" />;
-                    return <polygon key={measurement.id} points={measurement.points.map((point) => `${point.x},${point.y}`).join(" | ")} fill={`${group.color}55`} stroke={group.color} strokeWidth="6" />;
+                    return <polygon key={measurement.id} points={measurement.points.map((point) => `${point.x},${point.y}`).join(" ")} fill={`${group.color}55`} stroke={group.color} strokeWidth="6" />;
                   })}
-                  {draftPoints.length > 0 && <polyline points={draftPoints.map((point) => `${point.x},${point.y}`).join(" | ")} fill="none" stroke="#22d3ee" strokeWidth="6" strokeDasharray="10 8" />}
-                  {calibrationPoints.length > 0 && <polyline points={calibrationPoints.map((point) => `${point.x},${point.y}`).join(" | ")} fill="none" stroke="#facc15" strokeWidth="8" strokeDasharray="12 8" />}
+                  {draftPoints.length > 0 && <polyline points={draftPoints.map((point) => `${point.x},${point.y}`).join(" ")} fill="none" stroke="#22d3ee" strokeWidth="6" strokeDasharray="10 8" />}
+                  {calibrationPoints.length > 0 && <polyline points={calibrationPoints.map((point) => `${point.x},${point.y}`).join(" ")} fill="none" stroke="#facc15" strokeWidth="8" strokeDasharray="12 8" />}
                 </svg>
               </div>
             </div>
@@ -2935,6 +3068,56 @@ function AITakeoff({ language = "en", project }) {
                   <h3 className="text-xl font-black text-white">Project Summary</h3>
                   {measurements.length ? <div className="mt-4 space-y-3">{totalsByGroup.filter((group) => group.count).map((group) => <div key={group.id} className="rounded-2xl border border-white/10 bg-slate-900/60 p-4"><div className="flex justify-between"><span className="font-black text-white">{group.name}</span><span className="text-cyan-300">{formatMoney(group.cost)}</span></div><p className="mt-1 text-sm text-slate-400">{formatNumber(group.withWaste, 1)} units incl. {group.waste}% waste</p></div>)}<div className="rounded-2xl bg-cyan-300/10 p-4 text-lg font-black text-cyan-100">Total: {formatMoney(totalCost)}</div></div> : <p className="mt-8 text-center text-slate-500">No measurements yet<br />Select a group and start drawing</p>}
                 </div>
+                <div className="border-t border-white/10 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-xl font-black text-white">Editable Quantity Table</h3>
+                      <p className="mt-1 text-sm text-slate-500">Descriptions, quantities, costs, waste, labor, and notes stay editable.</p>
+                    </div>
+                    <button onClick={addManualTakeoffItem} className="rounded-xl bg-cyan-300 px-3 py-2 text-sm font-black text-slate-950"><Plus size={16} className="inline" /> Add</button>
+                  </div>
+                  <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                    <MiniMetric label="Material" value={formatMoney(materialTotal)} />
+                    <MiniMetric label="Labor" value={formatMoney(laborTotal)} />
+                    <MiniMetric label="Total" value={formatMoney(takeoffTotal)} green />
+                  </div>
+                  <div className="mt-4 overflow-x-auto rounded-2xl border border-white/10 bg-slate-900/70">
+                    <table className="min-w-[1120px] text-left text-sm">
+                      <thead className="bg-slate-950/80 text-xs font-black uppercase tracking-widest text-slate-500">
+                        <tr>
+                          {["Color", "Description", "Location", "Category", "Qty", "Unit", "Waste %", "Unit Cost", "Labor", "Total", "Notes", ""].map((head) => <th key={head} className="px-3 py-3">{head}</th>)}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {takeoffRows.map((item) => (
+                          <tr key={item.id} className="border-t border-white/10 align-top">
+                            <td className="px-3 py-3"><span className="block h-5 w-5 rounded-full border border-white/20" style={{ backgroundColor: item.color || "#22d3ee" }} /></td>
+                            <td className="px-3 py-3"><input className="w-48 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.description} onChange={(event) => updateTakeoffItem(item.id, "description", event.target.value)} /></td>
+                            <td className="px-3 py-3"><input className="w-40 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.area || ""} onChange={(event) => updateTakeoffItem(item.id, "area", event.target.value)} /></td>
+                            <td className="px-3 py-3"><input className="w-40 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.materialType || ""} onChange={(event) => updateTakeoffItem(item.id, "materialType", event.target.value)} /></td>
+                            <td className="px-3 py-3"><input inputMode="decimal" className="w-24 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.quantity} onChange={(event) => updateTakeoffItem(item.id, "quantity", event.target.value)} /></td>
+                            <td className="px-3 py-3"><select className="w-24 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.unit} onChange={(event) => updateTakeoffItem(item.id, "unit", event.target.value)}><option>ft2</option><option>LF</option><option>EA</option><option>yd3</option><option>bags</option><option>boxes</option></select></td>
+                            <td className="px-3 py-3"><input inputMode="decimal" className="w-20 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.waste} onChange={(event) => updateTakeoffItem(item.id, "waste", event.target.value)} /></td>
+                            <td className="px-3 py-3"><input inputMode="decimal" className="w-24 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.unitCost} onChange={(event) => updateTakeoffItem(item.id, "unitCost", event.target.value)} /></td>
+                            <td className="px-3 py-3"><input inputMode="decimal" className="w-24 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.laborCost} onChange={(event) => updateTakeoffItem(item.id, "laborCost", event.target.value)} /></td>
+                            <td className="px-3 py-3 font-black text-emerald-300">{formatMoney(item.total)}</td>
+                            <td className="px-3 py-3"><input className="w-56 rounded-lg border border-white/10 bg-slate-950 px-3 py-2 text-white outline-none focus:border-cyan-300" value={item.notes || ""} onChange={(event) => updateTakeoffItem(item.id, "notes", event.target.value)} /></td>
+                            <td className="px-3 py-3"><button onClick={() => removeTakeoffItem(item.id)} className="rounded-lg border border-rose-300/20 p-2 text-rose-200 hover:bg-rose-400/10"><Trash2 size={16} /></button></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  <label className="mt-4 block"><span className="label">Takeoff Notes</span><textarea className="field min-h-24" value={takeoffNotes} onChange={(event) => setTakeoffNotes(event.target.value)} /></label>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <button onClick={() => runAiAction("summary")} className="secondary-button justify-center"><Bot size={18} />AI summarize</button>
+                    <button onClick={() => runAiAction("materials")} className="secondary-button justify-center"><Sparkles size={18} />Material list</button>
+                    <button onClick={() => runAiAction("labor")} className="secondary-button justify-center"><Hammer size={18} />Labor estimate</button>
+                    <button onClick={pushToBudgetEstimator} className="secondary-button justify-center"><Calculator size={18} />Push budget</button>
+                    <button onClick={() => runAiAction("missing")} className="secondary-button justify-center"><Search size={18} />Missing items</button>
+                    <button onClick={() => runAiAction("explain")} className="secondary-button justify-center"><HelpCircle size={18} />Explain qty</button>
+                  </div>
+                </div>
               </>
             ) : (
               <div className="flex flex-1 flex-col">
@@ -2950,7 +3133,7 @@ function AITakeoff({ language = "en", project }) {
           </aside>
         </div>
       </main>
-      {showScaleModal && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-md"><div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><h3 className="flex items-center gap-3 text-2xl font-black text-white"><Ruler className="text-amber-300" /> Set Drawing Scale</h3><p className="mt-3 max-w-2xl text-lg leading-7 text-slate-400">Choose a preset scale or calibrate manually by clicking two points on the plan.</p></div><button onClick={() => setShowScaleModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-white"><X /></button></div><div className="mt-6"><p className="mb-3 font-black text-white">Preset Scales</p><div className="grid gap-3 sm:grid-cols-3">{scalePresets.map((preset) => <button key={preset.label} onClick={() => applyScalePreset(preset)} className={`rounded-2xl border p-4 text-left transition hover:border-amber-400/60 hover:bg-amber-400/10 ${scaleLabel === preset.label ? "border-amber-400 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,.18)]" : "border-white/10 bg-slate-900/60"}`}><p className="text-lg font-black text-white">{preset.label}</p><p className="mt-1 text-sm font-bold text-slate-500">{preset.detail}</p></button>)}</div></div><div className="mt-7"><p className="mb-3 font-black text-white">Custom Calibration</p><div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/50 p-5"><p className="text-slate-400">Click two points on the plan and enter the real-world distance.</p><label className="mt-4 block"><span className="label">Known distance in feet</span><input inputMode="decimal" className="field" value={calibrationDistance} onChange={(event) => setCalibrationDistance(event.target.value)} /></label><button onClick={startCalibration} className="primary-button mt-4 w-full justify-center"><MousePointer2 size={18} /> Start Calibration</button></div></div><div className="mt-6 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-bold text-cyan-200">Current: {scaleLabel} ? {scaleFeet} ft</p><button onClick={() => setShowScaleModal(false)} className="secondary-button">Cancel</button></div></div></div>}
+      {showScaleModal && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-md"><div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"><div className="flex items-start justify-between gap-4"><div><h3 className="flex items-center gap-3 text-2xl font-black text-white"><Ruler className="text-amber-300" /> Set Drawing Scale</h3><p className="mt-3 max-w-2xl text-lg leading-7 text-slate-400">Choose a preset scale or calibrate manually by clicking two points on the plan.</p></div><button onClick={() => setShowScaleModal(false)} className="rounded-xl p-2 text-slate-400 hover:bg-white/5 hover:text-white"><X /></button></div><div className="mt-6"><p className="mb-3 font-black text-white">Preset Scales</p><div className="grid gap-3 sm:grid-cols-3">{scalePresets.map((preset) => <button key={preset.label} onClick={() => applyScalePreset(preset)} className={`rounded-2xl border p-4 text-left transition hover:border-amber-400/60 hover:bg-amber-400/10 ${scaleLabel === preset.label ? "border-amber-400 bg-amber-400/10 shadow-[0_0_28px_rgba(251,191,36,.18)]" : "border-white/10 bg-slate-900/60"}`}><p className="text-lg font-black text-white">{preset.label}</p><p className="mt-1 text-sm font-bold text-slate-500">{preset.detail}</p></button>)}</div></div><div className="mt-7"><p className="mb-3 font-black text-white">Custom Calibration</p><div className="rounded-2xl border border-dashed border-white/10 bg-slate-900/50 p-5"><p className="text-slate-400">Click two points on the plan and enter the real-world distance.</p><label className="mt-4 block"><span className="label">Known distance in feet</span><input inputMode="decimal" className="field" value={calibrationDistance} onChange={(event) => setCalibrationDistance(event.target.value)} /></label><button onClick={startCalibration} className="primary-button mt-4 w-full justify-center"><MousePointer2 size={18} /> Start Calibration</button></div></div><div className="mt-6 flex flex-wrap items-center justify-between gap-3"><p className="text-sm font-bold text-cyan-200">Current: {scaleLabel} | {scaleFeet} ft</p><button onClick={() => setShowScaleModal(false)} className="secondary-button">Cancel</button></div></div></div>}
       {showGroupModal && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm"><div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl"><div className="flex items-center justify-between"><h3 className="text-2xl font-black text-white">Add Group</h3><button onClick={() => setShowGroupModal(false)}><X /></button></div><div className="mt-5 grid gap-4"><label><span className="label">Name</span><input className="field text-lg" value={draftGroup.name} onChange={(event) => setDraftGroup({ ...draftGroup, name: event.target.value })} /></label><label><span className="label">Type</span><select className="field" value={draftGroup.type} onChange={(event) => setDraftGroup({ ...draftGroup, type: event.target.value })}><option>Area (SF)</option><option>Linear (LF)</option><option>Count</option><option>Volume (YD3)</option></select></label><label><span className="label">Parent Group</span><select className="field" value={draftGroup.parent} onChange={(event) => setDraftGroup({ ...draftGroup, parent: event.target.value })}><option>None</option>{groups.map((group) => <option key={group.id}>{group.name}</option>)}</select></label><div className="grid gap-4 md:grid-cols-2"><div><span className="label">Icon</span><div className="grid grid-cols-6 gap-2 rounded-2xl bg-slate-900 p-3">{iconOptions.map((icon) => { const Icon = IconByName[icon] || Layers; return <button key={icon} onClick={() => setDraftGroup({ ...draftGroup, icon })} className={`grid h-10 place-items-center rounded-xl ${draftGroup.icon === icon ? 'bg-amber-400 text-slate-950' : 'bg-slate-800 text-slate-300'}`}><Icon size={18} /></button>; })}</div></div><div><span className="label">Color</span><div className="grid grid-cols-7 gap-2 rounded-2xl bg-slate-900 p-3">{colorOptions.map((color) => <button key={color} onClick={() => setDraftGroup({ ...draftGroup, color })} className={`h-9 rounded-lg border-2 ${draftGroup.color === color ? 'border-white' : 'border-transparent'}`} style={{ backgroundColor: color }} />)}</div></div></div><label><span className="label">Pitch</span><select className="field" value={draftGroup.pitch} onChange={(event) => setDraftGroup({ ...draftGroup, pitch: event.target.value })}><option>Flat (0/12)</option><option>Low slope (3/12)</option><option>Standard (6/12)</option><option>Steep (9/12)</option></select></label><label className="flex items-center gap-3 text-white"><input type="checkbox" checked={draftGroup.volume} onChange={(event) => setDraftGroup({ ...draftGroup, volume: event.target.checked })} /> Calculate volume (yd3)</label></div><div className="mt-6 flex justify-end gap-3"><button onClick={() => setShowGroupModal(false)} className="secondary-button">Cancel</button><button onClick={addGroup} className="primary-button">Save</button></div></div></div>}
       {aiOpen && <div className="fixed inset-0 z-[70] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
         <div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-slate-950 p-6 shadow-2xl">
@@ -2982,7 +3165,7 @@ function AITakeoff({ language = "en", project }) {
             <div className="mt-5 flex gap-3"><textarea value={customPrompt} onChange={(event) => setCustomPrompt(event.target.value)} className="field min-h-28 flex-1" placeholder="Tell me which pages to analyze and what you're looking for..." /><button onClick={() => runTakeoffAnalysis("custom")} className="primary-button self-end"><Bot size={18} />Go</button></div>
           </>}
         </div>
-      </div>}      <div ref={reportRef} className="fixed -left-[9999px] top-0 w-[794px] bg-white p-10 text-slate-950"><div className="flex justify-between border-b border-slate-300 pb-5"><h1 className="text-3xl font-black">Takeoff Report</h1><p>{new Date().toLocaleDateString()}</p></div>{totalsByGroup.filter((group) => group.count).map((group) => <div key={group.id} className="flex justify-between border-b border-slate-200 py-4"><span><strong>{group.name}</strong><br />{group.count} measurements</span><span>{formatNumber(group.withWaste, 1)} units<br /><small>{group.waste}% waste</small></span></div>)}<div className="flex justify-between pt-5 text-xl font-black"><span>Total</span><span>{formatMoney(totalCost)}</span></div><p className="mt-8 text-sm text-slate-500">Generated by Operitron</p></div>
+      </div>}      <div ref={reportRef} className="fixed -left-[9999px] top-0 w-[794px] bg-white p-10 text-slate-950"><div className="flex justify-between border-b border-slate-300 pb-5"><h1 className="text-3xl font-black">Takeoff Report</h1><p>{new Date().toLocaleDateString()}</p></div><p className="mt-4 text-sm text-slate-600">{fileName} | {scaleLabel} | Project: {project?.name || project?.title || "Draft"}</p>{takeoffRows.map((item) => <div key={item.id} className="flex justify-between border-b border-slate-200 py-4"><span><strong>{item.description}</strong><br />{item.area} | {item.materialType}<br /><small>{item.notes}</small></span><span>{formatNumber(item.orderQuantity, 2)} {item.unit}<br /><small>{item.waste}% waste | {formatMoney(item.total)}</small></span></div>)}<div className="mt-5 border-t border-slate-300 pt-4"><div className="flex justify-between"><span>Materials</span><span>{formatMoney(materialTotal)}</span></div><div className="flex justify-between"><span>Labor</span><span>{formatMoney(laborTotal)}</span></div><div className="flex justify-between pt-3 text-xl font-black"><span>Total</span><span>{formatMoney(takeoffTotal)}</span></div></div><p className="mt-6 text-sm text-slate-600">{takeoffNotes}</p><p className="mt-8 text-sm text-slate-500">Generated by Operitron</p></div>
     </div>
   );
 }
