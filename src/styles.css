@@ -99,8 +99,7 @@ select:focus-visible {
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.backdrop-blur,
-.backdrop-blur-xl {
+.modal-pop {
   animation: soft-pop 180ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 

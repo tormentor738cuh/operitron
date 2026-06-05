@@ -147,7 +147,16 @@ const pagePaths = {
   disclaimer: "/disclaimer",
 };
 const pathPages = Object.fromEntries(Object.entries(pagePaths).map(([page, path]) => [path, page]));
-const getPageFromPath = () => pathPages[window.location.pathname.replace(/\/+$/, "") || "/"] || "home";
+const pathAliases = {
+  "/login": "settings",
+  "/settings": "settings",
+  "/project": "projectDetails",
+  "/projects": "projectManager",
+};
+const getPageFromPath = () => {
+  const path = window.location.pathname.replace(/\/+$/, "") || "/";
+  return pathAliases[path] || pathPages[path] || "home";
+};
 
 const seoArticles = {
   brrrCalculator: {
@@ -837,7 +846,7 @@ function AppShell() {
   const isAdmin = Boolean(subscription?.role === "admin" || (user?.email && adminEmails.includes(user.email.toLowerCase())));
   const isTestCustomer = Boolean(user?.email && customerBypassEmails.includes(user.email.toLowerCase()));
   const hasPremium = ["active", "trialing"].includes(subscription?.subscription_status);
-  const hasProductAccess = hasPremium || isAdmin || isTestCustomer;
+  const hasProductAccess = Boolean(user || hasPremium || isAdmin || isTestCustomer);
 
   useEffect(() => {
     if (!supabase || !user || !isAdmin) return;
@@ -953,7 +962,7 @@ function AppShell() {
     setAuthLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/settings`,
+        redirectTo: `${window.location.origin}${pagePaths.settings}`,
       });
       if (error) throw error;
       setAuthMessage(language === "es" ? "Enlace enviado. Revisa tu email." : "Reset link sent. Check your email.");
@@ -1035,11 +1044,11 @@ function AppShell() {
     return <Dashboard {...props} />;
   }, [activePage, language, projects, user, subscription, passwordRecovery, hasProductAccess, isAdmin, isTestCustomer, activeProject, authMode, authEmail, authPassword, authName, authMessage, authLoading]);
 
-  if (loading || authLoading || (user && subscriptionLoading && !isAdmin)) return <LoadingScreen />;
+  if (loading || authLoading) return <LoadingScreen />;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-[#050817] text-slate-200">
-      <div className="pointer-events-none fixed inset-0 opacity-80">
+      <div aria-hidden="true" className="pointer-events-none fixed inset-0 z-0 opacity-80">
         <div className="absolute -left-32 -top-28 h-[440px] w-[440px] rounded-full bg-cyan-500/16 blur-3xl" />
         <div className="absolute right-[-120px] top-20 h-[460px] w-[460px] rounded-full bg-amber-400/18 blur-3xl" />
         <div className="absolute bottom-[-160px] left-[34%] h-[520px] w-[520px] rounded-full bg-fuchsia-500/10 blur-3xl" />
@@ -1057,7 +1066,7 @@ function AppShell() {
       </main>
       {!user && activePage !== "home" && <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 sm:px-5 lg:px-8 lg:pb-8"><PublicFooter isEs={language === "es"} go={go} /></div>}
       <MobileNavigation t={t} language={language} activePage={activePage} go={go} user={user} hasProductAccess={hasProductAccess} />
-      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} projects={projects} onSaveProject={saveOrUpdateProject} activeProject={activeProject} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
+      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} projects={projects} onSaveProject={saveOrUpdateProject} activeProject={activeProject} getAccessToken={getAccessToken} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
       {contactOpen && <ContactModal language={language} user={user} onClose={() => setContactOpen(false)} />}
     </div>
   );
@@ -1071,9 +1080,13 @@ function Sidebar({ t, user, activePage, go, setActiveTool, mobileOpen, setMobile
   const isSpanish = t.dashboard === "Panel";
   const items = [
     ["dashboard", Home, t.dashboard],
+    ["projectTools", Hammer, t.projectTools],
     ["projectManager", FolderOpen, isSpanish ? "Mis Proyectos" : "My Projects"],
-    ["createProject", Plus, isSpanish ? "Crear Proyecto" : "Create Project"],
     ["propertySearch", MapPin, t.propertySearch],
+    ["learning", BookOpen, t.learning],
+    ["knowledge", Sparkles, t.knowledge],
+    ["tutorials", PlayCircle, t.tutorials],
+    ["createProject", Plus, isSpanish ? "Crear Proyecto" : "Create Project"],
     ["reports", FileText, isSpanish ? "Reportes" : "Reports"],
     ["billing", WalletCards, isSpanish ? "Facturacion" : "Billing"],
     ["contact", Mail, isSpanish ? "Contacto" : "Contact Us"],
@@ -1086,8 +1099,6 @@ function Sidebar({ t, user, activePage, go, setActiveTool, mobileOpen, setMobile
     ["loan", Calculator, isSpanish ? "Calculadora de Pr?stamo" : "Loan Calculator"],
   ];
   const resourceItems = [
-    ["learning", BookOpen, t.learning],
-    ["tutorials", PlayCircle, t.tutorials],
     ["dropbox", Cloud, t.dropbox],
     ["pricing", DollarSign, t.pricing],
     ["settings", Settings, t.settings],
@@ -1095,7 +1106,7 @@ function Sidebar({ t, user, activePage, go, setActiveTool, mobileOpen, setMobile
   if (isAdmin) items.splice(1, 0, ["admin", Sparkles, "Owner Console"]);
 
   return (
-    <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-white/10 bg-slate-950/90 p-5 backdrop-blur-xl transition-all duration-300 lg:translate-x-0 ${collapsed ? "lg:w-20 lg:p-3" : "lg:w-72"} ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
+    <aside className={`fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-cyan-300/10 bg-[#05091a]/95 p-5 shadow-[18px_0_70px_rgba(0,0,0,.35)] backdrop-blur-xl transition-all duration-300 lg:translate-x-0 ${collapsed ? "lg:w-20 lg:p-3" : "lg:w-72"} ${mobileOpen ? "translate-x-0" : "-translate-x-full"}`}>
       <div className="flex items-center justify-between gap-2">
         <div className={collapsed ? "lg:hidden" : ""}><BrandLogo onClick={() => go("dashboard")} size="sidebar" /></div>
         {collapsed && <button type="button" onClick={() => go("dashboard")} aria-label="OPERITRON.COM" className="hidden h-12 w-12 place-items-center rounded-2xl border border-cyan-300/20 bg-slate-900/70 transition hover:border-cyan-300/60 hover:shadow-[0_0_22px_rgba(34,211,238,.24)] lg:grid"><img loading="eager" decoding="async" src="/operitron-mark.png" className="h-10 w-10 rounded-xl object-cover" alt="" /></button>}
@@ -1108,7 +1119,7 @@ function Sidebar({ t, user, activePage, go, setActiveTool, mobileOpen, setMobile
 
       <nav className="mt-6 min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
         {items.map(([id, Icon, label]) => (
-          <button key={id} title={collapsed ? label : undefined} onClick={() => { if (id === "contact") openContact?.(); else if (id === "createProject") go("projectManager"); else go(id); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left font-bold transition-all ${collapsed ? "lg:justify-center lg:px-0" : ""} ${activePage === id ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.25)]" : "text-slate-400 hover:bg-white/5 hover:text-white hover:shadow-[0_0_30px_rgba(34,211,238,.10)]"}`}>
+          <button key={id} title={collapsed ? label : undefined} onClick={() => { if (id === "contact") openContact?.(); else if (id === "createProject") go("projectManager"); else go(id); setMobileOpen(false); }} className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left text-lg font-black transition-all ${collapsed ? "lg:justify-center lg:px-0" : ""} ${activePage === id ? "bg-cyan-300 text-slate-950 shadow-[0_0_36px_rgba(34,211,238,.32)]" : "text-slate-400 hover:bg-white/5 hover:text-white hover:shadow-[0_0_30px_rgba(34,211,238,.10)]"}`}>
             <Icon className="shrink-0" size={20} />
             <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
             {!collapsed && <ChevronRight className="ml-auto opacity-0 transition group-hover:opacity-100" size={16} />}
@@ -1116,7 +1127,7 @@ function Sidebar({ t, user, activePage, go, setActiveTool, mobileOpen, setMobile
         ))}
         {!collapsed && <p className="px-4 pt-4 text-[0.68rem] font-black uppercase tracking-[0.22em] text-slate-600">Tools</p>}
         {toolShortcuts.map(([id, Icon, label]) => (
-          <button key={id} title={collapsed ? label : undefined} onClick={() => { setActiveTool?.(id); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left font-bold text-slate-400 transition-all hover:bg-white/5 hover:text-white hover:shadow-[0_0_30px_rgba(34,211,238,.10)] ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
+          <button key={id} title={collapsed ? label : undefined} onClick={() => { setActiveTool?.(id); setMobileOpen(false); }} className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left text-lg font-black text-slate-400 transition-all hover:bg-white/5 hover:text-white hover:shadow-[0_0_30px_rgba(34,211,238,.10)] ${collapsed ? "lg:justify-center lg:px-0" : ""}`}>
             <Icon className="shrink-0" size={20} />
             <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
             {!collapsed && <ChevronRight className="ml-auto opacity-0 transition group-hover:opacity-100" size={16} />}
@@ -1124,7 +1135,7 @@ function Sidebar({ t, user, activePage, go, setActiveTool, mobileOpen, setMobile
         ))}
         {!collapsed && <p className="px-4 pt-4 text-[0.68rem] font-black uppercase tracking-[0.22em] text-slate-600">More</p>}
         {resourceItems.map(([id, Icon, label]) => (
-          <button key={id} title={collapsed ? label : undefined} onClick={() => { go(id); setMobileOpen(false); }} className={`group flex w-full items-center gap-3 rounded-2xl px-4 py-3 text-left font-bold transition-all ${collapsed ? "lg:justify-center lg:px-0" : ""} ${activePage === id ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.25)]" : "text-slate-400 hover:bg-white/5 hover:text-white hover:shadow-[0_0_30px_rgba(34,211,238,.10)]"}`}>
+          <button key={id} title={collapsed ? label : undefined} onClick={() => { go(id); setMobileOpen(false); }} className={`group flex w-full items-center gap-4 rounded-2xl px-4 py-3.5 text-left text-lg font-black transition-all ${collapsed ? "lg:justify-center lg:px-0" : ""} ${activePage === id ? "bg-cyan-300 text-slate-950 shadow-[0_0_35px_rgba(34,211,238,.25)]" : "text-slate-400 hover:bg-white/5 hover:text-white hover:shadow-[0_0_30px_rgba(34,211,238,.10)]"}`}>
             <Icon className="shrink-0" size={20} />
             <span className={collapsed ? "lg:hidden" : ""}>{label}</span>
             {!collapsed && <ChevronRight className="ml-auto opacity-0 transition group-hover:opacity-100" size={16} />}
@@ -1210,7 +1221,7 @@ function Header({ t, language, setLanguage, setMobileOpen, go, user, signOut, ha
 function SupportModalFrame({ title, subtitle, icon: Icon = Mail, children, onClose }) {
   return (
     <div className="fixed inset-0 z-[90] grid place-items-center bg-black/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl rounded-3xl border border-cyan-200/15 bg-slate-950 p-6 shadow-[0_24px_90px_rgba(0,0,0,.65)] sm:p-8">
+      <div className="modal-pop w-full max-w-2xl rounded-3xl border border-cyan-200/15 bg-slate-950 p-6 shadow-[0_24px_90px_rgba(0,0,0,.65)] sm:p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h3 className="flex items-center gap-3 text-2xl font-black text-white"><Icon className="text-amber-300" />{title}</h3>
@@ -1415,16 +1426,17 @@ function SettingsPage({ t, language = "en", user, authMode, setAuthMode, authEma
             <button onClick={signOut} className="secondary-button w-full">{isSpanish ? "Cerrar sesion" : "Sign Out"}</button>
           </div>
         ) : (
-          <div className="mt-5 space-y-4">
-            {mode === "signup" && <input value={authName || ""} onChange={(e) => setAuthName?.(e.target.value)} placeholder={isSpanish ? "Nombre" : "Name"} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />}
-            <input value={authEmail || ""} onChange={(e) => setAuthEmail?.(e.target.value)} placeholder="email@example.com" className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />
+          <form className="mt-5 space-y-4" onSubmit={(event) => { event.preventDefault(); handleAuth?.(mode); }}>
+            {mode === "signup" && <input autoComplete="name" value={authName || ""} onChange={(e) => setAuthName?.(e.target.value)} placeholder={isSpanish ? "Nombre" : "Name"} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />}
+            <input type="email" autoComplete="email" value={authEmail || ""} onChange={(e) => setAuthEmail?.(e.target.value)} placeholder="email@example.com" className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />
             <div>
               <div className="flex items-center rounded-2xl border border-white/10 bg-slate-950/80 px-4 text-white transition focus-within:border-cyan-300 focus-within:shadow-[0_0_28px_rgba(34,211,238,.16)]">
                 <input
                   type={showPassword ? "text" : "password"}
+                  autoComplete={mode === "signup" ? "new-password" : "current-password"}
                   value={authPassword || ""}
                   onChange={(e) => setAuthPassword?.(e.target.value)}
-                  onKeyDown={(e) => { setCapsLockOn(Boolean(e.getModifierState?.("CapsLock"))); if (e.key === "Enter") handleAuth?.(mode); }}
+                  onKeyDown={(e) => setCapsLockOn(Boolean(e.getModifierState?.("CapsLock")))}
                   onKeyUp={(e) => setCapsLockOn(Boolean(e.getModifierState?.("CapsLock")))}
                   placeholder={isSpanish ? "Contrasena" : "Password"}
                   className="min-h-12 w-full bg-transparent py-3 pr-3 outline-none"
@@ -1439,12 +1451,12 @@ function SettingsPage({ t, language = "en", user, authMode, setAuthMode, authEma
               </div>
             </div>
             {authMessage && <p className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm text-cyan-100">{authMessage}</p>}
-            <button disabled={authLoading} onClick={() => handleAuth?.(mode)} className="primary-button w-full">{authLoading ? (isSpanish ? "Procesando..." : "Working...") : mode === "signup" ? (isSpanish ? "Registrarse" : "Sign Up") : (isSpanish ? "Iniciar sesion" : "Sign In")}</button>
+            <button type="submit" disabled={authLoading} className="primary-button w-full">{authLoading ? (isSpanish ? "Procesando..." : "Working...") : mode === "signup" ? (isSpanish ? "Registrarse" : "Sign Up") : (isSpanish ? "Iniciar sesion" : "Sign In")}</button>
             <div className="flex flex-wrap justify-between gap-3 text-sm font-bold text-slate-400">
-              <button onClick={() => setAuthMode?.(mode === "signup" ? "login" : "signup")} className="hover:text-cyan-300">{mode === "signup" ? (isSpanish ? "Ya tengo cuenta" : "I have an account") : (isSpanish ? "Crear cuenta" : "Create account")}</button>
-              <button onClick={handleForgotPassword} className="hover:text-cyan-300">{isSpanish ? "Olvide mi contrasena" : "Forgot password"}</button>
+              <button type="button" onClick={() => setAuthMode?.(mode === "signup" ? "login" : "signup")} className="hover:text-cyan-300">{mode === "signup" ? (isSpanish ? "Ya tengo cuenta" : "I have an account") : (isSpanish ? "Crear cuenta" : "Create account")}</button>
+              <button type="button" onClick={handleForgotPassword} className="hover:text-cyan-300">{isSpanish ? "Olvide mi contrasena" : "Forgot password"}</button>
             </div>
-          </div>
+          </form>
         )}
       </GlassPanel>
     </div>
@@ -1454,23 +1466,43 @@ function SettingsPage({ t, language = "en", user, authMode, setAuthMode, authEma
 function ProfileMini({ user }) {
   const email = user?.email || "Account";
   const initial = email.slice(0, 1).toUpperCase();
-  return <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.04] p-3"><div className="grid h-10 w-10 place-items-center rounded-full bg-cyan-400 text-sm font-black text-slate-950">{initial}</div><div className="min-w-0"><p className="truncate text-sm font-black text-white">{email.split("@")[0]}</p><p className="truncate text-xs text-slate-500">{email}</p></div></div>;
+  return <div className="mt-7 flex items-center gap-4 rounded-[1.35rem] border border-white/10 bg-white/[.045] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,.05)]"><div className="grid h-12 w-12 place-items-center rounded-full bg-cyan-300 text-slate-950 shadow-[0_0_28px_rgba(34,211,238,.35)]"><UserCircle size={25} /></div><div className="min-w-0"><p className="truncate text-lg font-black text-white">{email.split("@")[0]}</p><p className="truncate text-sm font-bold text-slate-500">{email}</p></div></div>;
 }
 
-function ToolCard({ tool, onClick, compact }) {
+function ToolCard({ tool, onClick, compact, index = 0 }) {
   const [id, title, desc, Icon, badge] = Array.isArray(tool) ? tool : [tool.id, tool.title, tool.desc, tool.icon, tool.badge];
   const ToolIcon = Icon || Sparkles;
-  return <button onClick={onClick} className={`group rounded-3xl border border-white/10 bg-slate-950/60 p-${compact ? "4" : "5"} text-left transition hover:border-cyan-300/40 hover:shadow-[0_0_35px_rgba(34,211,238,.12)]`}><div className="flex items-start justify-between gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-300/10 text-cyan-300"><ToolIcon size={19} /></div>{badge && <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-2 py-1 text-[10px] font-black text-amber-300">{badge}</span>}</div><h3 className="mt-4 text-lg font-black text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{desc}</p><p className="mt-4 text-sm font-black text-cyan-300">Open tool</p></button>;
+  const dense = Boolean(compact);
+  return (
+    <button type="button" onClick={onClick} className={`group relative min-h-[15.5rem] overflow-hidden rounded-[1.65rem] border border-white/10 bg-gradient-to-br ${toolGradient(index)} p-7 text-left shadow-[0_20px_60px_rgba(0,0,0,.28)] transition duration-300 hover:-translate-y-1 hover:border-amber-300/30 hover:shadow-[0_28px_90px_rgba(0,0,0,.42)] ${dense ? "sm:min-h-[13.5rem] sm:p-6" : "sm:min-h-[17.5rem] sm:p-8"}`}>
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_22%_12%,rgba(255,202,40,.15),transparent_28%),radial-gradient(circle_at_88%_10%,rgba(103,232,249,.08),transparent_34%),linear-gradient(180deg,rgba(255,255,255,.035),transparent_56%)]" />
+      <span aria-hidden="true" className="pointer-events-none absolute -bottom-16 -right-12 h-48 w-48 rounded-full bg-black/20 blur-3xl transition duration-500 group-hover:bg-cyan-300/10" />
+      <span className="relative flex items-start justify-between gap-4">
+        <span className="grid h-14 w-14 place-items-center rounded-2xl bg-amber-400 text-slate-950 shadow-[0_0_36px_rgba(251,191,36,.35)] transition duration-300 group-hover:scale-105 group-hover:shadow-[0_0_46px_rgba(251,191,36,.48)]"><ToolIcon size={25} strokeWidth={2.4} /></span>
+        <span className="flex items-center gap-3">
+          <span title={desc} aria-label={desc} className="grid h-6 w-6 place-items-center rounded-full text-slate-400 transition group-hover:text-cyan-200"><HelpCircle size={18} /></span>
+          {badge && <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs font-black text-amber-300 shadow-[inset_0_1px_0_rgba(255,255,255,.08)]">{badge}</span>}
+        </span>
+      </span>
+      <span className="relative mt-12 block">
+        <span className="block text-2xl font-black leading-tight text-white sm:text-[1.65rem]">{title}</span>
+        <span className="mt-4 block text-base font-semibold leading-7 text-slate-400">{desc}</span>
+      </span>
+      <span className="relative mt-8 inline-flex items-center gap-3 text-lg font-black text-amber-300 transition group-hover:gap-4 group-hover:text-amber-200">
+        Open tool <ChevronRight size={21} />
+      </span>
+    </button>
+  );
 }
 
 function ProjectTools({ language = "en", setActiveTool }) {
   const isSpanish = language === "es";
   const toolCards = getTools(language);
-  return <div className="space-y-5"><SectionHeader title={isSpanish ? "Herramientas del Proyecto" : "Project Tools"} detail={isSpanish ? "Haz clic en cualquier herramienta para abrir su panel." : "Click any tool to open its working panel."} /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{toolCards.map((tool) => <ToolCard key={tool[0]} tool={tool} onClick={() => setActiveTool?.(tool[0])} />)}</div></div>;
+  return <div className="space-y-8"><div className="sr-only"><SectionHeader title={isSpanish ? "Herramientas del Proyecto" : "Project Tools"} detail={isSpanish ? "Haz clic en cualquier herramienta para abrir su panel." : "Click any tool to open its working panel."} /></div><div className="grid gap-6 md:grid-cols-2 2xl:grid-cols-3">{toolCards.map((tool, index) => <ToolCard key={tool[0]} tool={tool} index={index} onClick={() => setActiveTool?.(tool[0])} />)}</div></div>;
 }
 
 function ToolModalFrame({ children, onClose }) {
-  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur"><div className="max-h-[90vh] w-full max-w-5xl overflow-auto rounded-3xl border border-white/10 bg-slate-950 p-5 shadow-2xl"><div className="mb-4 flex justify-end"><button onClick={onClose} className="rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-slate-300 hover:border-cyan-300/40">Close</button></div>{children}</div></div>;
+  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur"><div className="modal-pop max-h-[90vh] w-full max-w-5xl overflow-auto rounded-3xl border border-white/10 bg-slate-950 p-5 shadow-2xl"><div className="mb-4 flex justify-end"><button onClick={onClose} className="rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-slate-300 hover:border-cyan-300/40">Close</button></div>{children}</div></div>;
 }
 
 function SubscriptionGate({ language = "en", go }) {
@@ -1481,18 +1513,184 @@ function ToolPanel({ title, subtitle, children }) {
   return <GlassPanel><div className="mb-5"><h3 className="text-2xl font-black text-white">{title}</h3>{subtitle && <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>}</div>{children}</GlassPanel>;
 }
 
-function ToolModal({ toolId, language = "en", projects = [], activeProject, onClose }) {
+function ToolModal({ toolId, language = "en", projects = [], activeProject, onSaveProject, getAccessToken, onClose }) {
+  const [selectedProject, setSelectedProject] = useState(activeProject || null);
+  const [creatingProject, setCreatingProject] = useState(false);
+  const [newProject, setNewProject] = useState({ name: "", address: "" });
   const tool = getTools(language).find((item) => item[0] === toolId);
   const title = tool?.[1] || "Tool";
   const desc = tool?.[2] || "This workspace is ready for project data.";
-  return <ToolModalFrame onClose={onClose}><div className="space-y-4"><div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">Selected Project</p><p className="mt-2 text-xl font-black text-white">{activeProject?.name || activeProject?.title || projects[0]?.name || projects[0]?.title || "No project selected"}</p></div><ToolPanel title={title} subtitle={desc}><EmptyState text="Open this tool from a saved project to continue working." /></ToolPanel></div></ToolModalFrame>;
+  const project = selectedProject;
+  async function createProject(event) {
+    event.preventDefault();
+    if (!newProject.name.trim()) return;
+    const projectRecord = {
+      id: Date.now(),
+      name: newProject.name.trim(),
+      title: newProject.name.trim(),
+      address: newProject.address.trim(),
+      status: "Active",
+      notes: [],
+      analyses: [],
+      files: [],
+      reports: [],
+      tools: {},
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    await onSaveProject?.(projectRecord);
+    setSelectedProject(projectRecord);
+  }
+  if (!project) {
+    return (
+      <ToolModalFrame onClose={onClose}>
+        <div className="space-y-5">
+          <div className="flex items-start gap-4">
+            <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-amber-400 text-slate-950 shadow-[0_0_36px_rgba(251,191,36,.35)]">{tool?.[3] ? React.createElement(tool[3], { size: 30 }) : <Sparkles size={30} />}</div>
+            <div>
+              <h2 className="text-4xl font-black text-white">{title}</h2>
+              <p className="mt-2 text-lg leading-7 text-slate-400">{desc}</p>
+            </div>
+          </div>
+          <div className="mx-auto max-w-2xl rounded-[2rem] border border-white/10 bg-white/[.045] p-6 shadow-2xl shadow-black/20">
+            <h3 className="text-3xl font-black text-white">Select a Project</h3>
+            <p className="mt-3 text-lg leading-7 text-slate-400">Choose a project to use with <span className="font-black text-cyan-300">{title}</span></p>
+            {!creatingProject ? (
+              <div className="mt-7 space-y-4">
+                <button onClick={() => setCreatingProject(true)} className="primary-button w-full text-lg"><Plus size={22} /> Create New Project</button>
+                <div className="max-h-64 space-y-2 overflow-auto pr-1">
+                  {projects.length ? projects.filter((item) => !item.archived).map((item) => <button key={item.id} onClick={() => setSelectedProject(item)} className="flex w-full items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-left font-black text-slate-200 hover:border-cyan-300/40 hover:bg-white/[.04]"><FolderOpen className="text-cyan-300" /> <span className="min-w-0"><span className="block truncate">{item.name || item.title}</span><span className="block truncate text-sm text-slate-500">{item.address || "No address"}</span></span></button>) : <EmptyState text="No saved projects yet." />}
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={createProject} className="mt-7 space-y-4">
+                <label><span className="label">Project Name</span><input className="field" value={newProject.name} onChange={(event) => setNewProject((current) => ({ ...current, name: event.target.value }))} autoFocus /></label>
+                <label><span className="label">Property Address</span><input className="field" value={newProject.address} onChange={(event) => setNewProject((current) => ({ ...current, address: event.target.value }))} /></label>
+                <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+                  <button type="button" onClick={() => setCreatingProject(false)} className="secondary-button">Back</button>
+                  <button type="submit" className="primary-button">Create and Open</button>
+                </div>
+              </form>
+            )}
+          </div>
+        </div>
+      </ToolModalFrame>
+    );
+  }
+  let panel = null;
+  if (toolId === "underwriter") panel = <Suspense fallback={<EmptyState text="Loading analyzer..." />}><LazyAIAnalyzerPanel language={language} getAccessToken={getAccessToken} large /></Suspense>;
+  if (toolId === "loan") panel = <LoanTool language={language} project={project} onSaveProject={onSaveProject} />;
+  if (toolId === "budget") panel = <BudgetTool language={language} project={project} onSaveProject={onSaveProject} />;
+  if (toolId === "takeoff") panel = <TakeoffTool language={language} project={project} onSaveProject={onSaveProject} />;
+  if (toolId === "wizard") panel = <WizardTool language={language} project={project} onSaveProject={onSaveProject} />;
+  if (toolId === "todo") panel = <ChecklistTool language={language} project={project} onSaveProject={onSaveProject} listKey="todos" title="To Do List" />;
+  if (toolId === "punch") panel = <ChecklistTool language={language} project={project} onSaveProject={onSaveProject} listKey="punch" title="Punch List" />;
+  if (toolId === "subs") panel = <SubsTool language={language} project={project} onSaveProject={onSaveProject} />;
+  return <ToolModalFrame onClose={onClose}><div className="space-y-4"><div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">Selected Project</p><p className="mt-2 text-xl font-black text-white">{project?.name || project?.title || "No project selected"}</p></div><ToolPanel title={title} subtitle={desc}>{panel || <EmptyState text="Tool is ready." />}</ToolPanel></div></ToolModalFrame>;
 }
 
 function SimplePage({ title, subtitle, children }) {
   return <div className="space-y-5"><GlassPanel><h2 className="text-3xl font-black text-white">{title}</h2>{subtitle && <p className="mt-2 text-slate-400">{subtitle}</p>}</GlassPanel>{children}</div>;
 }
 
-function PropertySearch({ language = "en" }) { return <SimplePage title={language === "es" ? "Busqueda de Propiedades" : "Property Search"} subtitle="RentCast property search workspace."><GlassPanel><EmptyState text="Search tools are loading from your connected services." /></GlassPanel></SimplePage>; }
+function ToolSaveButton({ project, patch, onSaveProject, label = "Save to Project" }) {
+  const [status, setStatus] = useState("");
+  async function save() {
+    if (!project) {
+      setStatus("Select or create a project first.");
+      return;
+    }
+    const updated = { ...project, tools: { ...(project.tools || {}), ...patch }, updatedAt: new Date().toISOString() };
+    const result = await onSaveProject?.(updated);
+    setStatus(result?.error || "Saved.");
+  }
+  return <div className="mt-4"><button onClick={save} className="primary-button">{label}</button>{status && <p className="mt-3 rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm text-cyan-100">{status}</p>}</div>;
+}
+
+function LoanTool({ project, onSaveProject }) {
+  const [loan, setLoan] = useState(project?.tools?.loan || { amount: project?.loanAmount || 225000, rate: 7.25, years: 30, rent: project?.monthlyRent || 2600, expenses: 900 });
+  const payment = formulas.monthlyMortgage(cleanNumber(loan.amount), cleanNumber(loan.rate), cleanNumber(loan.years));
+  const noi = formulas.noi(cleanNumber(loan.rent) * 12, cleanNumber(loan.expenses) * 12);
+  const dscr = formulas.dscr(noi, payment * 12);
+  return <div className="space-y-5"><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">{[["amount", "Loan Amount"], ["rate", "Interest Rate %"], ["years", "Loan Years"], ["rent", "Monthly Rent"], ["expenses", "Monthly Expenses"]].map(([key, label]) => <NumberInput key={key} label={label} value={loan[key]} setValue={(value) => setLoan((current) => ({ ...current, [key]: value }))} />)}</div><ResultBox items={[["Monthly Payment", formatMoney(payment)], ["Annual NOI", formatMoney(noi)], ["DSCR", dscr.toFixed(2), dscr >= 1.2]]} /><ToolSaveButton project={project} patch={{ loan: { ...loan, payment, dscr } }} onSaveProject={onSaveProject} /></div>;
+}
+
+function BudgetTool({ project, onSaveProject }) {
+  const [items, setItems] = useState(project?.tools?.budget?.items || [["Demo", 8500], ["Framing", 32000], ["MEP", 41000], ["Finishes", 52000], ["Contingency", 18000]]);
+  const total = items.reduce((sum, [, cost]) => sum + cleanNumber(cost), 0);
+  function update(index, field, value) {
+    setItems((current) => current.map((item, i) => i === index ? field === "name" ? [value, item[1]] : [item[0], value] : item));
+  }
+  return <div className="space-y-4"><div className="grid gap-3">{items.map(([name, cost], index) => <div key={index} className="grid gap-3 md:grid-cols-[1fr_180px]"><input className="field" value={name} onChange={(event) => update(index, "name", event.target.value)} /><input className="field" inputMode="decimal" value={cost} onChange={(event) => update(index, "cost", event.target.value)} /></div>)}</div><button onClick={() => setItems((current) => [...current, ["New line item", 0]])} className="secondary-button">Add Line Item</button><ResultBox items={[["Estimated Budget", formatMoney(total)], ["Recommended Reserve", formatMoney(total * 0.1)], ["Budget With Reserve", formatMoney(total * 1.1)]]} /><ToolSaveButton project={project} patch={{ budget: { items, total } }} onSaveProject={onSaveProject} /></div>;
+}
+
+function TakeoffTool({ project, onSaveProject }) {
+  const [values, setValues] = useState(project?.tools?.takeoff || { floorArea: 1800, wallArea: 5200, roofArea: 2200, tileArea: 420, waste: 10 });
+  const waste = 1 + cleanNumber(values.waste) / 100;
+  const results = { drywall: formulas.drywallSheets(values.wallArea) * waste, paint: formulas.paintGallons(values.wallArea) * waste, roofing: formulas.roofingSquares(values.roofArea) * waste, tile: cleanNumber(values.tileArea) * waste };
+  return <div className="space-y-5"><div className="grid gap-3 md:grid-cols-5">{[["floorArea", "Floor Area"], ["wallArea", "Wall Area"], ["roofArea", "Roof Area"], ["tileArea", "Tile Area"], ["waste", "Waste %"]].map(([key, label]) => <NumberInput key={key} label={label} value={values[key]} setValue={(value) => setValues((current) => ({ ...current, [key]: value }))} />)}</div><ResultBox items={[["Drywall Sheets", Math.ceil(results.drywall)], ["Paint Gallons", Math.ceil(results.paint)], ["Roofing Squares", results.roofing.toFixed(1)], ["Tile Area With Waste", `${Math.ceil(results.tile)} sq ft`]]} /><ToolSaveButton project={project} patch={{ takeoff: { ...values, results } }} onSaveProject={onSaveProject} /></div>;
+}
+
+function WizardTool({ project, onSaveProject }) {
+  const defaults = ["Due diligence", "Design and permits", "Demo", "Rough MEP", "Framing", "Inspections", "Finishes", "Punch list"];
+  const [phases, setPhases] = useState(project?.tools?.wizard?.phases || defaults.map((name, index) => ({ id: index + 1, name, done: index < 2 })));
+  const complete = phases.filter((phase) => phase.done).length;
+  return <div className="space-y-4"><div className="grid gap-3 md:grid-cols-2">{phases.map((phase) => <label key={phase.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4 font-bold text-slate-200"><input type="checkbox" checked={phase.done} onChange={(event) => setPhases((current) => current.map((item) => item.id === phase.id ? { ...item, done: event.target.checked } : item))} />{phase.name}</label>)}</div><ResultBox items={[["Phases Complete", `${complete} / ${phases.length}`], ["Progress", `${((complete / phases.length) * 100).toFixed(0)}%`, complete === phases.length]]} /><ToolSaveButton project={project} patch={{ wizard: { phases } }} onSaveProject={onSaveProject} /></div>;
+}
+
+function ChecklistTool({ project, onSaveProject, listKey, title }) {
+  const [text, setText] = useState("");
+  const [items, setItems] = useState(project?.tools?.[listKey]?.items || [{ id: 1, text: `${title} item`, done: false }]);
+  function add() {
+    if (!text.trim()) return;
+    setItems((current) => [{ id: Date.now(), text: text.trim(), done: false }, ...current]);
+    setText("");
+  }
+  return <div className="space-y-4"><div className="flex gap-3"><input className="field" value={text} onChange={(event) => setText(event.target.value)} placeholder="Add item" /><button onClick={add} className="primary-button">Add</button></div><div className="space-y-2">{items.map((item) => <label key={item.id} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/60 p-4"><input type="checkbox" checked={item.done} onChange={(event) => setItems((current) => current.map((row) => row.id === item.id ? { ...row, done: event.target.checked } : row))} /><span className={item.done ? "text-slate-500 line-through" : "text-white"}>{item.text}</span></label>)}</div><ToolSaveButton project={project} patch={{ [listKey]: { items } }} onSaveProject={onSaveProject} /></div>;
+}
+
+function SubsTool({ project, onSaveProject }) {
+  const [rows, setRows] = useState(project?.tools?.subs?.rows || [["Electrical", "Vendor A", 18500], ["Plumbing", "Vendor B", 22000], ["HVAC", "Vendor C", 16500]]);
+  const total = rows.reduce((sum, row) => sum + cleanNumber(row[2]), 0);
+  return <div className="space-y-4"><div className="grid gap-3">{rows.map((row, index) => <div key={index} className="grid gap-3 md:grid-cols-[1fr_1fr_160px]">{[0, 1, 2].map((field) => <input key={field} className="field" value={row[field]} onChange={(event) => setRows((current) => current.map((item, i) => i === index ? item.map((part, p) => p === field ? event.target.value : part) : item))} />)}</div>)}</div><button onClick={() => setRows((current) => [...current, ["Trade", "Vendor", 0]])} className="secondary-button">Add Quote</button><ResultBox items={[["Quote Total", formatMoney(total)], ["Average Quote", formatMoney(total / Math.max(rows.length, 1))]]} /><ToolSaveButton project={project} patch={{ subs: { rows, total } }} onSaveProject={onSaveProject} /></div>;
+}
+
+function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
+  const isSpanish = language === "es";
+  const [address, setAddress] = useState("5500 Grand Lake Dr, San Antonio, TX 78244");
+  const [mortgageBalance, setMortgageBalance] = useState("225000");
+  const [status, setStatus] = useState(t?.propertyReady || "Ready to search.");
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  async function search() {
+    setLoading(true);
+    setStatus(t?.searchingRecords || "Searching property records...");
+    try {
+      const token = await getAccessToken?.();
+      if (!token) throw new Error(isSpanish ? "Inicia sesion para continuar." : "Sign in to continue.");
+      const response = await fetch("/api/rentcast-search", { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ address, mortgageBalance }) });
+      const data = await readApiJson(response);
+      if (!response.ok) throw new Error(data.error || "Property search failed.");
+      setResult(data);
+      setStatus(t?.propertyLoaded || "Property intelligence loaded.");
+    } catch (error) {
+      setStatus(error.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+  async function saveProjectFromSearch() {
+    if (!result?.property) return;
+    const property = result.property;
+    await onAddProject?.({ id: Date.now(), name: property.formattedAddress || address, title: property.formattedAddress || address, address: property.formattedAddress || address, arv: result.valueEstimate?.price || result.valueEstimate?.value || 0, monthlyRent: result.rentEstimate?.rent || 0, mortgageBalance: cleanNumber(mortgageBalance), reports: [{ id: Date.now(), title: "Property intelligence report", type: "RentCast" }], tools: { propertySearch: result }, createdAt: new Date().toISOString() });
+    setStatus("Saved as project.");
+  }
+  const property = result?.property || {};
+  const value = result?.valueEstimate?.price || result?.valueEstimate?.value || property.estimatedValue || 0;
+  const rent = result?.rentEstimate?.rent || property.rentEstimate || 0;
+  const equity = formulas.equity(value, mortgageBalance);
+  return <div className="space-y-7"><section className="rounded-[2rem] border border-white/10 bg-white/[.055] p-6 shadow-2xl shadow-black/20 backdrop-blur-xl"><p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">RentCast</p><h2 className="mt-4 text-4xl font-black text-white">{t?.propertySearch || "Property Search"}</h2><p className="mt-3 text-lg leading-7 text-slate-400">{t?.propertySearchDetail || "Search property records, comps, owner information, taxes, sale history, features, coordinates, and investor math."}</p><div className="mt-7 grid gap-4 lg:grid-cols-[1fr_320px_180px]"><label><span className="label">{t?.address || "Address"}</span><input className="field text-lg" value={address} onChange={(event) => setAddress(event.target.value)} /></label><label><span className="label">{isSpanish ? "Balance hipotecario" : "Mortgage Balance"}</span><input className="field text-lg" value={formatMoney(mortgageBalance)} onChange={(event) => setMortgageBalance(cleanNumber(event.target.value))} /></label><button disabled={loading} onClick={search} className="primary-button mt-7 disabled:opacity-70">{loading ? "Searching..." : t?.search || "Search"}</button></div><p className="mt-5 rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-slate-400">{status}</p></section>{result ? <section className="grid gap-5 xl:grid-cols-3"><Stat title={t?.estimatedValue || "Estimated Value"} value={formatMoney(value)} icon={Home} /><Stat title={t?.estimatedRent || "Estimated Rent"} value={formatMoney(rent)} icon={WalletCards} /><Stat title={t?.equity || "Equity"} value={formatMoney(equity)} icon={LineChart} /><GlassPanel className="xl:col-span-2"><h3 className="text-2xl font-black text-white">{t?.propertySummary || "Property Summary"}</h3><div className="mt-4 grid gap-3 md:grid-cols-2"><ResultBox items={[["Address", property.formattedAddress || address], ["Beds", property.bedrooms || "N/A"], ["Baths", property.bathrooms || "N/A"], ["Sq Ft", property.squareFootage || "N/A"], ["Year Built", property.yearBuilt || "N/A"]]} /></div><button onClick={saveProjectFromSearch} className="primary-button mt-5">Save Project</button></GlassPanel><GlassPanel><h3 className="text-2xl font-black text-white">Comps</h3><div className="mt-4 space-y-3">{(result.saleComps || []).slice(0, 5).map((comp, index) => <div key={index} className="rounded-xl border border-white/10 bg-slate-950/60 p-3"><p className="font-bold text-white">{comp.address || "Comparable"}</p><p className="text-sm text-slate-400">{formatMoney(comp.price)} {comp.sqft ? `- ${comp.sqft} sq ft` : ""}</p></div>)}{!(result.saleComps || []).length && <EmptyState text="No sale comps returned." />}</div></GlassPanel></section> : <GlassPanel><div className="grid min-h-52 place-items-center text-center"><div><Search className="mx-auto text-cyan-300" size={42} /><h3 className="mt-4 text-2xl font-black text-white">Search a property to begin</h3><p className="mx-auto mt-3 max-w-2xl text-lg leading-7 text-slate-400">RentCast data is requested on the server to keep the key secure, then displayed here for investor-grade review.</p></div></div></GlassPanel>}</div>;
+}
 function LearningCenter({ language = "en" }) { return <SimplePage title={language === "es" ? "Centro de Aprendizaje" : "Learning Center"} subtitle="Guides and tutorials for investors and builders." />; }
 function KnowledgeBase({ language = "en" }) { return <SimplePage title={language === "es" ? "Base de Conocimiento" : "Knowledge Base"} subtitle="Answers and operating guidance." />; }
 function Tutorials({ language = "en" }) { return <SimplePage title={language === "es" ? "Tutoriales" : "Tutorials"} subtitle="Short walkthroughs for each workflow." />; }
@@ -1613,7 +1811,7 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
           <button onClick={() => go("projectTools")} className="text-sm font-black text-cyan-300 hover:text-cyan-100">{isSpanish ? "Ver todas" : "View all"}</button>
         </div>
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-          {toolCards.map((tool) => <ToolCard key={tool[0]} tool={tool} onClick={() => setActiveTool(tool[0])} compact />)}
+          {toolCards.map((tool, index) => <ToolCard key={tool[0]} tool={tool} index={index} onClick={() => setActiveTool(tool[0])} compact />)}
         </div>
       </section>
     </div>
@@ -1687,21 +1885,64 @@ function BillingPage({ language, subscription, getAccessToken, isAdmin }) {
   return <div className="space-y-5"><PageTitle title={isSpanish ? "Facturacion" : "Billing"} subtitle={isSpanish ? "Administra tu suscripcion, facturas y metodo de pago." : "Manage your subscription, invoices, and payment method."} /><GlassPanel><div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"><div><p className="text-sm font-black uppercase tracking-widest text-slate-500">Status</p><p className="mt-1 text-2xl font-black text-white">{subscription?.status || (isSpanish ? "Sin suscripcion" : "No subscription")}</p><p className="mt-2 text-sm text-slate-400">{isSpanish ? "Si todavia no empezaste una suscripcion, inicia la prueba desde Precios." : "If you have not started a subscription yet, start your trial from Pricing."}</p></div><button onClick={openPortal} className="rounded-2xl bg-cyan-400 px-5 py-3 font-black text-slate-950 shadow-[0_0_25px_rgba(34,211,238,.25)] hover:bg-cyan-300">{isSpanish ? "Administrar Facturacion" : "Manage Billing"}</button></div>{status && <p className="mt-4 rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300">{status}</p>}{isAdmin && diagnostics && <pre className="mt-4 max-h-80 overflow-auto rounded-xl border border-cyan-400/20 bg-slate-950 p-4 text-xs text-cyan-100">{JSON.stringify(diagnostics, null, 2)}</pre>}</GlassPanel></div>;
 }
 
+function ProjectActionDialog({ title, subtitle, label, value = "", placeholder = "", multiline = false, danger = false, confirmOnly = false, confirmLabel = "Save", onConfirm, onClose }) {
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef(null);
+  useEffect(() => {
+    setDraft(value);
+    window.setTimeout(() => inputRef.current?.focus(), 30);
+  }, [value]);
+  async function submit(event) {
+    event.preventDefault();
+    await onConfirm?.(confirmOnly ? true : draft);
+    onClose?.();
+  }
+  const Field = multiline ? "textarea" : "input";
+  return (
+    <div className="fixed inset-0 z-[95] grid place-items-center bg-black/75 p-4 backdrop-blur-md" onMouseDown={onClose}>
+      <form onSubmit={submit} onMouseDown={(event) => event.stopPropagation()} className="modal-pop w-full max-w-xl overflow-hidden rounded-[1.75rem] border border-cyan-200/15 bg-[#080d20] shadow-[0_28px_110px_rgba(0,0,0,.75)]">
+        <div className="flex items-start justify-between gap-5 border-b border-white/10 bg-gradient-to-br from-cyan-300/[.10] via-slate-950 to-amber-300/[.08] p-6">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">OPERITRON.COM</p>
+            <h3 className="mt-3 text-3xl font-black text-white">{title}</h3>
+            {subtitle && <p className="mt-2 leading-6 text-slate-400">{subtitle}</p>}
+          </div>
+          <button type="button" onClick={onClose} className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl border border-white/10 text-slate-400 transition hover:border-cyan-300/40 hover:bg-white/5 hover:text-white" aria-label="Close"><X /></button>
+        </div>
+        <div className="space-y-5 p-6">
+          {confirmOnly ? (
+            <div className={`rounded-2xl border p-4 text-sm leading-6 ${danger ? "border-red-400/25 bg-red-400/10 text-red-100" : "border-cyan-300/20 bg-cyan-300/10 text-cyan-100"}`}>{label}</div>
+          ) : (
+            <label className="block">
+              <span className="label">{label}</span>
+              <Field ref={inputRef} value={draft} onChange={(event) => setDraft(event.target.value)} placeholder={placeholder} className={`field ${multiline ? "min-h-32 resize-y" : ""}`} />
+            </label>
+          )}
+          <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+            <button type="button" onClick={onClose} className="secondary-button">{danger ? "Keep Project" : "Cancel"}</button>
+            <button type="submit" className={danger ? "inline-flex items-center justify-center gap-2 rounded-2xl bg-red-400 px-5 py-3 font-black text-slate-950 shadow-lg shadow-red-500/20 transition hover:bg-red-300" : "primary-button"}>{confirmLabel}</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  );
+}
+
 function ProjectDetails({ language, activeProject, setActiveProject, go, setActiveTool, onSaveProject }) {
   const isSpanish = language === "es";
   const toolCards = getTools(language);
+  const [noteDialogOpen, setNoteDialogOpen] = useState(false);
   if (!activeProject) return <div className="space-y-5"><PageTitle title={isSpanish ? "Proyecto" : "Project"} subtitle={isSpanish ? "Selecciona un proyecto para continuar." : "Select a project to continue."} /><GlassPanel><EmptyState text={isSpanish ? "No hay proyecto seleccionado." : "No project selected."} /><button onClick={() => go("projectManager")} className="mt-4 rounded-xl bg-cyan-400 px-4 py-3 font-black text-slate-950">{isSpanish ? "Abrir proyectos" : "Open Projects"}</button></GlassPanel></div>;
   const notes = projectNotes(activeProject);
   const reports = projectReports(activeProject);
   const analyses = projectAnalyses(activeProject);
-  async function addNote() {
-    const text = window.prompt(isSpanish ? "Nueva nota" : "New note");
-    if (!text) return;
-    const updated = { ...activeProject, notes: [{ id: Date.now(), text, createdAt: new Date().toISOString() }, ...notes] };
+  async function saveNote(text) {
+    if (!text?.trim()) return;
+    const updated = { ...activeProject, notes: [{ id: Date.now(), text: text.trim(), createdAt: new Date().toISOString() }, ...notes] };
     setActiveProject(updated);
     await onSaveProject?.(updated);
   }
-  return <div className="space-y-5"><GlassPanel><div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"><div><button onClick={() => go("projectManager")} className="mb-3 text-sm font-black text-slate-400 hover:text-cyan-300">Back to projects</button><h2 className="text-4xl font-black text-white">{activeProject.name || activeProject.title}</h2><p className="mt-2 text-slate-400">{activeProject.address || "No address"}</p>{activeProject.description && <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">{activeProject.description}</p>}</div><span className={`rounded-full border px-4 py-2 text-sm font-black ${approvalStatus(activeProject).cls}`}>{approvalStatus(activeProject).label}</span></div></GlassPanel><section className="grid gap-4 md:grid-cols-3"><Stat title="Profit" value={hasProjectNumbers(activeProject) ? formatMoney(projectProfit(activeProject)) : "No analysis yet"} icon={WalletCards} /><Stat title="ROI" value={hasProjectNumbers(activeProject) ? `${projectRoi(activeProject).toFixed(1)}%` : "No analysis yet"} icon={LineChart} /><Stat title="Reports" value={reports.length || "No reports yet"} icon={FileText} /></section><GlassPanel><h3 className="mb-4 text-2xl font-black text-white">Project Tools</h3><div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">{toolCards.map((tool) => <ToolCard key={tool[0]} tool={tool} compact onClick={() => setActiveTool(tool[0])} />)}</div></GlassPanel><section className="grid gap-4 xl:grid-cols-3"><GlassPanel><div className="flex items-center justify-between"><h3 className="text-xl font-black text-white">Notes</h3><button onClick={addNote} className="rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-slate-200 hover:border-cyan-300/40">Add Note</button></div><div className="mt-4 space-y-3">{notes.length ? notes.map((note) => <div key={note.id || note.createdAt || note.text} className="rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300">{note.text}</div>) : <EmptyState text="No notes yet" />}</div></GlassPanel><GlassPanel><h3 className="text-xl font-black text-white">Analyses</h3><div className="mt-4 space-y-3">{analyses.length ? analyses.map((analysis, index) => <div key={analysis.id || index} className="rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300">{analysis.title || analysis.summary || "Saved analysis"}</div>) : <EmptyState text="No analyses yet" />}</div></GlassPanel><GlassPanel><h3 className="text-xl font-black text-white">Files & Reports</h3><div className="mt-4 space-y-3">{reports.length ? reports.map((report, index) => <div key={report.id || index} className="rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300">{report.title || report.name || "Saved report"}</div>) : <EmptyState text="No files or reports yet" />}</div></GlassPanel></section></div>;
+  return <><div className="space-y-5"><GlassPanel><div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between"><div><button onClick={() => go("projectManager")} className="mb-3 text-sm font-black text-slate-400 hover:text-cyan-300">Back to projects</button><h2 className="text-4xl font-black text-white">{activeProject.name || activeProject.title}</h2><p className="mt-2 text-slate-400">{activeProject.address || "No address"}</p>{activeProject.description && <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-300">{activeProject.description}</p>}</div><span className={`rounded-full border px-4 py-2 text-sm font-black ${approvalStatus(activeProject).cls}`}>{approvalStatus(activeProject).label}</span></div></GlassPanel><section className="grid gap-4 md:grid-cols-3"><Stat title="Profit" value={hasProjectNumbers(activeProject) ? formatMoney(projectProfit(activeProject)) : "No analysis yet"} icon={WalletCards} /><Stat title="ROI" value={hasProjectNumbers(activeProject) ? `${projectRoi(activeProject).toFixed(1)}%` : "No analysis yet"} icon={LineChart} /><Stat title="Reports" value={reports.length || "No reports yet"} icon={FileText} /></section><GlassPanel><h3 className="mb-4 text-2xl font-black text-white">Project Tools</h3><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{toolCards.map((tool, index) => <ToolCard key={tool[0]} tool={tool} index={index} compact onClick={() => setActiveTool(tool[0])} />)}</div></GlassPanel><section className="grid gap-4 xl:grid-cols-3"><GlassPanel><div className="flex items-center justify-between"><h3 className="text-xl font-black text-white">Notes</h3><button onClick={() => setNoteDialogOpen(true)} className="rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-slate-200 hover:border-cyan-300/40">Add Note</button></div><div className="mt-4 space-y-3">{notes.length ? notes.map((note) => <div key={note.id || note.createdAt || note.text} className="rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300">{note.text}</div>) : <EmptyState text="No notes yet" />}</div></GlassPanel><GlassPanel><h3 className="text-xl font-black text-white">Analyses</h3><div className="mt-4 space-y-3">{analyses.length ? analyses.map((analysis, index) => <div key={analysis.id || index} className="rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300">{analysis.title || analysis.summary || "Saved analysis"}</div>) : <EmptyState text="No analyses yet" />}</div></GlassPanel><GlassPanel><h3 className="text-xl font-black text-white">Files & Reports</h3><div className="mt-4 space-y-3">{reports.length ? reports.map((report, index) => <div key={report.id || index} className="rounded-xl border border-white/10 bg-slate-950/60 p-3 text-sm text-slate-300">{report.title || report.name || "Saved report"}</div>) : <EmptyState text="No files or reports yet" />}</div></GlassPanel></section></div>{noteDialogOpen && <ProjectActionDialog title={isSpanish ? "Nueva nota" : "New Note"} subtitle={activeProject.name || activeProject.title || "Project"} label={isSpanish ? "Nota" : "Note"} multiline confirmLabel={isSpanish ? "Guardar Nota" : "Save Note"} onConfirm={saveNote} onClose={() => setNoteDialogOpen(false)} />}</>;
 }
 
 function PageTitle({ title, subtitle }) {
@@ -2145,6 +2386,7 @@ function ToolShell({ title, subtitle, children }) {
 function ProjectCard({ project, open, t, onSaveProject, onDeleteProject, setProjects }) {
   const approval = approvalStatus(project);
   const hasNumbers = hasProjectNumbers(project);
+  const [dialog, setDialog] = useState(null);
 
   async function updateProject(patch) {
     const updated = { ...project, ...patch, updatedAt: new Date().toISOString() };
@@ -2152,29 +2394,57 @@ function ProjectCard({ project, open, t, onSaveProject, onDeleteProject, setProj
     await onSaveProject?.(updated);
   }
 
-  async function renameProject(event) {
+  function renameProject(event) {
     event.stopPropagation();
-    const next = window.prompt("Project name", project.name || project.title || "");
-    if (next?.trim()) await updateProject({ name: next.trim(), title: next.trim() });
+    setDialog({
+      title: "Rename Project",
+      label: "Project name",
+      value: project.name || project.title || "",
+      confirmLabel: "Save Name",
+      onConfirm: async (next) => {
+        if (next?.trim()) await updateProject({ name: next.trim(), title: next.trim() });
+      },
+    });
   }
 
-  async function editAddress(event) {
+  function editAddress(event) {
     event.stopPropagation();
-    const next = window.prompt("Property address", project.address || "");
-    if (next !== null) await updateProject({ address: next.trim() });
+    setDialog({
+      title: "Property Address",
+      label: "Address",
+      value: project.address || "",
+      placeholder: "Enter property address",
+      confirmLabel: "Save Address",
+      onConfirm: async (next) => updateProject({ address: String(next || "").trim() }),
+    });
   }
 
-  async function editDescription(event) {
+  function editDescription(event) {
     event.stopPropagation();
-    const next = window.prompt("Project description", project.description || "");
-    if (next !== null) await updateProject({ description: next.trim() });
+    setDialog({
+      title: "Project Description",
+      label: "Description",
+      value: project.description || "",
+      placeholder: "Add project context",
+      multiline: true,
+      confirmLabel: "Save Description",
+      onConfirm: async (next) => updateProject({ description: String(next || "").trim() }),
+    });
   }
 
-  async function addNote(event) {
+  function addNote(event) {
     event.stopPropagation();
-    const text = window.prompt("Add project note");
-    if (!text?.trim()) return;
-    await updateProject({ notes: [{ id: Date.now(), text: text.trim(), createdAt: new Date().toISOString() }, ...projectNotes(project)] });
+    setDialog({
+      title: "Add Project Note",
+      label: "Note",
+      placeholder: "Write a note for this project",
+      multiline: true,
+      confirmLabel: "Save Note",
+      onConfirm: async (text) => {
+        if (!text?.trim()) return;
+        await updateProject({ notes: [{ id: Date.now(), text: text.trim(), createdAt: new Date().toISOString() }, ...projectNotes(project)] });
+      },
+    });
   }
 
   async function duplicateProject(event) {
@@ -2190,14 +2460,23 @@ function ProjectCard({ project, open, t, onSaveProject, onDeleteProject, setProj
     await updateProject({ archived: true, status: "Archived" });
   }
 
-  async function deleteProject(event) {
+  function deleteProject(event) {
     event.stopPropagation();
-    if (!window.confirm("Delete this project? This cannot be undone.")) return;
-    setProjects?.((prev) => prev.filter((item) => item.id !== project.id));
-    await onDeleteProject?.(project.id);
+    setDialog({
+      title: "Delete Project",
+      label: "Delete this project? This cannot be undone.",
+      danger: true,
+      confirmOnly: true,
+      confirmLabel: "Delete Project",
+      onConfirm: async () => {
+        setProjects?.((prev) => prev.filter((item) => item.id !== project.id));
+        await onDeleteProject?.(project.id);
+      },
+    });
   }
 
   return (
+    <>
     <motion.article whileHover={{ y: -3 }} onClick={open} className="group cursor-pointer rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.06] to-white/[.025] p-4 shadow-xl shadow-black/20 transition hover:border-cyan-300/40 hover:shadow-[0_0_32px_rgba(34,211,238,.12)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
@@ -2221,6 +2500,8 @@ function ProjectCard({ project, open, t, onSaveProject, onDeleteProject, setProj
         <button onClick={deleteProject} className="rounded-xl border border-red-400/20 px-3 py-2 font-black text-red-300 hover:border-red-300/60">Delete</button>
       </div>
     </motion.article>
+    {dialog && <ProjectActionDialog {...dialog} subtitle={project.name || project.title || "Project"} onClose={() => setDialog(null)} />}
+    </>
   );
 }
 
@@ -2272,13 +2553,15 @@ function NumberInput({ label, value, setValue }) {
 
 function toolGradient(index) {
   return [
-    "from-amber-400/20 to-orange-500/5",
-    "from-emerald-400/20 to-cyan-500/5",
-    "from-blue-400/20 to-indigo-500/5",
-    "from-violet-400/20 to-fuchsia-500/5",
-    "from-teal-400/20 to-emerald-500/5",
-    "from-red-400/20 to-rose-500/5",
-  ][index % 6];
+    "from-amber-300/20 via-stone-900/80 to-fuchsia-950/25",
+    "from-cyan-300/18 via-teal-950/70 to-slate-950",
+    "from-blue-300/18 via-indigo-950/70 to-slate-950",
+    "from-violet-300/18 via-purple-950/70 to-slate-950",
+    "from-teal-300/18 via-cyan-950/70 to-slate-950",
+    "from-rose-300/18 via-pink-950/70 to-slate-950",
+    "from-amber-300/18 via-stone-900/80 to-pink-950/25",
+    "from-cyan-200/18 via-sky-950/70 to-slate-950",
+  ][index % 8];
 }
 
 export default function CompFinderPro() {
