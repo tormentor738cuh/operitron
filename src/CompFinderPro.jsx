@@ -2476,6 +2476,16 @@ function ComparisonBars({ current, next, language }) {
   return <div className="mt-7"><p className="mb-4 font-black text-white">{language === "es" ? "Comparación de Pagos" : "Payment Comparison"}</p>{[[language === "es" ? "Actual" : "Current", current, "bg-indigo-400"], [language === "es" ? "Nuevo" : "New", next, "bg-cyan-300"]].map(([label, value, color]) => <div key={label} className="mb-4 grid grid-cols-[5rem_1fr] items-center gap-3"><span className="text-sm text-slate-400">{label}</span><div className="rounded-r-lg bg-slate-900"><div className={`${color} rounded-r-lg px-3 py-3 text-right text-xs font-black text-slate-950`} style={{ width: `${Math.max(16, value / max * 100)}%` }}>{formatMoneyCents(value)}</div></div></div>)}</div>;
 }
 
+function rentCastErrorMessage(payload, fallback) {
+  const details = payload?.adminDebug
+    ? Object.entries(payload.adminDebug)
+      .filter(([, value]) => value !== undefined && value !== null && value !== "")
+      .map(([key, value]) => `${key}: ${typeof value === "object" ? JSON.stringify(value) : value}`)
+      .join(" | ")
+    : "";
+  return [payload?.error || fallback, payload?.supportCode && `Code: ${payload.supportCode}`, details].filter(Boolean).join(" ");
+}
+
 function InterestTimeline({ balances, constructionMonths, saleMonths, language }) {
   const max = Math.max(...balances, 1);
   return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "Cronología de Acumulación de Interés" : "Interest Accumulation Timeline"}</p><div className="flex h-44 items-end gap-1.5 rounded-2xl border border-white/5 bg-slate-900/40 p-3 sm:gap-2">{balances.map((balance, index) => <div key={index} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"><div className={`w-full rounded-t-md ${index < constructionMonths ? "bg-gradient-to-t from-cyan-500/45 to-cyan-300" : "bg-gradient-to-t from-indigo-500/45 to-indigo-300"}`} style={{ height: `${Math.max(8, balance / max * 100)}%` }} title={formatMoney(balance)} /><span className="text-center text-[0.62rem] font-bold text-slate-500">{index + 1}</span></div>)}</div><div className="mt-4 flex flex-wrap justify-center gap-5 text-xs font-bold text-slate-400"><span className="text-cyan-300">{language === "es" ? `Construcción: 1-${constructionMonths} meses` : `Construction: 1-${constructionMonths} mo`}</span>{saleMonths > 0 && <span className="text-indigo-300">{language === "es" ? `Venta: ${constructionMonths + 1}-${constructionMonths + saleMonths} meses` : `Sale: ${constructionMonths + 1}-${constructionMonths + saleMonths} mo`}</span>}</div></div>;
@@ -2507,10 +2517,10 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
       const response = await fetch("/api/rentcast-search", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ address }),
+        body: JSON.stringify({ address, diagnostics: true }),
       });
       const payload = await readApiJson(response);
-      if (!response.ok) throw new Error(payload.error || (isEs ? "No se pudo cargar la propiedad." : "Property intelligence could not be loaded."));
+      if (!response.ok) throw new Error(rentCastErrorMessage(payload, isEs ? "No se pudo cargar la propiedad." : "Property intelligence could not be loaded."));
       setResult(payload);
       setStatus(payload.warnings?.length
         ? (isEs ? "Propiedad cargada. Algunos conjuntos de datos no estuvieron disponibles." : "Property loaded. Some provider datasets were not available.")

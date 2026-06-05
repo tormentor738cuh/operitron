@@ -7,7 +7,14 @@ const testCustomerEmails = [];
 function adminEmails() {
   return [...new Set([
     ...ownerAdminEmails,
-    ...String([process.env.ADMIN_OWNER_EMAIL, process.env.ADMIN_EMAILS, process.env.VITE_ADMIN_EMAILS].filter(Boolean).join(","))
+    ...String([
+      process.env.ADMIN_OWNER_EMAIL,
+      process.env.ADMIN_EMAIL,
+      process.env.ADMIN_EMAILS,
+      process.env.OWNER_EMAIL,
+      process.env.OPERITRON_ADMIN_EMAILS,
+      process.env.VITE_ADMIN_EMAILS,
+    ].filter(Boolean).join(","))
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -161,6 +168,7 @@ export default async function handler(request, response) {
   const email = String(data.user.email || "").toLowerCase();
   const ownerOverride = adminEmails().includes(email);
   const customerOverride = bypassCustomerEmails().includes(email);
+  const wantsDiagnostics = Boolean(request.body?.diagnostics);
 
   const apiKey = process.env.RENTCAST_API_KEY;
   if (!apiKey) {
@@ -192,19 +200,31 @@ export default async function handler(request, response) {
     } else {
       return json(response, 503, {
         error: "We could not verify your account yet. Please contact support@operitron.com.",
-        adminDebug: adminEmails().length
-          ? undefined
-          : { reason: "No ADMIN_OWNER_EMAIL, ADMIN_EMAILS, or VITE_ADMIN_EMAILS environment variable was detected server-side." },
+        supportCode: "rentcast-access-lookup-failed",
+        adminDebug: wantsDiagnostics ? {
+          email,
+          code: error?.code,
+          message: error?.message,
+          adminEnvConfigured: Boolean(adminEmails().length),
+          serviceRoleConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+          reason: adminEmails().length
+            ? "Supabase profile/subscription lookup failed before access could be verified."
+            : "No server admin email environment variable was detected. Set ADMIN_OWNER_EMAIL or ADMIN_EMAILS in Vercel, or set profiles.role='admin' for this user.",
+        } : undefined,
       });
     }
   }
   if (!access.allowed) return json(response, 403, {
     error: "Start your 3-day free trial to access property intelligence.",
-    adminDebug: ownerOverride ? {
+    adminDebug: wantsDiagnostics ? {
       email,
       role: access.role,
       subscriptionStatus: access.status,
-      reason: "Admin email matched, but access did not resolve as allowed.",
+      adminEnvConfigured: Boolean(adminEmails().length),
+      serviceRoleConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+      reason: ownerOverride
+        ? "Admin email matched, but access did not resolve as allowed."
+        : "User is not active, trialing, test customer, or profile admin.",
     } : undefined,
   });
 
