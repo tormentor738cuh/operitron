@@ -1666,6 +1666,92 @@ function SEOArticleGrid({ go }) {
   );
 }
 
+function PricingPlans({ language = "en", user, go }) {
+  const isEs = language === "es";
+  const [loadingPlan, setLoadingPlan] = useState("");
+  const [message, setMessage] = useState("");
+  const plans = [
+    {
+      id: "monthly",
+      name: isEs ? "Mensual" : "Monthly",
+      price: "$29.99",
+      term: isEs ? "/mes" : "/month",
+      badge: "Flexible",
+      detail: isEs ? "Acceso mensual con prueba gratis de 3 dias." : "Month-to-month access with a 3-day free trial.",
+      features: isEs ? ["Proyectos ilimitados", "Underwriter de deals", "Calculadoras DSCR y BRRR", "Takeoff de materiales", "Punch list y reportes"] : ["Unlimited projects", "Deal underwriter", "DSCR and BRRR calculators", "Material takeoff", "Punch lists and reports"],
+    },
+    {
+      id: "annual",
+      name: isEs ? "Anual" : "Annual",
+      price: "$249.99",
+      term: isEs ? "/ano" : "/year",
+      badge: isEs ? "Mejor Valor" : "Best Value",
+      detail: isEs ? "Ahorra mas de 30% con acceso anual." : "Save over 30% with annual access.",
+      features: isEs ? ["Todo lo de Mensual", "Soporte prioritario", "Acceso temprano", "Historial extendido"] : ["Everything in Monthly", "Priority support", "Early access", "Extended data history"],
+      featured: true,
+    },
+  ];
+
+  async function startCheckout(plan) {
+    setMessage("");
+    if (!user) {
+      go?.("settings");
+      return;
+    }
+    setLoadingPlan(plan);
+    try {
+      const { data } = supabase ? await supabase.auth.getSession() : { data: {} };
+      const token = data?.session?.access_token;
+      if (!token) throw new Error(isEs ? "Inicia sesion primero." : "Sign in first.");
+      const response = await fetch(checkoutEndpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ plan }),
+      });
+      const result = await readApiJson(response);
+      if (!response.ok) throw new Error(result.error || (isEs ? "No se pudo crear checkout." : "Checkout could not be created."));
+      if (result.url) window.location.assign(result.url);
+      else throw new Error(isEs ? "Stripe no devolvio una URL." : "Stripe did not return a checkout URL.");
+    } catch (error) {
+      setMessage(error.message || (isEs ? "No se pudo iniciar checkout." : "Checkout could not be started."));
+    } finally {
+      setLoadingPlan("");
+    }
+  }
+
+  return (
+    <section className="mx-auto max-w-5xl space-y-6">
+      <div className="text-center">
+        <p className="text-xs font-black uppercase tracking-[0.28em] text-cyan-300">{isEs ? "Precios" : "Pricing"}</p>
+        <h1 className="mt-3 text-4xl font-black text-white sm:text-5xl">{isEs ? "Planes simples para operadores" : "Simple plans for operators"}</h1>
+        <p className="mx-auto mt-4 max-w-2xl text-slate-400">{isEs ? "Elige Mensual o Anual. La prueba gratis de 3 dias empieza despues del checkout seguro de Stripe." : "Choose Monthly or Annual. The 3-day free trial starts after secure Stripe checkout."}</p>
+      </div>
+      <div className="grid gap-5 md:grid-cols-2">
+        {plans.map((plan) => (
+          <div key={plan.id} className={(plan.featured ? "border-cyan-300/45 bg-cyan-300/[.08]" : "border-white/10 bg-white/[.045]") + " rounded-[2rem] border p-6 shadow-2xl shadow-black/25"}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-2xl font-black text-white">{plan.name}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-400">{plan.detail}</p>
+              </div>
+              <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-black text-amber-200">{plan.badge}</span>
+            </div>
+            <p className="mt-6 text-5xl font-black text-cyan-200">{plan.price}<span className="text-base text-slate-500">{plan.term}</span></p>
+            <p className="mt-2 text-sm font-bold text-emerald-300">{isEs ? "Prueba gratis de 3 dias" : "3-day free trial"}</p>
+            <ul className="mt-6 space-y-3">
+              {plan.features.map((feature) => <li key={feature} className="flex gap-3 text-sm font-bold text-slate-300"><CheckCircle2 className="shrink-0 text-emerald-300" size={18} />{feature}</li>)}
+            </ul>
+            <button onClick={() => startCheckout(plan.id)} disabled={!!loadingPlan} className={(plan.featured ? "bg-cyan-300 text-slate-950 hover:bg-cyan-200" : "border border-white/10 text-white hover:border-cyan-300/50 hover:bg-white/5") + " mt-7 w-full rounded-2xl px-5 py-4 font-black transition"}>
+              {loadingPlan === plan.id ? (isEs ? "Abriendo..." : "Opening...") : (isEs ? "Comenzar" : "Get Started")}
+            </button>
+          </div>
+        ))}
+      </div>
+      {message && <p className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-center text-sm font-bold text-amber-100">{message}</p>}
+    </section>
+  );
+}
+
 function SEOArticlePage({ page, go }) {
   const article = seoArticles[page] || seoArticles.brrrCalculator;
   const Icon = article.icon;
