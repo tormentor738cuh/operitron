@@ -9,7 +9,7 @@ select
   'admin',
   'inactive'
 from auth.users as users
-where lower(coalesce(users.email, '')) = 'tormentor738@gmail.com'
+where lower(coalesce(users.email, '')) = 'your-admin-email@example.com'
 on conflict (id) do update
 set email = excluded.email,
     role = 'admin',
@@ -17,4 +17,4 @@ set email = excluded.email,
 
 select id, email, role, subscription_status
 from public.profiles
-where lower(email) = 'tormentor738@gmail.com';
+where lower(email) = 'your-admin-email@example.com';

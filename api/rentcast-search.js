@@ -1,8 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 
 const allowedStatuses = new Set(["active", "trialing"]);
-const ownerAdminEmails = ["tormentor738@gmail.com"];
-const testCustomerEmails = ["gamuelgotgame@gmail.com"];
+const ownerAdminEmails = [];
+const testCustomerEmails = [];
 
 function adminEmails() {
   return [...new Set([
@@ -190,7 +190,7 @@ export default async function handler(request, response) {
       };
     } else {
       return json(response, 503, {
-        error: "Account setup is not ready. Please contact support@operitron.com.",
+        error: "We could not verify your account yet. Please contact support@operitron.com.",
       });
     }
   }

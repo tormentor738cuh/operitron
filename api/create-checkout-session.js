@@ -37,7 +37,6 @@ function configuredAdminEmails() {
   return [
     process.env.ADMIN_EMAILS,
     process.env.VITE_ADMIN_EMAILS,
-    "tormentor738@gmail.com",
   ]
     .filter(Boolean)
     .join(",")

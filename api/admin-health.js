@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 
-const ownerEmail = "tormentor738@gmail.com";
+const ownerEmail = String(process.env.ADMIN_OWNER_EMAIL || process.env.ADMIN_EMAILS || "").split(",")[0]?.trim().toLowerCase();
 
 export default async function handler(request, response) {
   if (request.method !== "GET") return response.status(405).json({ error: "Method not allowed." });
