@@ -2499,6 +2499,7 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
   const [status, setStatus] = useState(isEs ? "Listo para buscar registros reales de propiedad." : "Ready to search live property intelligence.");
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [diagnostics, setDiagnostics] = useState(null);
 
   const property = result?.property || null;
   const valuation = result?.valueEstimate || null;
@@ -2508,8 +2509,9 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
   const saleMarket = asArray(result?.saleMarket);
   const rentalMarket = asArray(result?.rentalMarket);
 
-  async function search() {
+  async function search(nextAddress = address) {
     setLoading(true);
+    setDiagnostics(null);
     setStatus(isEs ? "Buscando RentCast de forma segura..." : "Searching RentCast securely...");
     try {
       const token = await getAccessToken?.();
@@ -2517,9 +2519,14 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
       const response = await fetch("/api/rentcast-search", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ address, diagnostics: true }),
+        body: JSON.stringify({ address: nextAddress, diagnostics: true }),
       });
       const payload = await readApiJson(response);
+      setDiagnostics(payload?.adminDebug || payload?.rentcastDebug ? {
+        summary: payload?.adminDebug,
+        calls: payload?.rentcastDebug || [],
+        warnings: payload?.warnings || [],
+      } : null);
       if (!response.ok) throw new Error(rentCastErrorMessage(payload, isEs ? "No se pudo cargar la propiedad." : "Property intelligence could not be loaded."));
       setResult(payload);
       setStatus(payload.warnings?.length
@@ -2531,6 +2538,12 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
     } finally {
       setLoading(false);
     }
+  }
+
+  function testRentCast() {
+    const testAddress = "65 Nellie Preserve Ln, Santa Rosa Beach, FL 32459";
+    setAddress(testAddress);
+    search(testAddress);
   }
 
   async function savePropertyProject() {
@@ -2589,10 +2602,31 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
             <input value={address} onChange={(event) => setAddress(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") search(); }} className="field" placeholder="123 Main St, City, ST" />
           </label>
           <MoneyInput label={t.mortgageBalance} value={mortgage} setValue={setMortgage} />
-          <button onClick={search} disabled={loading} className="primary-button self-end">{loading ? (isEs ? "Buscando..." : "Searching...") : t.search}</button>
+          <button onClick={() => search()} disabled={loading} className="primary-button self-end">{loading ? (isEs ? "Buscando..." : "Searching...") : t.search}</button>
         </div>
+        <button onClick={testRentCast} disabled={loading} className="mt-3 rounded-2xl border border-cyan-300/25 px-4 py-3 text-sm font-black text-cyan-100 transition hover:border-cyan-300/60 hover:bg-cyan-300/[.08]">
+          Test RentCast API
+        </button>
         <p className={`mt-4 rounded-2xl border p-4 text-sm ${result ? "border-emerald-300/20 bg-emerald-300/[.06] text-emerald-100" : "border-white/10 bg-slate-950/70 text-slate-400"}`}>{status}</p>
         {!!result?.warnings?.length && <div className="mt-3 rounded-2xl border border-amber-300/20 bg-amber-300/[.06] p-4 text-sm leading-6 text-amber-100">{result.warnings.map((warning) => <p key={warning}>{warning}</p>)}</div>}
+        {diagnostics && (
+          <div className="mt-3 rounded-2xl border border-cyan-300/20 bg-slate-950/80 p-4 text-xs leading-6 text-slate-300">
+            <p className="mb-2 font-black uppercase tracking-widest text-cyan-300">RentCast Diagnostics</p>
+            {diagnostics.summary && Object.entries(diagnostics.summary).map(([key, value]) => (
+              <p key={key}><span className="font-black text-white">{key}:</span> {typeof value === "object" ? JSON.stringify(value) : String(value)}</p>
+            ))}
+            {!!diagnostics.calls?.length && <div className="mt-3 space-y-2">
+              {diagnostics.calls.map((call, index) => (
+                <div key={`${call.url}-${index}`} className="rounded-xl border border-white/10 bg-white/[.035] p-3">
+                  <p><span className="font-black text-white">endpoint:</span> {call.url || call.endpoint}</p>
+                  <p><span className="font-black text-white">header:</span> {call.requestHeader || "X-Api-Key"}</p>
+                  <p><span className="font-black text-white">status:</span> {call.status}</p>
+                  <p className="break-words"><span className="font-black text-white">body:</span> {call.body || "No response body."}</p>
+                </div>
+              ))}
+            </div>}
+          </div>
+        )}
       </GlassPanel>
 
       {property ? (
