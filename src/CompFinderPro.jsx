@@ -1320,6 +1320,8 @@ function PremiumPaywall({ language = "en", user, go }) {
 function SettingsPage({ t, language = "en", user, authMode, setAuthMode, authEmail, setAuthEmail, authPassword, setAuthPassword, authName, setAuthName, authMessage, authLoading, handleAuth, handleForgotPassword, signOut }) {
   const isSpanish = language === "es";
   const mode = authMode || "login";
+  const [showPassword, setShowPassword] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
   return (
     <div className="mx-auto max-w-2xl">
       <GlassPanel>
@@ -1334,7 +1336,26 @@ function SettingsPage({ t, language = "en", user, authMode, setAuthMode, authEma
           <div className="mt-5 space-y-4">
             {mode === "signup" && <input value={authName || ""} onChange={(e) => setAuthName?.(e.target.value)} placeholder={isSpanish ? "Nombre" : "Name"} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />}
             <input value={authEmail || ""} onChange={(e) => setAuthEmail?.(e.target.value)} placeholder="email@example.com" className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />
-            <input type="password" value={authPassword || ""} onChange={(e) => setAuthPassword?.(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleAuth?.(mode); }} placeholder={isSpanish ? "Contrasena" : "Password"} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />
+            <div>
+              <div className="flex items-center rounded-2xl border border-white/10 bg-slate-950/80 px-4 text-white transition focus-within:border-cyan-300 focus-within:shadow-[0_0_28px_rgba(34,211,238,.16)]">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={authPassword || ""}
+                  onChange={(e) => setAuthPassword?.(e.target.value)}
+                  onKeyDown={(e) => { setCapsLockOn(Boolean(e.getModifierState?.("CapsLock"))); if (e.key === "Enter") handleAuth?.(mode); }}
+                  onKeyUp={(e) => setCapsLockOn(Boolean(e.getModifierState?.("CapsLock")))}
+                  placeholder={isSpanish ? "Contrasena" : "Password"}
+                  className="min-h-12 w-full bg-transparent py-3 pr-3 outline-none"
+                />
+                <button type="button" onClick={() => setShowPassword((value) => !value)} className="grid h-11 w-11 shrink-0 place-items-center rounded-xl text-slate-400 transition hover:bg-white/5 hover:text-cyan-200" aria-label={showPassword ? "Hide password" : "Show password"}>
+                  {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
+                </button>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-bold text-slate-500">
+                <span>{isSpanish ? "Las contrasenas distinguen mayusculas." : "Passwords are case-sensitive."}</span>
+                {capsLockOn && <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-1 text-amber-200">{isSpanish ? "Bloq Mayus activado" : "Caps Lock is on"}</span>}
+              </div>
+            </div>
             {authMessage && <p className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm text-cyan-100">{authMessage}</p>}
             <button disabled={authLoading} onClick={() => handleAuth?.(mode)} className="primary-button w-full">{authLoading ? (isSpanish ? "Procesando..." : "Working...") : mode === "signup" ? (isSpanish ? "Registrarse" : "Sign Up") : (isSpanish ? "Iniciar sesion" : "Sign In")}</button>
             <div className="flex flex-wrap justify-between gap-3 text-sm font-bold text-slate-400">
