@@ -46,6 +46,7 @@ import {
   Settings,
   Share2,
   Sparkles,
+  Star,
   StickyNote,
   Trash2,
   Redo2,
@@ -1721,7 +1722,7 @@ function Testimonials({ isEs }) {
       { quote: "The underwriting plus construction workflow is exactly what our team needed.", initial: "A", name: "Alyssa V.", role: "Residential Builder", location: "Raleigh, NC", color: "from-purple-400 to-indigo-600" },
       { quote: "Reports and punch lists make contractor conversations cleaner.", initial: "D", name: "Daniel L.", role: "BRRR Portfolio Operator", location: "Orlando, FL", color: "from-amber-300 to-orange-500" },
     ];
-  return <section><SectionHeader title={isEs ? "Confiado por Operadores" : "Trusted by Investors"} detail={isEs ? "Software para equipos que viven entre números, obra y ejecución." : "Software for teams living between numbers, jobsites, and execution."} /><div className="grid gap-4 md:grid-cols-3">{quotes.map((review) => <motion.article key={review.name} whileHover={{ y: -4 }} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 transition hover:border-cyan-300/25 hover:shadow-[0_16px_45px_rgba(34,211,238,.08)]"><p className="text-amber-300" aria-label="5 out of 5 stars">?????</p><p className="mt-4 min-h-24 leading-7 text-slate-300">{review.quote}</p><div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-4"><div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${review.color} text-lg font-black text-white shadow-[0_0_22px_rgba(34,211,238,.18)]`}>{review.initial}</div><div><p className="font-black text-white">{review.name}</p><p className="text-sm text-cyan-200">{review.role} <span className="text-slate-500">|</span> {review.location}</p></div></div></motion.article>)}</div></section>;
+  return <section><SectionHeader title={isEs ? "Confiado por Operadores" : "Trusted by Investors"} detail={isEs ? "Software para equipos que viven entre números, obra y ejecución." : "Software for teams living between numbers, jobsites, and execution."} /><div className="grid gap-4 md:grid-cols-3">{quotes.map((review) => <motion.article key={review.name} whileHover={{ y: -4 }} className="rounded-3xl border border-white/10 bg-slate-950/70 p-5 transition hover:border-cyan-300/25 hover:shadow-[0_16px_45px_rgba(34,211,238,.08)]"><div className="flex gap-1 text-amber-300" aria-label="5 out of 5 stars">{Array.from({ length: 5 }).map((_, index) => <Star key={index} size={17} fill="currentColor" strokeWidth={0} />)}</div><p className="mt-4 min-h-24 leading-7 text-slate-300">{review.quote}</p><div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-4"><div className={`grid h-12 w-12 shrink-0 place-items-center rounded-full bg-gradient-to-br ${review.color} text-lg font-black text-white shadow-[0_0_22px_rgba(34,211,238,.18)]`}>{review.initial}</div><div><p className="font-black text-white">{review.name}</p><p className="text-sm text-cyan-200">{review.role} <span className="text-slate-500">|</span> {review.location}</p></div></div></motion.article>)}</div></section>;
 }
 
 function ByNumbers({ isEs }) {
