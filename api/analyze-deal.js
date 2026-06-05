@@ -14,7 +14,7 @@ const numericFields = [
 function adminEmails() {
   return [...new Set([
     ...ownerAdminEmails,
-    ...String(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || "")
+    ...String([process.env.ADMIN_OWNER_EMAIL, process.env.ADMIN_EMAILS, process.env.VITE_ADMIN_EMAILS].filter(Boolean).join(","))
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -24,7 +24,7 @@ function adminEmails() {
 function bypassCustomerEmails() {
   return [...new Set([
     ...testCustomerEmails,
-    ...String(process.env.TEST_CUSTOMER_EMAILS || process.env.VITE_TEST_CUSTOMER_EMAILS || "")
+    ...String([process.env.TEST_CUSTOMER_EMAILS, process.env.VITE_TEST_CUSTOMER_EMAILS].filter(Boolean).join(","))
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -70,7 +70,8 @@ function rateLimited(key) {
 function validateInputs(body) {
   const input = {};
   for (const field of numericFields) {
-    const value = Number(body[field]);
+    const raw = body[field] === undefined || body[field] === null || body[field] === "" ? 0 : body[field];
+    const value = Number(typeof raw === "string" ? raw.replace(/[^0-9.-]/g, "") : raw);
     if (!Number.isFinite(value) || value < 0 || value > 100000000) {
       throw new Error(`Invalid ${field}.`);
     }
@@ -78,8 +79,8 @@ function validateInputs(body) {
   }
   if (input.interestRate > 50 || input.loanYears > 50) throw new Error("Invalid loan terms.");
   input.notes = typeof body.notes === "string" ? body.notes.trim().slice(0, 2000) : "";
-  input.projectId = body.projectId ? Number(body.projectId) : null;
-  if (input.projectId !== null && (!Number.isSafeInteger(input.projectId) || input.projectId <= 0)) {
+  input.projectId = body.projectId ? String(body.projectId).trim().slice(0, 100) : null;
+  if (input.projectId !== null && !/^[a-zA-Z0-9_-]+(?:-[a-zA-Z0-9_-]+)*$/.test(input.projectId)) {
     throw new Error("Invalid projectId.");
   }
   return input;

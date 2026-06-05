@@ -7,7 +7,7 @@ const testCustomerEmails = [];
 function adminEmails() {
   return [...new Set([
     ...ownerAdminEmails,
-    ...String(process.env.ADMIN_EMAILS || process.env.VITE_ADMIN_EMAILS || "")
+    ...String([process.env.ADMIN_OWNER_EMAIL, process.env.ADMIN_EMAILS, process.env.VITE_ADMIN_EMAILS].filter(Boolean).join(","))
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -17,7 +17,7 @@ function adminEmails() {
 function bypassCustomerEmails() {
   return [...new Set([
     ...testCustomerEmails,
-    ...String(process.env.TEST_CUSTOMER_EMAILS || process.env.VITE_TEST_CUSTOMER_EMAILS || "")
+    ...String([process.env.TEST_CUSTOMER_EMAILS, process.env.VITE_TEST_CUSTOMER_EMAILS].filter(Boolean).join(","))
       .split(",")
       .map((email) => email.trim().toLowerCase())
       .filter(Boolean),
@@ -59,8 +59,9 @@ async function getAccess(adminClient, user) {
   }
   const { data: profile, error } = await adminClient.from("profiles").select("subscription_status, role").eq("id", user.id).maybeSingle();
   if (error) throw error;
+  const status = profile?.subscription_status;
   const isAdmin = ownerOverride || profile?.role === "admin";
-  return { allowed: isAdmin || customerOverride || allowedStatuses.has(profile?.subscription_status), isAdmin, isTestCustomer: customerOverride };
+  return { allowed: isAdmin || customerOverride || allowedStatuses.has(status), isAdmin, isTestCustomer: customerOverride, status, role: profile?.role || "user" };
 }
 
 function cleanAddress(address) {
@@ -191,10 +192,21 @@ export default async function handler(request, response) {
     } else {
       return json(response, 503, {
         error: "We could not verify your account yet. Please contact support@operitron.com.",
+        adminDebug: adminEmails().length
+          ? undefined
+          : { reason: "No ADMIN_OWNER_EMAIL, ADMIN_EMAILS, or VITE_ADMIN_EMAILS environment variable was detected server-side." },
       });
     }
   }
-  if (!access.allowed) return json(response, 403, { error: "Start your 3-day free trial to access property intelligence." });
+  if (!access.allowed) return json(response, 403, {
+    error: "Start your 3-day free trial to access property intelligence.",
+    adminDebug: ownerOverride ? {
+      email,
+      role: access.role,
+      subscriptionStatus: access.status,
+      reason: "Admin email matched, but access did not resolve as allowed.",
+    } : undefined,
+  });
 
   const address = cleanAddress(request.body?.address);
   if (address.length < 6) return json(response, 400, { error: "Enter a complete property address." });

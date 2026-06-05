@@ -968,7 +968,7 @@ function AppShell() {
       </main>
       {!user && activePage !== "home" && <div className="relative z-10 mx-auto max-w-7xl px-4 pb-28 sm:px-5 lg:px-8 lg:pb-8"><PublicFooter isEs={language === "es"} go={go} /></div>}
       <MobileNavigation t={t} language={language} activePage={activePage} go={go} user={user} hasProductAccess={hasProductAccess} />
-      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} projects={projects} onSaveProject={saveOrUpdateProject} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
+      {activeTool && (hasProductAccess ? <ToolModal t={t} language={language} toolId={activeTool} projects={projects} activeProject={activeProject} setActiveProject={setActiveProject} onSaveProject={saveOrUpdateProject} onClose={() => setActiveTool(null)} /> : <ToolModalFrame onClose={() => setActiveTool(null)}><SubscriptionGate language={language} go={(page) => { setActiveTool(null); go(page); }} /></ToolModalFrame>)}
       {contactOpen && <ContactModal language={language} user={user} onClose={() => setContactOpen(false)} />}
     </div>
   );
@@ -1754,13 +1754,28 @@ function ToolGrid({ setActiveTool, language = "en" }) {
   );
 }
 
-function ToolModal({ t, language, toolId, projects, onSaveProject, onClose }) {
+function cleanProjectForTool(project) {
+  if (!project || typeof project !== "object") return null;
+  const rawName = String(project.name || project.title || "").trim();
+  if (!rawName || [";'", "';", ";", "'", "\""].includes(rawName)) return null;
+  return { ...project, name: rawName, title: project.title || rawName };
+}
+
+function ToolModal({ t, language, toolId, projects, activeProject, setActiveProject, onSaveProject, onClose }) {
   const tool = getTools(language).find(([id]) => id === toolId) || getTools(language)[0];
   const [, title, desc, Icon] = tool;
   const requiresProject = ["wizard", "underwriter", "loan", "loanCalcs", "todo", "punch", "takeoff", "budget", "subs", "linked", "collab"].includes(toolId);
-  const [projectReady, setProjectReady] = useState(!requiresProject);
+  const initialProject = cleanProjectForTool(activeProject);
+  const [projectReady, setProjectReady] = useState(!requiresProject || Boolean(initialProject));
   const [showExisting, setShowExisting] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(null);
+  const [selectedProject, setSelectedProject] = useState(initialProject);
+  const chooseProject = (project) => {
+    const cleanProject = cleanProjectForTool(project);
+    if (!cleanProject) return;
+    setSelectedProject(cleanProject);
+    setActiveProject?.(cleanProject);
+    setProjectReady(true);
+  };
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-0 backdrop-blur-sm sm:p-4">
       <motion.div initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="h-[100dvh] w-full overflow-y-auto bg-[#080d1f] p-4 pb-24 shadow-2xl shadow-black sm:max-h-[90vh] sm:max-w-5xl sm:rounded-[2rem] sm:border sm:border-white/10 sm:p-6">
@@ -1774,7 +1789,7 @@ function ToolModal({ t, language, toolId, projects, onSaveProject, onClose }) {
           </div>
           <button onClick={onClose} className="rounded-2xl border border-white/10 p-3 text-slate-300 hover:border-amber-400/50 hover:text-white"><X /></button>
         </div>
-        {projectReady ? <ToolBody t={t} language={language} toolId={toolId} project={selectedProject} /> : <ProjectPicker language={language} toolTitle={title} projects={projects} showExisting={showExisting} setShowExisting={setShowExisting} onSaveProject={onSaveProject} selectProject={(project) => { setSelectedProject(project); setProjectReady(true); }} />}
+        {projectReady ? <ToolBody t={t} language={language} toolId={toolId} project={selectedProject} /> : <ProjectPicker language={language} toolTitle={title} projects={projects} showExisting={showExisting} setShowExisting={setShowExisting} onSaveProject={onSaveProject} selectProject={chooseProject} />}
       </motion.div>
     </div>
   );
@@ -1787,7 +1802,10 @@ function ProjectPicker({ language, toolTitle, projects = [], showExisting, setSh
   const [projectName, setProjectName] = useState("");
   const [description, setDescription] = useState("");
   const [query, setQuery] = useState("");
-  const filteredProjects = projects.filter((project) => `${project.name || ""} ${project.address || ""} ${project.description || ""}`.toLowerCase().includes(query.toLowerCase()));
+  const filteredProjects = projects
+    .map(cleanProjectForTool)
+    .filter(Boolean)
+    .filter((project) => `${project.name || ""} ${project.title || ""} ${project.address || ""} ${project.description || ""}`.toLowerCase().includes(query.toLowerCase()));
 
   async function createProject() {
     const name = projectName.trim();
