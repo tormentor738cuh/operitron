@@ -1301,6 +1301,103 @@ function approvalStatus(project = {}) {
   return { label: "Not Approved", cls: "text-red-300 border-red-400/40 bg-red-400/10 shadow-[0_0_24px_rgba(248,113,113,.12)]" };
 }
 
+function PremiumPaywall({ language = "en", user, go }) {
+  const isSpanish = language === "es";
+  return (
+    <div className="space-y-5">
+      <GlassPanel>
+        <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">OPERITRON.COM</p>
+        <h2 className="mt-3 text-3xl font-black text-white">{isSpanish ? "Inicia tu prueba para acceder" : "Start your trial to unlock tools"}</h2>
+        <p className="mt-3 max-w-2xl leading-7 text-slate-400">{isSpanish ? "Tu cuenta esta lista. Las herramientas premium se activan con una suscripcion en prueba o activa." : "Your account is ready. Premium tools unlock with a trialing or active subscription."}</p>
+        {user?.email && <p className="mt-4 text-sm font-bold text-slate-300">{user.email}</p>}
+      </GlassPanel>
+      <PricingPlans language={language} go={go} user={user} />
+    </div>
+  );
+}
+
+function SettingsPage({ t, language = "en", user, authMode, setAuthMode, authEmail, setAuthEmail, authPassword, setAuthPassword, authName, setAuthName, authMessage, authLoading, handleAuth, handleForgotPassword, signOut }) {
+  const isSpanish = language === "es";
+  const mode = authMode || "login";
+  return (
+    <div className="mx-auto max-w-2xl">
+      <GlassPanel>
+        <BrandLogo size="large" />
+        <h2 className="mt-6 text-3xl font-black text-white">{user ? (isSpanish ? "Cuenta" : "Account") : (mode === "signup" ? (isSpanish ? "Crear cuenta" : "Create Account") : (isSpanish ? "Iniciar sesion" : "Sign In"))}</h2>
+        {user ? (
+          <div className="mt-5 space-y-4">
+            <p className="rounded-2xl border border-white/10 bg-slate-950/60 p-4 text-slate-300">{user.email}</p>
+            <button onClick={signOut} className="secondary-button w-full">{isSpanish ? "Cerrar sesion" : "Sign Out"}</button>
+          </div>
+        ) : (
+          <div className="mt-5 space-y-4">
+            {mode === "signup" && <input value={authName || ""} onChange={(e) => setAuthName?.(e.target.value)} placeholder={isSpanish ? "Nombre" : "Name"} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />}
+            <input value={authEmail || ""} onChange={(e) => setAuthEmail?.(e.target.value)} placeholder="email@example.com" className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />
+            <input type="password" value={authPassword || ""} onChange={(e) => setAuthPassword?.(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleAuth?.(mode); }} placeholder={isSpanish ? "Contrasena" : "Password"} className="w-full rounded-2xl border border-white/10 bg-slate-950/80 px-4 py-3 text-white outline-none focus:border-cyan-300" />
+            {authMessage && <p className="rounded-xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm text-cyan-100">{authMessage}</p>}
+            <button disabled={authLoading} onClick={() => handleAuth?.(mode)} className="primary-button w-full">{authLoading ? (isSpanish ? "Procesando..." : "Working...") : mode === "signup" ? (isSpanish ? "Registrarse" : "Sign Up") : (isSpanish ? "Iniciar sesion" : "Sign In")}</button>
+            <div className="flex flex-wrap justify-between gap-3 text-sm font-bold text-slate-400">
+              <button onClick={() => setAuthMode?.(mode === "signup" ? "login" : "signup")} className="hover:text-cyan-300">{mode === "signup" ? (isSpanish ? "Ya tengo cuenta" : "I have an account") : (isSpanish ? "Crear cuenta" : "Create account")}</button>
+              <button onClick={handleForgotPassword} className="hover:text-cyan-300">{isSpanish ? "Olvide mi contrasena" : "Forgot password"}</button>
+            </div>
+          </div>
+        )}
+      </GlassPanel>
+    </div>
+  );
+}
+
+function ProfileMini({ user }) {
+  const email = user?.email || "Account";
+  const initial = email.slice(0, 1).toUpperCase();
+  return <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[.04] p-3"><div className="grid h-10 w-10 place-items-center rounded-full bg-cyan-400 text-sm font-black text-slate-950">{initial}</div><div className="min-w-0"><p className="truncate text-sm font-black text-white">{email.split("@")[0]}</p><p className="truncate text-xs text-slate-500">{email}</p></div></div>;
+}
+
+function ToolCard({ tool, onClick, compact }) {
+  const [id, title, desc, Icon, badge] = Array.isArray(tool) ? tool : [tool.id, tool.title, tool.desc, tool.icon, tool.badge];
+  const ToolIcon = Icon || Sparkles;
+  return <button onClick={onClick} className={`group rounded-3xl border border-white/10 bg-slate-950/60 p-${compact ? "4" : "5"} text-left transition hover:border-cyan-300/40 hover:shadow-[0_0_35px_rgba(34,211,238,.12)]`}><div className="flex items-start justify-between gap-3"><div className="grid h-11 w-11 place-items-center rounded-2xl bg-cyan-300/10 text-cyan-300"><ToolIcon size={19} /></div>{badge && <span className="rounded-full border border-amber-300/20 bg-amber-300/10 px-2 py-1 text-[10px] font-black text-amber-300">{badge}</span>}</div><h3 className="mt-4 text-lg font-black text-white">{title}</h3><p className="mt-2 text-sm leading-6 text-slate-400">{desc}</p><p className="mt-4 text-sm font-black text-cyan-300">Open tool</p></button>;
+}
+
+function ProjectTools({ language = "en", setActiveTool }) {
+  const isSpanish = language === "es";
+  const toolCards = getTools(language);
+  return <div className="space-y-5"><SectionHeader title={isSpanish ? "Herramientas del Proyecto" : "Project Tools"} detail={isSpanish ? "Haz clic en cualquier herramienta para abrir su panel." : "Click any tool to open its working panel."} /><div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">{toolCards.map((tool) => <ToolCard key={tool[0]} tool={tool} onClick={() => setActiveTool?.(tool[0])} />)}</div></div>;
+}
+
+function ToolModalFrame({ children, onClose }) {
+  return <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4 backdrop-blur"><div className="max-h-[90vh] w-full max-w-5xl overflow-auto rounded-3xl border border-white/10 bg-slate-950 p-5 shadow-2xl"><div className="mb-4 flex justify-end"><button onClick={onClose} className="rounded-xl border border-white/10 px-3 py-2 text-sm font-black text-slate-300 hover:border-cyan-300/40">Close</button></div>{children}</div></div>;
+}
+
+function SubscriptionGate({ language = "en", go }) {
+  return <PremiumPaywall language={language} go={go} />;
+}
+
+function ToolPanel({ title, subtitle, children }) {
+  return <GlassPanel><div className="mb-5"><h3 className="text-2xl font-black text-white">{title}</h3>{subtitle && <p className="mt-2 text-sm leading-6 text-slate-400">{subtitle}</p>}</div>{children}</GlassPanel>;
+}
+
+function ToolModal({ toolId, language = "en", projects = [], activeProject, onClose }) {
+  const tool = getTools(language).find((item) => item[0] === toolId);
+  const title = tool?.[1] || "Tool";
+  const desc = tool?.[2] || "This workspace is ready for project data.";
+  return <ToolModalFrame onClose={onClose}><div className="space-y-4"><div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">Selected Project</p><p className="mt-2 text-xl font-black text-white">{activeProject?.name || activeProject?.title || projects[0]?.name || projects[0]?.title || "No project selected"}</p></div><ToolPanel title={title} subtitle={desc}><EmptyState text="Open this tool from a saved project to continue working." /></ToolPanel></div></ToolModalFrame>;
+}
+
+function SimplePage({ title, subtitle, children }) {
+  return <div className="space-y-5"><GlassPanel><h2 className="text-3xl font-black text-white">{title}</h2>{subtitle && <p className="mt-2 text-slate-400">{subtitle}</p>}</GlassPanel>{children}</div>;
+}
+
+function PropertySearch({ language = "en" }) { return <SimplePage title={language === "es" ? "Busqueda de Propiedades" : "Property Search"} subtitle="RentCast property search workspace."><GlassPanel><EmptyState text="Search tools are loading from your connected services." /></GlassPanel></SimplePage>; }
+function LearningCenter({ language = "en" }) { return <SimplePage title={language === "es" ? "Centro de Aprendizaje" : "Learning Center"} subtitle="Guides and tutorials for investors and builders." />; }
+function KnowledgeBase({ language = "en" }) { return <SimplePage title={language === "es" ? "Base de Conocimiento" : "Knowledge Base"} subtitle="Answers and operating guidance." />; }
+function Tutorials({ language = "en" }) { return <SimplePage title={language === "es" ? "Tutoriales" : "Tutorials"} subtitle="Short walkthroughs for each workflow." />; }
+function Tours({ language = "en" }) { return <SimplePage title={language === "es" ? "Recorridos" : "Tours"} subtitle="Guided product tours." />; }
+function DropboxPage() { return <SimplePage title="Dropbox" subtitle="Connect and manage cloud storage."><GlassPanel><EmptyState text="Dropbox integration panel is ready." /></GlassPanel></SimplePage>; }
+function OwnerConsole({ language = "en" }) { return <SimplePage title={language === "es" ? "Owner Console" : "Owner Console"} subtitle="Admin diagnostics and launch controls."><GlassPanel><EmptyState text="Admin tools are available for authorized accounts." /></GlassPanel></SimplePage>; }
+function ProfilePage({ user, back, language = "en" }) { return <SimplePage title={language === "es" ? "Perfil" : "Profile"} subtitle={user?.email || "Account"}><GlassPanel><button onClick={back} className="secondary-button">Back</button></GlassPanel></SimplePage>; }
+function LegalPage({ type, language = "en" }) { const titles = { privacy: "Privacy Policy", terms: "Terms of Service", refund: "Refund Policy", disclaimer: "Disclaimer" }; return <SimplePage title={titles[type] || "Legal"} subtitle="OPERITRON.COM"><GlassPanel><p className="leading-7 text-slate-300">This page is available for review. For questions, contact support@operitron.com.</p></GlassPanel></SimplePage>; }
+
 function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAddProject, isAdmin, activeProject, setActiveProject, onSaveProject, onDeleteProject }) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
@@ -1546,6 +1643,16 @@ function PublicHome({ t, go }) {
       <LandingKnowledgeBase isEs={isEs} />
       <SEOArticleGrid go={go} />
       <PublicFooter isEs={isEs} go={go} />
+    </div>
+  );
+}
+
+function SectionHeader({ title, detail, eyebrow }) {
+  return (
+    <div className="mb-8 text-center">
+      {eyebrow && <p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300">{eyebrow}</p>}
+      <h2 className="text-3xl font-black text-white sm:text-4xl">{title}</h2>
+      {detail && <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-400">{detail}</p>}
     </div>
   );
 }
