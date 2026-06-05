@@ -749,6 +749,11 @@ function AppShell() {
   const [subscriptionLoading, setSubscriptionLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [authLoading, setAuthLoading] = useState(Boolean(supabase));
+  const [authMode, setAuthMode] = useState("login");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authMessage, setAuthMessage] = useState("");
   const [passwordRecovery, setPasswordRecovery] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeProject, setActiveProject] = useState(null);
@@ -878,8 +883,85 @@ function AppShell() {
     setSubscription(null);
     setSubscriptionLoading(false);
     setPasswordRecovery(false);
+    setAuthPassword("");
+    setAuthMessage("");
     setProjects(initialProjects);
     go("home", true);
+  }
+
+  async function handleAuth(mode = authMode) {
+    const email = authEmail.trim().toLowerCase();
+    const password = authPassword;
+    setAuthMessage("");
+    if (!supabase) {
+      setAuthMessage(language === "es" ? "El acceso de cuenta no esta listo. Contacta a support@operitron.com." : "Account access is not ready. Please contact support@operitron.com.");
+      return;
+    }
+    if (!email || !password) {
+      setAuthMessage(language === "es" ? "Escribe tu email y contrasena." : "Enter your email and password.");
+      return;
+    }
+    if (password.length < 6) {
+      setAuthMessage(language === "es" ? "La contrasena debe tener al menos 6 caracteres." : "Password must be at least 6 characters.");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      if (mode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            emailRedirectTo: `${window.location.origin}/dashboard`,
+            data: { full_name: authName.trim() },
+          },
+        });
+        if (error) throw error;
+        trackGoogleAdsConversion("signup");
+        setAuthPassword("");
+        if (data.session?.user) {
+          setUser(data.session.user);
+          go("dashboard", true);
+        } else {
+          setAuthMessage(language === "es" ? "Revisa tu email para confirmar tu cuenta." : "Check your email to confirm your account.");
+        }
+      } else {
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        setAuthPassword("");
+        setUser(data.user || null);
+        go("dashboard", true);
+      }
+    } catch (error) {
+      setAuthMessage(error?.message || (language === "es" ? "No pudimos completar el acceso. Intenta de nuevo." : "We could not complete sign in. Please try again."));
+    } finally {
+      setAuthLoading(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    const email = authEmail.trim().toLowerCase();
+    setAuthMessage("");
+    if (!supabase) {
+      setAuthMessage(language === "es" ? "El acceso de cuenta no esta listo. Contacta a support@operitron.com." : "Account access is not ready. Please contact support@operitron.com.");
+      return;
+    }
+    if (!email) {
+      setAuthMessage(language === "es" ? "Escribe tu email para enviar el enlace." : "Enter your email to send a reset link.");
+      return;
+    }
+    setAuthLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/settings`,
+      });
+      if (error) throw error;
+      setAuthMessage(language === "es" ? "Enlace enviado. Revisa tu email." : "Reset link sent. Check your email.");
+    } catch (error) {
+      setAuthMessage(error?.message || (language === "es" ? "No pudimos enviar el enlace." : "We could not send the reset link."));
+    } finally {
+      setAuthLoading(false);
+    }
   }
 
   async function saveProject(project) {
@@ -928,7 +1010,7 @@ function AppShell() {
   }
 
   const page = useMemo(() => {
-    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery, isAdmin, isTestCustomer, hasProductAccess, getAccessToken, activeProject, setActiveProject, onSaveProject: saveOrUpdateProject, onDeleteProject: deleteProject };
+    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, authMode, setAuthMode, authEmail, setAuthEmail, authPassword, setAuthPassword, authName, setAuthName, authMessage, authLoading, handleAuth, handleForgotPassword, subscription, passwordRecovery, setPasswordRecovery, isAdmin, isTestCustomer, hasProductAccess, getAccessToken, activeProject, setActiveProject, onSaveProject: saveOrUpdateProject, onDeleteProject: deleteProject };
     if (activePage === "home") return user ? (hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />) : <PublicHome t={t} go={go} />;
     if (activePage === "dashboard" && !user) return <SettingsPage {...props} />;
     if (activePage === "dashboard") return hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
@@ -951,7 +1033,7 @@ function AppShell() {
     if (articlePages.has(activePage)) return <SEOArticlePage page={activePage} go={go} />;
     if (["privacy", "terms", "refund", "disclaimer"].includes(activePage)) return <LegalPage type={activePage} language={language} />;
     return <Dashboard {...props} />;
-  }, [activePage, language, projects, user, subscription, passwordRecovery, hasProductAccess, isAdmin, isTestCustomer, activeProject]);
+  }, [activePage, language, projects, user, subscription, passwordRecovery, hasProductAccess, isAdmin, isTestCustomer, activeProject, authMode, authEmail, authPassword, authName, authMessage, authLoading]);
 
   if (loading || authLoading || (user && subscriptionLoading && !isAdmin)) return <LoadingScreen />;
 
