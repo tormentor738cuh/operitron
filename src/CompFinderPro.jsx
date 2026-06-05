@@ -908,6 +908,16 @@ function AppShell() {
     return error ? { error: error.message, project: normalized } : { error: "", project: normalized };
   }
 
+  async function deleteProject(projectId) {
+    if (supabase && user) {
+      const { error } = await supabase.from("projects").delete().eq("id", projectId).eq("user_id", user.id);
+      if (error) return { error: error.message };
+    }
+    setProjects((current) => current.filter((item) => String(item.id) !== String(projectId)));
+    setActiveProject((current) => current && String(current.id) === String(projectId) ? null : current);
+    return { error: "" };
+  }
+
   async function getAccessToken() {
     if (!supabase) return "";
     const { data } = await supabase.auth.getSession();
@@ -915,7 +925,7 @@ function AppShell() {
   }
 
   const page = useMemo(() => {
-    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery, isAdmin, isTestCustomer, hasProductAccess, getAccessToken, activeProject, setActiveProject, onSaveProject: saveOrUpdateProject };
+    const props = { t, language, go, back, projects, setProjects, setActiveTool, user, setUser, signOut, subscription, passwordRecovery, setPasswordRecovery, isAdmin, isTestCustomer, hasProductAccess, getAccessToken, activeProject, setActiveProject, onSaveProject: saveOrUpdateProject, onDeleteProject: deleteProject };
     if (activePage === "home") return user ? (hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />) : <PublicHome t={t} go={go} />;
     if (activePage === "dashboard" && !user) return <SettingsPage {...props} />;
     if (activePage === "dashboard") return hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
@@ -1212,7 +1222,7 @@ function BrandLogo({ onClick, compact = false, size = "default" }) {
   );
 }
 
-function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAddProject, isAdmin }) {
+function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAddProject, onDeleteProject, isAdmin }) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [saveStatus, setSaveStatus] = useState("");
@@ -1241,7 +1251,7 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
       <section className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3">
         <Stat onClick={() => go("projectTools")} title={t.savedProjects} value={projects.length} icon={FolderOpen} help={t.savedProjectsHelp || "Number of saved property analyses in your workspace."} />
         <Stat onClick={() => setActiveTool("underwriter")} title={t.projectedProfit} value={formatMoney(totalProfit)} icon={WalletCards} help={t.projectedProfitHelp || "Combined expected profit from current projects."} />
-        <div className="col-span-2 md:col-span-1"><Stat onClick={() => setActiveTool("reports")} title={t.reportsReady} value="8" icon={FileText} help={t.reportsReadyHelp || "Reports available for PDF export or partner review."} /></div>
+        <div className="col-span-2 md:col-span-1"><Stat onClick={() => go("projectTools")} title={t.reportsReady} value="8" icon={FileText} help={t.reportsReadyHelp || "Reports available for PDF export or partner review."} /></div>
       </section>
 
       <section className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,390px)]">
@@ -1255,7 +1265,7 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
           </div>
           {projects.length ? <div className="grid gap-5 lg:grid-cols-2">
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} open={() => go("projectTools")} t={t} />
+              <ProjectCard key={project.id} project={project} open={() => go("projectTools")} onDeleteProject={onDeleteProject} t={t} />
             ))}
           </div> : <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/35 px-5 py-10 text-center">
             <FolderOpen className="mx-auto text-cyan-300" />
@@ -1618,12 +1628,72 @@ function ToolShell({ title, subtitle, children }) {
   );
 }
 
-function ProjectCard({ project, open, t }) {
+function ProjectCard({ project, open, onDeleteProject, t }) {
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
   const totalCost = project.purchase + project.repairs + project.expenses;
   const roi = formulas.roi(project.profit, totalCost);
+
+  async function removeProject(event) {
+    event.preventDefault();
+    event.stopPropagation();
+    setDeleteBusy(true);
+    setDeleteError("");
+    const result = await onDeleteProject?.(project.id);
+    if (result?.error) {
+      setDeleteError("Could not delete. Please try again.");
+      setDeleteBusy(false);
+      return;
+    }
+    setDeleteBusy(false);
+    setConfirmDelete(false);
+  }
+
   return (
-    <motion.button onClick={open} whileHover={{ y: -6, scale: 1.01 }} className="glow-card rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] to-white/[.03] p-4 text-left shadow-2xl shadow-black/20 sm:rounded-3xl sm:p-6">
-      <div className="mb-5 flex items-start justify-between gap-4">
+    <motion.article
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          open();
+        }
+      }}
+      whileHover={{ y: -6, scale: 1.01 }}
+      className="glow-card relative cursor-pointer rounded-2xl border border-white/10 bg-gradient-to-br from-white/[.07] to-white/[.03] p-4 text-left shadow-2xl shadow-black/20 outline-none transition focus-visible:border-cyan-300/60 focus-visible:ring-2 focus-visible:ring-cyan-300/30 sm:rounded-3xl sm:p-6"
+    >
+      {onDeleteProject && (
+        <div className="absolute right-3 top-3 z-20 sm:right-4 sm:top-4" onClick={(event) => event.stopPropagation()}>
+          {!confirmDelete ? (
+            <button
+              type="button"
+              aria-label={`Delete ${project.name}`}
+              title="Delete project"
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setDeleteError("");
+                setConfirmDelete(true);
+              }}
+              className="grid h-9 w-9 place-items-center rounded-xl border border-rose-300/15 bg-slate-950/60 text-rose-200 opacity-80 shadow-lg shadow-black/20 backdrop-blur transition hover:border-rose-300/40 hover:bg-rose-400/10 hover:text-rose-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-300/40 sm:h-10 sm:w-10"
+            >
+              <Trash2 size={16} />
+            </button>
+          ) : (
+            <div className="w-44 rounded-2xl border border-rose-300/25 bg-slate-950/95 p-2 shadow-2xl shadow-black/40 backdrop-blur">
+              <p className="px-2 pb-2 text-xs font-bold text-slate-300">Delete project?</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button type="button" onClick={removeProject} disabled={deleteBusy} className="rounded-xl bg-rose-400 px-2 py-2 text-xs font-black text-slate-950 disabled:cursor-wait disabled:opacity-70">{deleteBusy ? "..." : "Delete"}</button>
+                <button type="button" onClick={(event) => { event.preventDefault(); event.stopPropagation(); setConfirmDelete(false); }} className="rounded-xl border border-white/10 px-2 py-2 text-xs font-black text-slate-300 hover:bg-white/5">Cancel</button>
+              </div>
+              {deleteError && <p className="mt-2 px-2 text-xs font-bold text-rose-200">{deleteError}</p>}
+            </div>
+          )}
+        </div>
+      )}
+      <div className="mb-5 flex items-start justify-between gap-4 pr-12">
         <GlowIcon><FolderOpen /></GlowIcon>
         <span className="rounded-full border border-emerald-400/20 bg-emerald-400/10 px-3 py-1 text-xs font-black text-emerald-300">{project.type}</span>
       </div>
@@ -1638,7 +1708,7 @@ function ProjectCard({ project, open, t }) {
         <span className="text-sm font-black text-amber-300">{t.openProject}</span>
         <ChevronRight className="text-amber-300" />
       </div>
-    </motion.button>
+    </motion.article>
   );
 }
 
