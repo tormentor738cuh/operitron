@@ -14,6 +14,8 @@
     { "source": "/login", "destination": "/" },
     { "source": "/dashboard", "destination": "/" },
     { "source": "/project-tools", "destination": "/" },
+    { "source": "/projects", "destination": "/" },
+    { "source": "/project", "destination": "/" },
     { "source": "/property-search", "destination": "/" },
     { "source": "/dropbox", "destination": "/" },
     { "source": "/profile", "destination": "/" },

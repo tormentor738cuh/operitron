@@ -2289,9 +2289,37 @@ function PremiumPaywall({ language, user, go }) {
   return <div className="mx-auto max-w-5xl space-y-7"><section className="relative overflow-hidden rounded-[2rem] border border-cyan-300/25 bg-gradient-to-br from-cyan-400/12 via-slate-950 to-purple-500/12 p-6 text-center shadow-[0_0_55px_rgba(34,211,238,.12)] sm:p-10"><div className="absolute -right-20 -top-24 h-64 w-64 rounded-full bg-cyan-400/15 blur-3xl" /><Sparkles className="relative mx-auto text-cyan-300" size={38} /><p className="relative mt-5 text-xs font-black uppercase tracking-[0.28em] text-cyan-300">OPERITRON.COM</p><h1 className="relative mx-auto mt-3 max-w-3xl text-3xl font-black text-white sm:text-5xl">{isEs ? "Comienza tu prueba gratis de 3 días" : "Start your 3-day free trial"}</h1><p className="relative mx-auto mt-5 max-w-2xl text-base leading-7 text-slate-300 sm:text-lg">{isEs ? "Tu cuenta está lista. Las herramientas profesionales se activan cuando inicias una suscripción Mensual o Anual mediante Stripe Checkout." : "Your account is ready. Professional tools activate when you start a Monthly or Annual subscription through secure Stripe Checkout."}</p><p className="relative mt-4 text-sm font-bold text-slate-400">{user?.email}</p><div className="relative mt-8 flex flex-col justify-center gap-3 sm:flex-row"><button onClick={() => go("pricing")} className="primary-button">{isEs ? "Ver planes e iniciar prueba" : "View plans and start trial"}</button><button onClick={() => go("profile")} className="secondary-button">{isEs ? "Mi cuenta" : "My account"}</button></div></section><div className="grid gap-4 md:grid-cols-2">{perks.map((perk) => <div key={perk} className="rounded-2xl border border-white/10 bg-white/[.045] p-5 text-slate-200"><CheckCircle2 className="mb-3 text-cyan-300" size={20} /><p className="font-bold">{perk}</p></div>)}</div></div>;
 }
 
-function ToolBody({ t, language, toolId, project }) {
+function saveToolResultToProject(project, toolKey, payload, onSaveProject, onProjectSaved, aliases = []) {
+  if (!project || !toolKey || !onSaveProject) return null;
+  const now = new Date().toISOString();
+  const entry = { ...(payload || {}), toolKey, savedAt: now, updatedAt: now };
+  const updatedProject = {
+    ...project,
+    data: {
+      ...(project.data || {}),
+      [toolKey]: entry,
+      updatedAt: now,
+      lastSavedTool: toolKey,
+    },
+    [toolKey]: entry,
+    updatedAt: now,
+    lastSavedTool: toolKey,
+  };
+  aliases.filter(Boolean).forEach((alias) => {
+    updatedProject[alias] = entry;
+    updatedProject.data[alias] = entry;
+  });
+
+  Promise.resolve(onSaveProject(updatedProject))
+    .then((saved) => onProjectSaved?.(saved?.project || saved || updatedProject))
+    .catch(() => onProjectSaved?.(updatedProject));
+
+  return updatedProject;
+}
+
+function ToolBody({ t, language, toolId, project, onSaveProject, onProjectSaved }) {
   if (toolId === "wizard") return <ConstructionWizard language={language} project={project} />;
-  if (toolId === "underwriter") return <DealUnderwriter language={language} project={project} />;
+  if (toolId === "underwriter") return <DealUnderwriter language={language} project={project} onSaveProject={onSaveProject} onProjectSaved={onProjectSaved} />;
   if (toolId === "loan" || toolId === "loanCalcs") return <InvestmentLoanCalculator language={language} project={project} />;
   if (toolId === "todo") return <Checklist project={project} items={language === "es" ? ["Ordenar armaduras", "Confirmar inspección de cimentación", "Recopilar tres ofertas de HVAC", "Programar cuadrilla de drywall"] : ["Order trusses", "Confirm foundation inspection", "Collect three HVAC bids", "Schedule drywall crew"]} language={language} />;
   if (toolId === "punch") return <PunchListApp language={language} project={project} />;
@@ -2300,7 +2328,7 @@ function ToolBody({ t, language, toolId, project }) {
   if (toolId === "subs") return <div className="space-y-6"><SubsQuotes language={language} project={project} /><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Collaborators language={language} project={project} embedded /></section></div>;
   if (toolId === "linked") return <LinkedItems language={language} project={project} />;
   if (toolId === "collab") return <Collaborators language={language} project={project} />;
-  return <AIAssistant t={t} large />;
+  return <AIAssistant t={t} large project={project} onSaveProject={onSaveProject} onProjectSaved={onProjectSaved} />;
 }
 
 function createConstructionPhases(answers) {
@@ -2621,7 +2649,7 @@ function sidingDescription(name) {
   }[name];
 }
 
-function DealUnderwriter({ language = "en", project }) {
+function DealUnderwriter({ language = "en", project, onSaveProject, onProjectSaved }) {
   const isEs = language === "es";
   const [purchase, setPurchase] = useState(190000);
   const [rehab, setRehab] = useState(45000);
@@ -2632,7 +2660,27 @@ function DealUnderwriter({ language = "en", project }) {
   const roi = formulas.roi(profit, total);
   const noi = 2800 * 12 - 8500;
   const debt = formulas.monthlyMortgage(cleanNumber(purchase) * 0.8, 7.25, 30) * 12;
-  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de compra" : "Purchase Price"} value={purchase} setValue={setPurchase} /><MoneyInput label={isEs ? "Presupuesto de rehabilitación" : "Rehab Budget"} value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label={isEs ? "Cierre / Mantenimiento / Venta" : "Closing / Holding / Selling"} value={costs} setValue={setCosts} /></div><ResultBox items={[[isEs ? "Costo total" : "Total Cost", formatMoney(total)], [isEs ? "Ganancia" : "Profit", formatMoney(profit), profit > 0], ["ROI", `${roi.toFixed(1)}%`, roi > 15], [isEs ? "Oferta m?xima al 70%" : "70% Max Offer", formatMoney(cleanNumber(arv) * 0.7 - cleanNumber(rehab)), true], [isEs ? "Tasa de capitalizaci?n" : "Cap Rate", `${formulas.capRate(noi, cleanNumber(purchase)).toFixed(2)}%`], ["DSCR", formulas.dscr(noi, debt).toFixed(2), formulas.dscr(noi, debt) >= 1.2], [isEs ? "Retorno sobre efectivo" : "Cash-on-Cash", `${formulas.cashOnCash(noi - debt, total * 0.25).toFixed(2)}%`]]} /></div></div>;
+  function saveAnalysis() {
+    saveToolResultToProject(project, "dealUnderwriter", {
+      title: "Deal Underwriter",
+      inputs: {
+        purchasePrice: cleanNumber(purchase),
+        rehabBudget: cleanNumber(rehab),
+        arv: cleanNumber(arv),
+        closingHoldingSellingCosts: cleanNumber(costs),
+      },
+      summary: {
+        totalCost: total,
+        profit,
+        roi,
+        maxOffer70: cleanNumber(arv) * 0.7 - cleanNumber(rehab),
+        capRate: formulas.capRate(noi, cleanNumber(purchase)),
+        dscr: formulas.dscr(noi, debt),
+        cashOnCash: formulas.cashOnCash(noi - debt, total * 0.25),
+      },
+    }, onSaveProject, onProjectSaved, ["underwriter", "dealAnalysis"]);
+  }
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex justify-end"><button onClick={saveAnalysis} disabled={!project || !onSaveProject} className="secondary-button">{isEs ? "Guardar análisis" : "Save Analysis"}</button></div><div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de compra" : "Purchase Price"} value={purchase} setValue={setPurchase} /><MoneyInput label={isEs ? "Presupuesto de rehabilitación" : "Rehab Budget"} value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label={isEs ? "Cierre / Mantenimiento / Venta" : "Closing / Holding / Selling"} value={costs} setValue={setCosts} /></div><ResultBox items={[[isEs ? "Costo total" : "Total Cost", formatMoney(total)], [isEs ? "Ganancia" : "Profit", formatMoney(profit), profit > 0], ["ROI", `${roi.toFixed(1)}%`, roi > 15], [isEs ? "Oferta m?xima al 70%" : "70% Max Offer", formatMoney(cleanNumber(arv) * 0.7 - cleanNumber(rehab)), true], [isEs ? "Tasa de capitalizaci?n" : "Cap Rate", `${formulas.capRate(noi, cleanNumber(purchase)).toFixed(2)}%`], ["DSCR", formulas.dscr(noi, debt).toFixed(2), formulas.dscr(noi, debt) >= 1.2], [isEs ? "Retorno sobre efectivo" : "Cash-on-Cash", `${formulas.cashOnCash(noi - debt, total * 0.25).toFixed(2)}%`]]} /></div></div>;
 }
 
 function InvestmentLoanCalculator({ language = "en", project }) {
@@ -2770,7 +2818,7 @@ function InterestTimeline({ balances, constructionMonths, saleMonths, language }
   return <div className="mt-7"><p className="mb-5 font-black text-white">{language === "es" ? "Cronología de Acumulación de Interés" : "Interest Accumulation Timeline"}</p><div className="flex h-44 items-end gap-1.5 rounded-2xl border border-white/5 bg-slate-900/40 p-3 sm:gap-2">{balances.map((balance, index) => <div key={index} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-2"><div className={`w-full rounded-t-md ${index < constructionMonths ? "bg-gradient-to-t from-cyan-500/45 to-cyan-300" : "bg-gradient-to-t from-indigo-500/45 to-indigo-300"}`} style={{ height: `${Math.max(8, balance / max * 100)}%` }} title={formatMoney(balance)} /><span className="text-center text-[0.62rem] font-bold text-slate-500">{index + 1}</span></div>)}</div><div className="mt-4 flex flex-wrap justify-center gap-5 text-xs font-bold text-slate-400"><span className="text-cyan-300">{language === "es" ? `Construcción: 1-${constructionMonths} meses` : `Construction: 1-${constructionMonths} mo`}</span>{saleMonths > 0 && <span className="text-indigo-300">{language === "es" ? `Venta: ${constructionMonths + 1}-${constructionMonths + saleMonths} meses` : `Sale: ${constructionMonths + 1}-${constructionMonths + saleMonths} mo`}</span>}</div></div>;
 }
 
-function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
+function PropertySearch({ t, language = "en", getAccessToken, onAddProject, project, onSaveProject, onProjectSaved }) {
   const isEs = language === "es";
   const [address, setAddress] = useState("100 Example Ave, Denver, CO 80202");
   const [mortgage, setMortgage] = useState(225000);
@@ -2826,9 +2874,43 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
   }
 
   async function savePropertyProject() {
-    if (!property || !onAddProject) return;
+    if (!property) return;
     setSaving(true);
-    const project = {
+    const propertyPayload = {
+      title: "Property Search",
+      address: pick(property.formattedAddress, property.addressLine1, address),
+      property,
+      valuation,
+      rentEstimate,
+      saleComps: comps,
+      rentalComps,
+      saleMarket,
+      rentalMarket,
+      investorMath: {
+        arv,
+        equity,
+        pricePerSqft: ppsf,
+        taxRate,
+        mortgageBalance: cleanNumber(mortgage),
+        estimatedValue,
+        rent,
+        assessedValue: assessed,
+        propertyTaxes: taxes,
+      },
+      raw: result,
+    };
+    if (project && onSaveProject) {
+      saveToolResultToProject(project, "propertySearch", propertyPayload, onSaveProject, onProjectSaved, ["rentcast", "propertyData"]);
+      setSaving(false);
+      setStatus(isEs ? "Propiedad guardada en el proyecto activo." : "Property saved to the active project.");
+      return;
+    }
+    if (!onAddProject) {
+      setSaving(false);
+      setStatus(isEs ? "Selecciona o crea un proyecto antes de guardar." : "Select or create a project before saving.");
+      return;
+    }
+    const newProject = {
       id: Date.now(),
       name: pick(property.formattedAddress, property.addressLine1, address),
       type: "Property Intelligence",
@@ -2840,8 +2922,13 @@ function PropertySearch({ t, language = "en", getAccessToken, onAddProject }) {
       status: "Research",
       dataSource: "RentCast",
       rentcast: result,
+      propertySearch: propertyPayload,
+      data: {
+        propertySearch: propertyPayload,
+        rentcast: result,
+      },
     };
-    const saved = await onAddProject(project);
+    const saved = await onAddProject(newProject);
     setSaving(false);
     setStatus(saved?.error
       ? saved.error
@@ -4207,14 +4294,18 @@ function LegalPage({ type, language }) {
   return <article className="mx-auto max-w-4xl rounded-[1.5rem] border border-white/10 bg-white/[.055] p-5 shadow-2xl shadow-black/20 sm:rounded-[2rem] sm:p-6 md:p-10"><p className="text-xs font-black uppercase tracking-[0.24em] text-cyan-300 sm:text-sm">OPERITRON.COM</p><h1 className="mt-3 text-3xl font-black leading-tight text-white sm:text-4xl md:text-5xl">{data.title}</h1><p className="mt-5 max-w-3xl text-base leading-7 text-slate-300 sm:text-lg sm:leading-8">{data.intro}</p><p className="mt-4 text-sm font-bold text-slate-500">{language === "es" ? "Vigente: 25 de mayo de 2026" : "Effective: May 25, 2026"}</p><div className="mt-8 space-y-7 sm:mt-10 sm:space-y-8">{data.sections.map(([heading, text]) => <section key={heading} className="border-t border-white/10 pt-6 sm:pt-7"><h2 className="text-xl font-black text-white">{heading}</h2><p className="mt-3 whitespace-normal break-words text-base leading-7 text-slate-300 sm:leading-8">{text}</p></section>)}</div><p className="mt-8 rounded-2xl border border-cyan-300/15 bg-cyan-300/5 p-4 text-sm leading-7 text-slate-400 sm:mt-10">{language === "es" ? "Contacto: Para preguntas sobre estas políticas, escriba a " : "Contact: For questions about these policies, email "}<a href="mailto:support@operitron.com" className="font-bold text-cyan-300 hover:text-cyan-200">support@operitron.com</a>.</p></article>;
 }
 
-function AIAssistant({ t = enhancedCopy.en, large }) {
+function AIAssistant({ t = enhancedCopy.en, large, project, onSaveProject, onProjectSaved }) {
   const language = t === enhancedCopy.es ? "es" : "en";
   async function getAccessToken() {
     if (!supabase) return "";
     const { data } = await supabase.auth.getSession();
     return data.session?.access_token || "";
   }
-  return <Suspense fallback={<div className="grid min-h-52 place-items-center rounded-3xl border border-cyan-300/20 bg-cyan-300/[.05] text-cyan-200"><Sparkles className="animate-pulse" /> Loading AI Analyzer...</div>}><LazyAIAnalyzerPanel language={language} large={large} getAccessToken={getAccessToken} /></Suspense>;
+  const saveAnalysis = (payload) => {
+    if (!project || !onSaveProject) return null;
+    return saveToolResultToProject(project, "aiDealAnalyzer", { title: "AI Deal Analyzer", ...payload }, onSaveProject, onProjectSaved, ["aiAnalysis", "analysis"]);
+  };
+  return <Suspense fallback={<div className="grid min-h-52 place-items-center rounded-3xl border border-cyan-300/20 bg-cyan-300/[.05] text-cyan-200"><Sparkles className="animate-pulse" /> Loading AI Analyzer...</div>}><LazyAIAnalyzerPanel language={language} large={large} getAccessToken={getAccessToken} project={project} onAnalysisSaved={saveAnalysis} /></Suspense>;
 }
 
 function SectionHeader({ title, detail }) {

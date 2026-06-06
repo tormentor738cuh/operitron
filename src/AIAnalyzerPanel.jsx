@@ -44,11 +44,11 @@ async function readApiJson(response) {
   }
 }
 
-export default function AIAnalyzerPanel({ language = "en", getAccessToken, large }) {
+export default function AIAnalyzerPanel({ language = "en", getAccessToken, large, project, onAnalysisSaved }) {
   const isEs = language === "es";
   const [values, setValues] = useState(Object.fromEntries(fields.map(([key, , , value]) => [key, value])));
   const [notes, setNotes] = useState("");
-  const [projectId, setProjectId] = useState("");
+  const [projectId, setProjectId] = useState(project?.id ? String(project.id) : "");
   const [analysis, setAnalysis] = useState(null);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
@@ -78,6 +78,14 @@ export default function AIAnalyzerPanel({ language = "en", getAccessToken, large
       const result = await readApiJson(response);
       if (!response.ok) throw new Error(result.error || (isEs ? "No se pudo generar el análisis." : "Analysis could not be generated."));
       setAnalysis(result.analysis);
+      onAnalysisSaved?.({
+        inputs: values,
+        notes,
+        projectId: projectId || project?.id || null,
+        calculated,
+        analysis: result.analysis,
+        warning: result.warning || "",
+      });
       setStatus(result.warning
         ? (isEs ? "El análisis se generó, pero aún no puede guardarse. Revisa Control del Propietario para completar la configuración." : result.warning)
         : (isEs ? "Análisis guardado en tu espacio de trabajo." : "Analysis saved to your workspace."));
