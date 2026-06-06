@@ -128,7 +128,7 @@ const pagePaths = {
   settings: "/login",
   profile: "/profile",
   projectTools: "/project-tools",
-  projectDetails: "/project",
+  projectDetails: "/projects",
   propertySearch: "/property-search",
   dropbox: "/dropbox",
   learning: "/learning-center",
@@ -141,7 +141,10 @@ const pagePaths = {
   refund: "/refund-policy",
   disclaimer: "/disclaimer",
 };
-const pathPages = Object.fromEntries(Object.entries(pagePaths).map(([page, path]) => [path, page]));
+const pathPages = {
+  ...Object.fromEntries(Object.entries(pagePaths).map(([page, path]) => [path, page])),
+  "/project": "projectDetails",
+};
 const getPageFromPath = () => pathPages[window.location.pathname.replace(/\/+$/, "") || "/"] || "home";
 
 const seoArticles = {
@@ -945,7 +948,7 @@ function AppShell() {
     if (activePage === "dashboard") return hasProductAccess ? <Dashboard {...props} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "projectTools") return hasProductAccess ? <ProjectTools {...props} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "projectDetails") return hasProductAccess ? <ProjectDetails {...props} /> : <PremiumPaywall language={language} user={user} go={go} />;
-    if (activePage === "propertySearch") return hasProductAccess ? <PropertySearch t={t} language={language} getAccessToken={getAccessToken} onAddProject={saveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
+    if (activePage === "propertySearch") return hasProductAccess ? <PropertySearch t={t} language={language} getAccessToken={getAccessToken} onAddProject={saveProject} project={activeProject} onSaveProject={saveOrUpdateProject} onProjectSaved={setActiveProject} /> : <PremiumPaywall language={language} user={user} go={go} />;
     if (activePage === "learning") return hasProductAccess ? <LearningCenter t={t} language={language} go={go} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
     if (activePage === "knowledge") return hasProductAccess ? <KnowledgeBase t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
     if (activePage === "tutorials") return hasProductAccess ? <Tutorials t={t} language={language} /> : (user ? <PremiumPaywall language={language} user={user} go={go} /> : <PublicHome t={t} go={go} />);
@@ -2046,6 +2049,12 @@ function ToolModal({ t, language, toolId, projects, activeProject, setActiveProj
     setActiveProject?.(cleanProject);
     setProjectReady(true);
   };
+  const updateSelectedProject = (project) => {
+    const cleanProject = cleanProjectForTool(project);
+    if (!cleanProject) return;
+    setSelectedProject(cleanProject);
+    setActiveProject?.(cleanProject);
+  };
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-0 backdrop-blur-sm sm:p-4">
       <motion.div initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="h-[100dvh] w-full overflow-y-auto bg-[#080d1f] p-4 pb-24 shadow-2xl shadow-black sm:max-h-[90vh] sm:max-w-5xl sm:rounded-[2rem] sm:border sm:border-white/10 sm:p-6">
@@ -2059,7 +2068,7 @@ function ToolModal({ t, language, toolId, projects, activeProject, setActiveProj
           </div>
           <button onClick={onClose} className="rounded-2xl border border-white/10 p-3 text-slate-300 hover:border-amber-400/50 hover:text-white"><X /></button>
         </div>
-        {projectReady ? <ToolBody t={t} language={language} toolId={toolId} project={selectedProject} /> : <ProjectPicker language={language} toolTitle={title} projects={projects} showExisting={showExisting} setShowExisting={setShowExisting} onSaveProject={onSaveProject} selectProject={chooseProject} />}
+        {projectReady ? <ToolBody t={t} language={language} toolId={toolId} project={selectedProject} onSaveProject={onSaveProject} onProjectSaved={updateSelectedProject} /> : <ProjectPicker language={language} toolTitle={title} projects={projects} showExisting={showExisting} setShowExisting={setShowExisting} onSaveProject={onSaveProject} selectProject={chooseProject} />}
       </motion.div>
     </div>
   );
