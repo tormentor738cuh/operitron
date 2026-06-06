@@ -12,34 +12,44 @@ export function envPresence(...names) {
     return {
       name,
       present: typeof value === "string" && value.trim().length > 0,
-      length: typeof value === "string" ? value.trim().length : 0,
     };
   });
 }
 
+export function envAliasPresence(label, ...names) {
+  const checks = envPresence(...names);
+  return {
+    label,
+    ok: checks.some((check) => check.present),
+    acceptedNames: checks,
+  };
+}
+
 export function serverEnvDiagnostics() {
-  const expectedNames = [
-    "VITE_SUPABASE_URL",
-    "VITE_SUPABASE_ANON_KEY",
-    "SUPABASE_SERVICE_ROLE_KEY",
-    "STRIPE_SECRET_KEY",
-    "STRIPE_WEBHOOK_SECRET",
-    "VITE_STRIPE_MONTHLY_PRICE_ID",
-    "VITE_STRIPE_ANNUAL_PRICE_ID",
-    "STRIPE_MONTHLY_PRICE_ID",
-    "STRIPE_ANNUAL_PRICE_ID",
-    "RENTCAST_API_KEY",
-    "OPENAI_API_KEY",
-    "ADMIN_OWNER_EMAIL",
-    "ADMIN_EMAILS",
-    "VITE_ADMIN_EMAILS",
-  ];
   const relevantKeyPattern = /^(VITE_)?(SUPABASE|STRIPE|RENTCAST|OPENAI|ADMIN|OPERITRON|OWNER|TEST_CUSTOMER)/;
   return {
     vercelEnv: process.env.VERCEL_ENV || "",
     vercelUrlPresent: Boolean(process.env.VERCEL_URL),
     nodeEnv: process.env.NODE_ENV || "",
-    expected: envPresence(...expectedNames),
+    expected: [
+      envAliasPresence("Supabase URL", "VITE_SUPABASE_URL"),
+      envAliasPresence("Supabase anon key", "VITE_SUPABASE_ANON_KEY"),
+      envAliasPresence(
+        "Supabase service role key",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "SUPABASE_SERVICE_KEY",
+        "SUPABASE_SERVICE_ROLE",
+        "SUPABASE_SECRET_KEY",
+        "SUPABASE_SERVICE_ROLE_JWT",
+      ),
+      envAliasPresence("Stripe secret key", "STRIPE_SECRET_KEY"),
+      envAliasPresence("Stripe webhook secret", "STRIPE_WEBHOOK_SECRET"),
+      envAliasPresence("Stripe monthly price ID", "STRIPE_MONTHLY_PRICE_ID", "VITE_STRIPE_MONTHLY_PRICE_ID", "STRIPE_PRICE_MONTHLY"),
+      envAliasPresence("Stripe annual price ID", "STRIPE_ANNUAL_PRICE_ID", "VITE_STRIPE_ANNUAL_PRICE_ID", "STRIPE_PRICE_ANNUAL"),
+      envAliasPresence("RentCast API key", "RENTCAST_API_KEY"),
+      envAliasPresence("OpenAI API key", "OPENAI_API_KEY"),
+      envAliasPresence("Admin emails", "ADMIN_OWNER_EMAIL", "ADMIN_EMAIL", "ADMIN_EMAILS", "OWNER_EMAIL", "OPERITRON_ADMIN_EMAILS", "VITE_ADMIN_EMAILS"),
+    ],
     foundRelevantKeyNames: Object.keys(process.env).filter((name) => relevantKeyPattern.test(name)).sort(),
   };
 }
