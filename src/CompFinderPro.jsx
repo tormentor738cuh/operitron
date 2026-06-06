@@ -841,7 +841,18 @@ function AppShell() {
     if (!supabase || !user || !hasProductAccess) return;
     let active = true;
     supabase.from("projects").select("id, title, address, data, created_at").order("created_at", { ascending: false }).then(({ data, error }) => {
-      if (active && !error) setProjects((data || []).map((row) => ({ ...(row.data || {}), id: row.id, name: row.title, address: row.address })));
+      if (active && !error) setProjects((data || []).map((row) => {
+        const stored = row.data || {};
+        return {
+          ...stored,
+          id: row.id || stored.id,
+          name: stored.name || row.title || stored.title || "Untitled Project",
+          title: stored.title || row.title || stored.name || "Untitled Project",
+          address: stored.address || row.address || "",
+          createdAt: stored.createdAt || row.created_at,
+          updatedAt: stored.updatedAt || row.created_at,
+        };
+      }));
     });
     return () => {
       active = false;
@@ -878,20 +889,23 @@ function AppShell() {
   }
 
   async function saveProject(project) {
-    setProjects((current) => [project, ...current]);
-    if (!supabase || !user) return { error: "Account storage is unavailable." };
+    const now = new Date().toISOString();
+    const normalized = { ...project, id: project.id || Date.now(), createdAt: project.createdAt || now, updatedAt: now };
+    setProjects((current) => [normalized, ...current]);
+    if (!supabase || !user) return { error: "Account storage is unavailable.", project: normalized };
     const { error } = await supabase.from("projects").insert({
-      id: project.id,
+      id: normalized.id,
       user_id: user.id,
-      title: project.name,
-      address: project.address,
-      data: project,
+      title: normalized.name || normalized.title || "Untitled Project",
+      address: normalized.address || "",
+      data: normalized,
     });
-    return error ? { error: error.message } : { error: "" };
+    return error ? { error: error.message, project: normalized } : { error: "", project: normalized };
   }
 
   async function saveOrUpdateProject(project) {
-    const normalized = { ...project, id: project.id || Date.now(), updatedAt: new Date().toISOString() };
+    const now = new Date().toISOString();
+    const normalized = { ...project, id: project.id || Date.now(), createdAt: project.createdAt || now, updatedAt: now };
     setProjects((current) => {
       const exists = current.some((item) => String(item.id) === String(normalized.id));
       return exists ? current.map((item) => String(item.id) === String(normalized.id) ? { ...item, ...normalized } : item) : [normalized, ...current];
@@ -1222,7 +1236,7 @@ function BrandLogo({ onClick, compact = false, size = "default" }) {
   );
 }
 
-function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAddProject, onDeleteProject, isAdmin }) {
+function Dashboard({ t, language, projects, setProjects, setActiveTool, setActiveProject, go, onAddProject, onDeleteProject, isAdmin }) {
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
   const [saveStatus, setSaveStatus] = useState("");
@@ -1240,6 +1254,18 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
     setAddress("");
   }
 
+  function openProject(project) {
+    const cleanProject = cleanProjectForTool(project);
+    if (!cleanProject) return;
+    setActiveProject?.(cleanProject);
+    go("projectDetails");
+  }
+
+  function openProjectManager() {
+    setActiveProject?.(null);
+    go("projectDetails");
+  }
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <Hero t={t} go={go} />
@@ -1249,9 +1275,9 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
       </section>}
 
       <section className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-3">
-        <Stat onClick={() => go("projectTools")} title={t.savedProjects} value={projects.length} icon={FolderOpen} help={t.savedProjectsHelp || "Number of saved property analyses in your workspace."} />
+        <Stat onClick={openProjectManager} title={t.savedProjects} value={projects.length} icon={FolderOpen} help={t.savedProjectsHelp || "Number of saved property analyses in your workspace."} />
         <Stat onClick={() => setActiveTool("underwriter")} title={t.projectedProfit} value={formatMoney(totalProfit)} icon={WalletCards} help={t.projectedProfitHelp || "Combined expected profit from current projects."} />
-        <div className="col-span-2 md:col-span-1"><Stat onClick={() => go("projectTools")} title={t.reportsReady} value="8" icon={FileText} help={t.reportsReadyHelp || "Reports available for PDF export or partner review."} /></div>
+        <div className="col-span-2 md:col-span-1"><Stat onClick={openProjectManager} title={t.reportsReady} value="8" icon={FileText} help={t.reportsReadyHelp || "Reports available for PDF export or partner review."} /></div>
       </section>
 
       <section className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(320px,390px)]">
@@ -1265,7 +1291,7 @@ function Dashboard({ t, language, projects, setProjects, setActiveTool, go, onAd
           </div>
           {projects.length ? <div className="grid gap-5 lg:grid-cols-2">
             {projects.map((project) => (
-              <ProjectCard key={project.id} project={project} open={() => go("projectTools")} onDeleteProject={onDeleteProject} t={t} />
+              <ProjectCard key={project.id} project={project} open={() => openProject(project)} onDeleteProject={onDeleteProject} t={t} />
             ))}
           </div> : <div className="rounded-3xl border border-dashed border-white/10 bg-slate-950/35 px-5 py-10 text-center">
             <FolderOpen className="mx-auto text-cyan-300" />
@@ -1709,6 +1735,250 @@ function ProjectCard({ project, open, onDeleteProject, t }) {
         <ChevronRight className="text-amber-300" />
       </div>
     </motion.article>
+  );
+}
+
+function projectDisplayName(project) {
+  return String(project?.name || project?.title || "Untitled Project").trim() || "Untitled Project";
+}
+
+function hasSavedProjectValue(value) {
+  if (value === null || value === undefined || value === "") return false;
+  if (Array.isArray(value)) return value.length > 0;
+  if (typeof value === "object") return Object.keys(value).length > 0;
+  return true;
+}
+
+function getProjectField(project, fields) {
+  for (const field of fields) {
+    const value = project?.[field];
+    if (hasSavedProjectValue(value)) return value;
+  }
+  return null;
+}
+
+function formatSavedDate(value) {
+  if (!value) return "Not saved yet";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Saved";
+  return date.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+}
+
+function summarizeProjectValue(value) {
+  if (!hasSavedProjectValue(value)) return "No saved result yet";
+  if (Array.isArray(value)) return `${value.length} saved item${value.length === 1 ? "" : "s"}`;
+  if (typeof value === "object") {
+    const keys = Object.keys(value).filter((key) => hasSavedProjectValue(value[key]));
+    return keys.length ? keys.slice(0, 4).join(", ") : "Saved result";
+  }
+  return String(value).slice(0, 96);
+}
+
+function getProjectRecordDate(project, fields) {
+  const candidates = [project?.updatedAt, project?.createdAt, project?.savedAt];
+  for (const field of fields) {
+    const value = project?.[field];
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      candidates.unshift(value.updatedAt, value.createdAt, value.savedAt, value.date);
+    }
+  }
+  return candidates.find(Boolean);
+}
+
+function clearProjectFields(project, fields) {
+  const next = { ...project, updatedAt: new Date().toISOString() };
+  fields.forEach((field) => delete next[field]);
+  return next;
+}
+
+function exportWorkspaceRecord(project, record) {
+  if (typeof document === "undefined") return;
+  const safeProject = projectDisplayName(project).replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "").toLowerCase() || "project";
+  const payload = { project: projectDisplayName(project), section: record.title, tool: record.tool, savedAt: record.savedAt, data: record.value };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `${safeProject}-${record.id}.json`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
+
+function getProjectWorkspaceRecords(project, language = "en") {
+  const isEs = language === "es";
+  const definitions = [
+    { id: "summary", title: isEs ? "Resumen del Proyecto" : "Project Summary", tool: isEs ? "Espacio del Proyecto" : "Project Workspace", icon: FolderOpen, fields: ["summary", "finalSummary", "projectSummary", "description", "status"], fallback: true },
+    { id: "ai", title: isEs ? "Resultados del Analizador IA" : "AI Deal Analyzer results", tool: "AI Deal Analyzer", icon: Bot, fields: ["aiDealAnalyzer", "aiAnalysis", "aiAnalyses", "analysis", "analyses", "aiSummary"], toolId: "underwriter" },
+    { id: "property", title: isEs ? "Resultados de Busqueda de Propiedad" : "Property Search results", tool: "Property Search", icon: MapPin, fields: ["rentcast", "propertySearch", "propertyResult", "propertyData", "property", "properties"], page: "propertySearch" },
+    { id: "underwriter", title: isEs ? "Resultados del Deal Underwriter" : "Deal Underwriter results", tool: "Deal Underwriter", icon: LineChart, fields: ["underwriter", "dealUnderwriter", "deal", "underwriting"], toolId: "underwriter" },
+    { id: "dscr", title: "DSCR Calculator", tool: "Investment Loan Calculator", icon: Calculator, fields: ["dscr", "dscrCalculator", "loanDscr", "loanCalculator", "loan"], toolId: "loan" },
+    { id: "brrrr", title: "BRRRR Calculator", tool: "BRRRR Calculator", icon: BarChart3, fields: ["brrrr", "brrr", "brrrrCalculator", "brrrCalculator", "brrrrResults"], toolId: "underwriter" },
+    { id: "budget", title: isEs ? "Estimador de Presupuesto" : "Budget Estimator", tool: "Budget Estimator", icon: DollarSign, fields: ["budgetEstimator", "budget", "budgetItems", "estimate", "estimates"], toolId: "budget" },
+    { id: "wizard", title: isEs ? "Asistente de Construccion" : "Construction Wizard", tool: "Construction Wizard", icon: Hammer, fields: ["constructionWizard", "construction", "constructionChecklist", "checklist", "phases"], toolId: "wizard" },
+    { id: "takeoff", title: "Material Takeoff", tool: "Material Takeoff", icon: Layers, fields: ["materialTakeoff", "takeoff", "takeoffs", "measurements", "blueprints"], toolId: "takeoff" },
+    { id: "punch", title: "Punch List", tool: "Punch List", icon: ClipboardCheck, fields: ["punchList", "punchItems", "punches"], toolId: "punch" },
+    { id: "todo", title: isEs ? "Lista de Tareas" : "To Do List", tool: "To Do List", icon: ListChecks, fields: ["todoList", "tasks", "todos"], toolId: "todo" },
+    { id: "subs", title: "Subs / Quotes", tool: "Subs / Quotes", icon: Users, fields: ["subsQuotes", "subcontractors", "quotes", "subs"], toolId: "subs" },
+    { id: "reports", title: isEs ? "Reportes" : "Reports", tool: "Reports", icon: FileText, fields: ["reports", "pdfReports", "exports", "savedReports"] },
+    { id: "notes", title: isEs ? "Notas y Supuestos" : "Notes and assumptions", tool: isEs ? "Notas del Proyecto" : "Project Notes", icon: StickyNote, fields: ["notes", "assumptions", "transcripts", "projectNotes"] },
+  ];
+
+  return definitions.map((definition) => {
+    const value = definition.fallback
+      ? {
+          name: projectDisplayName(project),
+          address: project?.address || "",
+          description: project?.description || project?.summary || "",
+          status: project?.status || "",
+        }
+      : getProjectField(project, definition.fields);
+    return {
+      ...definition,
+      value,
+      saved: definition.fallback || hasSavedProjectValue(value),
+      savedAt: getProjectRecordDate(project, definition.fields),
+      summary: definition.fallback
+        ? (project?.description || project?.summary || project?.address || (isEs ? "Carpeta lista para analisis, reportes, notas y archivos guardados." : "Project folder is ready for saved analyses, reports, notes, and files."))
+        : summarizeProjectValue(value),
+    };
+  });
+}
+
+function ProjectWorkspaceRecordCard({ project, record, language, onOpen, onDelete }) {
+  const isEs = language === "es";
+  const Icon = record.icon;
+  return (
+    <article className={`glow-card rounded-3xl border p-5 transition ${record.saved ? "border-cyan-300/20 bg-slate-950/65 hover:border-cyan-300/45" : "border-dashed border-white/10 bg-slate-950/35 opacity-80"}`}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="grid h-12 w-12 place-items-center rounded-2xl bg-cyan-300/10 text-cyan-300"><Icon size={22} /></div>
+        <span className={`rounded-full px-3 py-1 text-xs font-black ${record.saved ? "bg-emerald-400/10 text-emerald-300" : "bg-slate-800 text-slate-500"}`}>{record.saved ? (isEs ? "Guardado" : "Saved") : (isEs ? "Sin datos" : "No data")}</span>
+      </div>
+      <h3 className="mt-4 text-xl font-black text-white">{record.title}</h3>
+      <p className="mt-2 text-sm font-bold text-cyan-200">{record.tool}</p>
+      <p className="mt-3 min-h-12 text-sm leading-6 text-slate-400">{record.summary}</p>
+      <p className="mt-3 text-xs font-black uppercase tracking-widest text-slate-500">{isEs ? "Guardado" : "Saved"}: {formatSavedDate(record.savedAt)}</p>
+      <div className="mt-5 grid grid-cols-2 gap-2">
+        <button onClick={onOpen} className="secondary-button justify-center">{record.saved ? (isEs ? "Reabrir" : "Reopen") : (isEs ? "Crear" : "Create")}</button>
+        <button onClick={() => exportWorkspaceRecord(project, record)} disabled={!record.saved} className="secondary-button justify-center disabled:cursor-not-allowed disabled:opacity-40"><FileText size={17} />{isEs ? "Exportar" : "Export"}</button>
+        <button onClick={onOpen} className="secondary-button justify-center">{isEs ? "Editar" : "Edit"}</button>
+        <button onClick={onDelete} disabled={!record.saved || record.fallback} className="secondary-button justify-center text-rose-100 disabled:cursor-not-allowed disabled:opacity-40"><Trash2 size={17} />{isEs ? "Borrar" : "Delete"}</button>
+      </div>
+    </article>
+  );
+}
+
+function ProjectDetails({ language, projects = [], activeProject, setActiveProject, setActiveTool, go, onSaveProject, onDeleteProject }) {
+  const isEs = language === "es";
+  const cleanProjects = useMemo(() => projects.map(cleanProjectForTool).filter(Boolean), [projects]);
+  const cleanActive = cleanProjectForTool(activeProject);
+  const [query, setQuery] = useState("");
+  const [notes, setNotes] = useState(cleanActive?.notes || "");
+  const [message, setMessage] = useState("");
+
+  useEffect(() => {
+    setNotes(cleanActive?.notes || "");
+    setMessage("");
+  }, [cleanActive?.id]);
+
+  const filteredProjects = cleanProjects.filter((project) => {
+    const haystack = `${projectDisplayName(project)} ${project.address || ""} ${project.description || ""}`.toLowerCase();
+    return haystack.includes(query.toLowerCase());
+  });
+
+  async function saveNotes() {
+    if (!cleanActive) return;
+    const updated = { ...cleanActive, notes, updatedAt: new Date().toISOString() };
+    const result = await onSaveProject?.(updated);
+    const saved = result?.project || updated;
+    setActiveProject?.(saved);
+    setMessage(result?.error ? (isEs ? "Las notas se actualizaron en esta sesion, pero no se guardaron en la nube." : "Notes updated for this session, but cloud save failed.") : (isEs ? "Notas guardadas." : "Notes saved."));
+  }
+
+  async function deleteRecord(record) {
+    if (!cleanActive || record.fallback) return;
+    const updated = clearProjectFields(cleanActive, record.fields);
+    const result = await onSaveProject?.(updated);
+    setActiveProject?.(result?.project || updated);
+    setMessage(result?.error ? (isEs ? "No se pudo borrar esta seccion en la nube." : "Could not delete this section in cloud storage.") : (isEs ? "Seccion eliminada." : "Section deleted."));
+  }
+
+  function openRecord(record) {
+    if (!cleanActive) return;
+    setActiveProject?.(cleanActive);
+    if (record.page) go?.(record.page);
+    else if (record.toolId) setActiveTool?.(record.toolId);
+    else setMessage(isEs ? "Esta seccion se edita desde el resumen del proyecto." : "This section is edited from the project workspace.");
+  }
+
+  if (!cleanActive) {
+    return (
+      <div className="space-y-6">
+        <GlassPanel>
+          <SectionHeader title={isEs ? "Proyectos Guardados" : "Saved Projects"} detail={isEs ? "Selecciona un proyecto para abrir su carpeta completa." : "Select a project to open its full workspace folder."} />
+          <input className="field mt-4" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={isEs ? "Buscar proyectos..." : "Search projects..."} />
+          {filteredProjects.length ? <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filteredProjects.map((project) => (
+              <button key={project.id} onClick={() => setActiveProject?.(project)} className="glow-card rounded-3xl border border-white/10 bg-slate-950/60 p-5 text-left transition hover:border-cyan-300/40">
+                <FolderOpen className="text-cyan-300" />
+                <h3 className="mt-4 text-xl font-black text-white">{projectDisplayName(project)}</h3>
+                <p className="mt-2 text-sm text-slate-400">{project.address || (isEs ? "Sin direccion guardada" : "No saved address")}</p>
+                <p className="mt-4 text-xs font-black uppercase tracking-widest text-slate-500">{isEs ? "Actualizado" : "Updated"}: {formatSavedDate(project.updatedAt || project.createdAt)}</p>
+              </button>
+            ))}
+          </div> : <div className="mt-5 rounded-3xl border border-dashed border-white/10 bg-slate-950/40 p-10 text-center">
+            <FolderOpen className="mx-auto text-cyan-300" size={34} />
+            <p className="mt-4 font-black text-white">{isEs ? "No hay proyectos guardados" : "No saved projects found"}</p>
+            <p className="mt-2 text-sm text-slate-400">{isEs ? "Crea un proyecto desde el panel para empezar." : "Create a project from the dashboard to begin."}</p>
+          </div>}
+        </GlassPanel>
+      </div>
+    );
+  }
+
+  const records = getProjectWorkspaceRecords(cleanActive, language);
+  const savedCount = records.filter((record) => record.saved).length;
+  const totalSections = records.length;
+
+  return (
+    <div className="space-y-6">
+      <GlassPanel>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <button onClick={() => setActiveProject?.(null)} className="mb-4 text-sm font-black text-cyan-300 hover:text-cyan-200">{isEs ? "Volver a Proyectos Guardados" : "Back to Saved Projects"}</button>
+            <p className="text-xs font-black uppercase tracking-[0.24em] text-amber-300">Project Workspace</p>
+            <h2 className="mt-2 text-3xl font-black text-white sm:text-4xl">{projectDisplayName(cleanActive)}</h2>
+            <p className="mt-2 max-w-3xl text-slate-400">{cleanActive.address || (isEs ? "Sin direccion guardada" : "No saved address")}</p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={() => setActiveTool?.("underwriter")} className="primary-button">{isEs ? "Abrir Herramientas" : "Open Tools"}</button>
+            {onDeleteProject && <button onClick={() => onDeleteProject(cleanActive.id)} className="secondary-button text-rose-100 hover:border-rose-300/40"><Trash2 size={18} />{isEs ? "Borrar" : "Delete"}</button>}
+          </div>
+        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <MiniMetric label={isEs ? "Secciones Guardadas" : "Saved Sections"} value={`${savedCount}/${totalSections}`} green />
+          <MiniMetric label={isEs ? "Actualizado" : "Last Updated"} value={formatSavedDate(cleanActive.updatedAt || cleanActive.createdAt)} />
+          <MiniMetric label={isEs ? "Estado" : "Status"} value={cleanActive.status || (isEs ? "Activo" : "Active")} />
+        </div>
+      </GlassPanel>
+
+      <section className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="space-y-5">
+          <SectionHeader title={isEs ? "Resultados Guardados" : "Saved Results"} detail={isEs ? "Cada tarjeta muestra que herramienta lo creo, cuando se guardo y las acciones disponibles." : "Each card shows what created it, when it was saved, and the available actions."} />
+          <div className="grid gap-4 md:grid-cols-2">
+            {records.map((record) => <ProjectWorkspaceRecordCard key={record.id} project={cleanActive} record={record} language={language} onOpen={() => openRecord(record)} onDelete={() => deleteRecord(record)} />)}
+          </div>
+        </div>
+
+        <GlassPanel className="self-start">
+          <StickyNote className="text-cyan-300" />
+          <h3 className="mt-4 text-2xl font-black text-white">{isEs ? "Notas y Supuestos" : "Notes and assumptions"}</h3>
+          <p className="mt-2 text-sm leading-6 text-slate-400">{isEs ? "Guarda decisiones, supuestos, riesgos y conversaciones importantes." : "Save decisions, assumptions, risks, and important conversations."}</p>
+          <textarea className="field mt-5 min-h-48" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder={isEs ? "Escribe notas del proyecto..." : "Write project notes..."} />
+          <button onClick={saveNotes} className="primary-button mt-4 w-full justify-center"><Save size={18} />{isEs ? "Guardar Notas" : "Save Notes"}</button>
+          {message && <p className="mt-3 rounded-xl border border-cyan-300/15 bg-cyan-300/[.06] p-3 text-sm text-cyan-100">{message}</p>}
+        </GlassPanel>
+      </section>
+    </div>
   );
 }
 
