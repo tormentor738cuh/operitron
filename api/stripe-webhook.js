@@ -1,5 +1,12 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import {
+  stripeAnnualPriceId,
+  stripeMonthlyPriceId,
+  stripeSecretKey,
+  stripeWebhookSecret,
+  supabaseServiceKey,
+} from "./_server-env.js";
 
 export const config = { api: { bodyParser: false } };
 
@@ -63,7 +70,7 @@ async function syncSubscription(adminClient, stripe, subscription) {
   await ensureProfile(adminClient, userId);
   const status = normalizedStatus(subscription);
   const price = subscription.items?.data?.[0]?.price;
-  const plan = subscription.metadata?.plan || (price?.id === (process.env.STRIPE_ANNUAL_PRICE_ID || process.env.VITE_STRIPE_ANNUAL_PRICE_ID) ? "annual" : price?.id === (process.env.STRIPE_MONTHLY_PRICE_ID || process.env.VITE_STRIPE_MONTHLY_PRICE_ID) ? "monthly" : "Subscribed");
+  const plan = subscription.metadata?.plan || (price?.id === stripeAnnualPriceId() ? "annual" : price?.id === stripeMonthlyPriceId() ? "monthly" : "Subscribed");
   const details = {
     stripe_customer_id: String(subscription.customer),
     subscription_id: subscription.id,
@@ -91,15 +98,15 @@ async function syncSubscription(adminClient, stripe, subscription) {
 
 export default async function handler(request, response) {
   if (request.method !== "POST") return response.status(405).end();
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const stripeKey = stripeSecretKey();
+  const webhookSecret = stripeWebhookSecret();
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!stripeSecretKey || !webhookSecret || !supabaseUrl || !serviceKey) {
+  const serviceKey = supabaseServiceKey();
+  if (!stripeKey || !webhookSecret || !supabaseUrl || !serviceKey) {
     console.error("[webhook] Missing server configuration.");
     return response.status(503).json({ error: "Webhook configuration is incomplete." });
   }
-  const stripe = new Stripe(stripeSecretKey);
+  const stripe = new Stripe(stripeKey);
   const adminClient = createClient(supabaseUrl, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
   });

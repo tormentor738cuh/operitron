@@ -1,34 +1,16 @@
 import { createClient } from "@supabase/supabase-js";
+import {
+  adminEmails,
+  isServiceRoleKey,
+  jwtRole,
+  supabaseServiceKey,
+  testCustomerEmails,
+} from "./_server-env.js";
 
 const allowedStatuses = new Set(["active", "trialing"]);
-const ownerAdminEmails = [];
-const testCustomerEmails = [];
-
-function adminEmails() {
-  return [...new Set([
-    ...ownerAdminEmails,
-    ...String([
-      process.env.ADMIN_OWNER_EMAIL,
-      process.env.ADMIN_EMAIL,
-      process.env.ADMIN_EMAILS,
-      process.env.OWNER_EMAIL,
-      process.env.OPERITRON_ADMIN_EMAILS,
-      process.env.VITE_ADMIN_EMAILS,
-    ].filter(Boolean).join(","))
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean),
-  ])];
-}
 
 function bypassCustomerEmails() {
-  return [...new Set([
-    ...testCustomerEmails,
-    ...String([process.env.TEST_CUSTOMER_EMAILS, process.env.VITE_TEST_CUSTOMER_EMAILS].filter(Boolean).join(","))
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean),
-  ])];
+  return testCustomerEmails();
 }
 
 function json(response, status, payload) {
@@ -38,11 +20,12 @@ function json(response, status, payload) {
 function serverClients() {
   const url = process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceKey = supabaseServiceKey();
+  const serviceRoleReady = isServiceRoleKey(serviceKey);
   if (!url || !anonKey) return {};
   return {
     authClient: createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } }),
-    adminClient: serviceKey ? createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }) : null,
+    adminClient: serviceRoleReady ? createClient(url, serviceKey, { auth: { persistSession: false, autoRefreshToken: false } }) : null,
   };
 }
 
@@ -115,6 +98,7 @@ function compactComp(comp = {}) {
 }
 
 function accessDiagnostics({ email, access = {}, apiKeyExists, lastEndpoint = "", lastStatus = "", lastBody = "" }) {
+  const serviceKey = supabaseServiceKey();
   const isActive = allowedStatuses.has(access.status);
   return {
     userEmail: email,
@@ -128,7 +112,8 @@ function accessDiagnostics({ email, access = {}, apiKeyExists, lastEndpoint = ""
     rentcastStatusCode: lastStatus,
     rentcastResponseBody: lastBody,
     adminEnvConfigured: Boolean(adminEmails().length),
-    serviceRoleConfigured: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+    serviceRoleConfigured: Boolean(serviceKey),
+    serviceRoleJwtRole: jwtRole(serviceKey),
   };
 }
 

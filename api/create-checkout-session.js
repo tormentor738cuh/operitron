@@ -1,24 +1,31 @@
 import Stripe from "stripe";
 import { createClient } from "@supabase/supabase-js";
+import {
+  adminEmails,
+  stripeAnnualPriceId,
+  stripeMonthlyPriceId,
+  stripeSecretKey,
+  supabaseServiceKey,
+} from "./_server-env.js";
 
 function serverConfig(plan) {
-  const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+  const stripeKey = stripeSecretKey();
   const supabaseUrl = process.env.VITE_SUPABASE_URL;
   const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceKey = supabaseServiceKey();
   const priceByPlan = {
-    monthly: process.env.STRIPE_MONTHLY_PRICE_ID || process.env.VITE_STRIPE_MONTHLY_PRICE_ID,
-    annual: process.env.STRIPE_ANNUAL_PRICE_ID || process.env.VITE_STRIPE_ANNUAL_PRICE_ID,
+    monthly: stripeMonthlyPriceId(),
+    annual: stripeAnnualPriceId(),
   };
   const priceId = priceByPlan[plan];
   const missing = [
-    !stripeSecretKey && "STRIPE_SECRET_KEY",
+    !stripeKey && "STRIPE_SECRET_KEY",
     !supabaseUrl && "VITE_SUPABASE_URL",
     !supabaseAnonKey && "VITE_SUPABASE_ANON_KEY",
-    !supabaseServiceKey && "SUPABASE_SERVICE_ROLE_KEY",
+    !serviceKey && "SUPABASE_SERVICE_ROLE_KEY",
     !priceId && `${plan === "annual" ? "STRIPE_ANNUAL_PRICE_ID" : "STRIPE_MONTHLY_PRICE_ID"}`,
   ].filter(Boolean);
-  return { stripeSecretKey, supabaseUrl, supabaseAnonKey, supabaseServiceKey, priceId, missing };
+  return { stripeSecretKey: stripeKey, supabaseUrl, supabaseAnonKey, supabaseServiceKey: serviceKey, priceId, missing };
 }
 
 function getSupabase(config) {
@@ -34,15 +41,7 @@ function getAdminSupabase(config) {
 }
 
 function configuredAdminEmails() {
-  return [
-    process.env.ADMIN_EMAILS,
-    process.env.VITE_ADMIN_EMAILS,
-  ]
-    .filter(Boolean)
-    .join(",")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
+  return adminEmails();
 }
 
 function isAdminUser(user, profile) {

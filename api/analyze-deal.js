@@ -1,8 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
+import { adminEmails as configuredAdminEmails, supabaseServiceKey, testCustomerEmails as configuredTestCustomerEmails } from "./_server-env.js";
 
 const allowedStatuses = new Set(["active", "trialing"]);
-const ownerAdminEmails = [];
-const testCustomerEmails = [];
 const recentRequests = new Map();
 
 const numericFields = [
@@ -12,29 +11,17 @@ const numericFields = [
 ];
 
 function adminEmails() {
-  return [...new Set([
-    ...ownerAdminEmails,
-    ...String([process.env.ADMIN_OWNER_EMAIL, process.env.ADMIN_EMAILS, process.env.VITE_ADMIN_EMAILS].filter(Boolean).join(","))
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean),
-  ])];
+  return configuredAdminEmails();
 }
 
 function bypassCustomerEmails() {
-  return [...new Set([
-    ...testCustomerEmails,
-    ...String([process.env.TEST_CUSTOMER_EMAILS, process.env.VITE_TEST_CUSTOMER_EMAILS].filter(Boolean).join(","))
-      .split(",")
-      .map((email) => email.trim().toLowerCase())
-      .filter(Boolean),
-  ])];
+  return configuredTestCustomerEmails();
 }
 
 function serverClients() {
   const url = process.env.VITE_SUPABASE_URL;
   const anonKey = process.env.VITE_SUPABASE_ANON_KEY;
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const serviceKey = supabaseServiceKey();
   if (!url || !anonKey) return {};
   return {
     authClient: createClient(url, anonKey, { auth: { persistSession: false, autoRefreshToken: false } }),
