@@ -3,6 +3,7 @@ import {
   adminEmails,
   isServiceRoleKey,
   jwtRole,
+  serverEnvDiagnostics,
   stripeAnnualPriceId,
   stripeMonthlyPriceId,
   stripeSecretKey,
@@ -22,7 +23,11 @@ export default async function handler(request, response) {
   const monthlyPrice = stripeMonthlyPriceId();
   const annualPrice = stripeAnnualPriceId();
   const webhookSecret = stripeWebhookSecret();
-  if (!url || !anonKey) return response.status(503).json({ error: "Account configuration is incomplete." });
+  const environment = serverEnvDiagnostics();
+  if (!url || !anonKey) return response.status(503).json({
+    error: "Account configuration is incomplete.",
+    diagnostics: { environment },
+  });
 
   const token = request.headers.authorization?.replace(/^Bearer\s+/i, "");
   if (!token) return response.status(401).json({ error: "Sign in required." });
@@ -62,6 +67,7 @@ export default async function handler(request, response) {
       serviceRoleConfigured: Boolean(serviceKey),
       serviceRoleJwtRole: serviceRole,
       schemaErrors,
+      environment,
       fix: [
         "Set ADMIN_OWNER_EMAIL=tormentor738@gmail.com in Vercel Production and Preview, then redeploy.",
         serviceRoleReady
@@ -90,6 +96,7 @@ export default async function handler(request, response) {
       serviceRoleConfigured: Boolean(serviceKey),
       serviceRoleJwtRole: serviceRole,
       schemaErrors,
+      environment,
     },
     stripeConfig,
     checks: [
