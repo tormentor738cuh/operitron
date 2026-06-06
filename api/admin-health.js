@@ -51,7 +51,28 @@ export default async function handler(request, response) {
     }
   }
   const isAdmin = ownerOverride || profile?.role === "admin";
-  if (!isAdmin) return response.status(403).json({ error: "Admin access required." });
+  if (!isAdmin) return response.status(403).json({
+    error: "Admin access required.",
+    diagnostics: {
+      email,
+      adminEnvConfigured: Boolean(configuredAdmins.length),
+      adminEmailMatched: ownerOverride,
+      profileRole: profile?.role || "unknown",
+      subscriptionStatus: profile?.subscription_status || "unknown",
+      serviceRoleConfigured: Boolean(serviceKey),
+      serviceRoleJwtRole: serviceRole,
+      schemaErrors,
+      fix: [
+        "Set ADMIN_OWNER_EMAIL=tormentor738@gmail.com in Vercel Production and Preview, then redeploy.",
+        serviceRoleReady
+          ? "SUPABASE_SERVICE_ROLE_KEY is present with service_role permissions."
+          : serviceKey
+            ? `SUPABASE_SERVICE_ROLE_KEY is a ${serviceRole || "non-service-role"} JWT. Replace it with the Supabase service_role key.`
+            : "SUPABASE_SERVICE_ROLE_KEY is missing on the server.",
+        "Make sure public.profiles contains your account with role='admin'.",
+      ],
+    },
+  });
   const stripeConfig = [
     { name: "Stripe keys loaded", ok: Boolean(stripeKey), detail: stripeKey ? "STRIPE_SECRET_KEY is available server-side." : "Missing STRIPE_SECRET_KEY." },
     { name: "Monthly price ID loaded", ok: Boolean(monthlyPrice), detail: monthlyPrice ? "Monthly subscription price ID is configured." : "Missing STRIPE_MONTHLY_PRICE_ID or VITE_STRIPE_MONTHLY_PRICE_ID." },

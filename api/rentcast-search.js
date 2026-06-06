@@ -100,6 +100,7 @@ function compactComp(comp = {}) {
 function accessDiagnostics({ email, access = {}, apiKeyExists, lastEndpoint = "", lastStatus = "", lastBody = "" }) {
   const serviceKey = supabaseServiceKey();
   const isActive = allowedStatuses.has(access.status);
+  const configuredAdmins = adminEmails();
   return {
     userEmail: email,
     profileRole: access.role || "unknown",
@@ -111,7 +112,8 @@ function accessDiagnostics({ email, access = {}, apiKeyExists, lastEndpoint = ""
     endpoint: lastEndpoint,
     rentcastStatusCode: lastStatus,
     rentcastResponseBody: lastBody,
-    adminEnvConfigured: Boolean(adminEmails().length),
+    adminEnvConfigured: Boolean(configuredAdmins.length),
+    adminEmailMatched: configuredAdmins.includes(String(email || "").toLowerCase()),
     serviceRoleConfigured: Boolean(serviceKey),
     serviceRoleJwtRole: jwtRole(serviceKey),
   };
@@ -208,10 +210,12 @@ export default async function handler(request, response) {
         warning: `Access override used because profile lookup failed: ${error?.message || "Unknown Supabase error."}`,
       };
     } else {
+      const serviceRole = jwtRole(supabaseServiceKey());
+      const configuredAdmins = adminEmails();
       return json(response, 503, {
         error: `Access verification failed before RentCast was called: ${error?.message || "Unknown Supabase error."}`,
         supportCode: "rentcast-access-lookup-failed",
-        adminDebug: wantsDiagnostics && ownerOverride ? accessDiagnostics({
+        adminDebug: wantsDiagnostics ? accessDiagnostics({
           email,
           apiKeyExists: Boolean(apiKey),
           access: { role: "lookup failed", status: "lookup failed", isAdmin: false },
@@ -219,12 +223,19 @@ export default async function handler(request, response) {
           lastStatus: error?.code || "supabase-error",
           lastBody: error?.message || "Unknown Supabase error.",
         }) : undefined,
-        adminNote: wantsDiagnostics && ownerOverride ? {
+        adminNote: wantsDiagnostics ? {
           code: error?.code,
           message: error?.message,
-          reason: adminEmails().length
+          reason: configuredAdmins.length
             ? "Supabase profile/subscription lookup failed before access could be verified."
-            : "No server admin email environment variable was detected. Set ADMIN_OWNER_EMAIL or ADMIN_EMAILS in Vercel, or set profiles.role='admin' for this user.",
+            : "No server admin email environment variable was detected.",
+          fix: [
+            "Set ADMIN_OWNER_EMAIL=tormentor738@gmail.com in Vercel Production and Preview, then redeploy.",
+            serviceRole === "service_role"
+              ? "SUPABASE_SERVICE_ROLE_KEY is shaped like a service_role JWT, so next verify the profiles table grants/policies in Supabase."
+              : `SUPABASE_SERVICE_ROLE_KEY is ${serviceRole ? `a ${serviceRole} JWT` : "missing or unreadable"}. It must be the Supabase service_role key, not anon.`,
+            "Make sure public.profiles has a row for your user with role='admin', or apply the admin-access SQL helper in Supabase SQL Editor.",
+          ],
         } : undefined,
       });
     }
