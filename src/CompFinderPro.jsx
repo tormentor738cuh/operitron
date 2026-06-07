@@ -79,12 +79,13 @@ const customerBypassEmails = [...new Set([
 ])];
 const LazyAIAnalyzerPanel = lazy(() => import("./AIAnalyzerPanel.jsx"));
 
-const googleAdsId = import.meta.env.VITE_GOOGLE_ADS_ID;
+const googleAdsId = import.meta.env.VITE_GOOGLE_ADS_ID || "AW-18217072204";
 const googleAdsLabels = {
   signup: import.meta.env.VITE_GOOGLE_ADS_SIGNUP_LABEL,
   trialStarted: import.meta.env.VITE_GOOGLE_ADS_TRIAL_LABEL,
   subscriptionStarted: import.meta.env.VITE_GOOGLE_ADS_SUBSCRIPTION_LABEL,
   checkoutCompleted: import.meta.env.VITE_GOOGLE_ADS_CHECKOUT_LABEL,
+  purchase: import.meta.env.VITE_GOOGLE_ADS_PURCHASE_LABEL || "avxcCKfW27kcEMzsye5D",
 };
 
 function trackGoogleAdsConversion(name) {
@@ -771,6 +772,7 @@ function AppShell() {
     if (params.get("checkout") !== "success") return;
     checkoutTrackedRef.current = true;
     trackGoogleAdsConversion("checkoutCompleted");
+    trackGoogleAdsConversion("purchase");
     trackGoogleAdsConversion("trialStarted");
     trackGoogleAdsConversion("subscriptionStarted");
     window.history.replaceState({}, "", pagePaths.dashboard);
@@ -4638,5 +4640,6 @@ function toolGradient(index) {
 export default function CompFinderPro() {
   return <AppShell />;
 }
+
 
 
