@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+﻿import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { motion } from "framer-motion";
 import {
@@ -1811,19 +1811,19 @@ function getProjectWorkspaceRecords(project, language = "en") {
   const isEs = language === "es";
   const definitions = [
     { id: "summary", title: isEs ? "Resumen del Proyecto" : "Project Summary", tool: isEs ? "Espacio del Proyecto" : "Project Workspace", icon: FolderOpen, fields: ["summary", "finalSummary", "projectSummary", "description", "status"], fallback: true },
-    { id: "ai", title: isEs ? "Resultados del Analizador IA" : "AI Deal Analyzer results", tool: "AI Deal Analyzer", icon: Bot, fields: ["aiDealAnalyzer", "aiAnalysis", "aiAnalyses", "analysis", "analyses", "aiSummary"], toolId: "underwriter" },
-    { id: "property", title: isEs ? "Resultados de Busqueda de Propiedad" : "Property Search results", tool: "Property Search", icon: MapPin, fields: ["rentcast", "propertySearch", "propertyResult", "propertyData", "property", "properties"], page: "propertySearch" },
-    { id: "underwriter", title: isEs ? "Resultados del Deal Underwriter" : "Deal Underwriter results", tool: "Deal Underwriter", icon: LineChart, fields: ["underwriter", "dealUnderwriter", "deal", "underwriting"], toolId: "underwriter" },
-    { id: "dscr", title: "DSCR Calculator", tool: "Investment Loan Calculator", icon: Calculator, fields: ["dscr", "dscrCalculator", "loanDscr", "loanCalculator", "loan"], toolId: "loan" },
-    { id: "brrrr", title: "BRRRR Calculator", tool: "BRRRR Calculator", icon: BarChart3, fields: ["brrrr", "brrr", "brrrrCalculator", "brrrCalculator", "brrrrResults"], toolId: "underwriter" },
-    { id: "budget", title: isEs ? "Estimador de Presupuesto" : "Budget Estimator", tool: "Budget Estimator", icon: DollarSign, fields: ["budgetEstimator", "budget", "budgetItems", "estimate", "estimates"], toolId: "budget" },
-    { id: "wizard", title: isEs ? "Asistente de Construccion" : "Construction Wizard", tool: "Construction Wizard", icon: Hammer, fields: ["constructionWizard", "construction", "constructionChecklist", "checklist", "phases"], toolId: "wizard" },
-    { id: "takeoff", title: "Material Takeoff", tool: "Material Takeoff", icon: Layers, fields: ["materialTakeoff", "takeoff", "takeoffs", "measurements", "blueprints"], toolId: "takeoff" },
-    { id: "punch", title: "Punch List", tool: "Punch List", icon: ClipboardCheck, fields: ["punchList", "punchItems", "punches"], toolId: "punch" },
-    { id: "todo", title: isEs ? "Lista de Tareas" : "To Do List", tool: "To Do List", icon: ListChecks, fields: ["todoList", "tasks", "todos"], toolId: "todo" },
-    { id: "subs", title: "Subs / Quotes", tool: "Subs / Quotes", icon: Users, fields: ["subsQuotes", "subcontractors", "quotes", "subs"], toolId: "subs" },
-    { id: "reports", title: isEs ? "Reportes" : "Reports", tool: "Reports", icon: FileText, fields: ["reports", "pdfReports", "exports", "savedReports"] },
-    { id: "notes", title: isEs ? "Notas y Supuestos" : "Notes and assumptions", tool: isEs ? "Notas del Proyecto" : "Project Notes", icon: StickyNote, fields: ["notes", "assumptions", "transcripts", "projectNotes"] },
+    { id: "ai", title: isEs ? "Resultados del Analizador IA" : "AI Deal Analyzer results", tool: isEs ? "Analizador de Deals con IA" : "AI Deal Analyzer", icon: Bot, fields: ["aiDealAnalyzer", "aiAnalysis", "aiAnalyses", "analysis", "analyses", "aiSummary"], toolId: "aiDealAnalyzer" },
+    { id: "property", title: isEs ? "Resultados de Búsqueda de Propiedad" : "Property Search results", tool: isEs ? "Búsqueda de Propiedad" : "Property Search", icon: MapPin, fields: ["rentcast", "propertySearch", "propertyResult", "propertyData", "property", "properties"], page: "propertySearch" },
+    { id: "underwriter", title: isEs ? "Resultados del Deal Underwriter" : "Deal Underwriter results", tool: isEs ? "Analizador de Deals" : "Deal Underwriter", icon: LineChart, fields: ["underwriter", "dealUnderwriter", "deal", "underwriting"], toolId: "underwriter" },
+    { id: "dscr", title: isEs ? "Calculadora DSCR" : "DSCR Calculator", tool: isEs ? "Calculadora de Préstamos" : "Investment Loan Calculator", icon: Calculator, fields: ["dscr", "dscrCalculator", "loanDscr", "loanCalculator", "loan"], toolId: "dscr" },
+    { id: "brrrr", title: isEs ? "Calculadora BRRRR" : "BRRRR Calculator", tool: isEs ? "Calculadora BRRRR" : "BRRRR Calculator", icon: BarChart3, fields: ["brrrr", "brrr", "brrrrCalculator", "brrrCalculator", "brrrrResults"], toolId: "brrrr" },
+    { id: "budget", title: isEs ? "Estimador de Presupuesto" : "Budget Estimator", tool: isEs ? "Estimador de Presupuesto" : "Budget Estimator", icon: DollarSign, fields: ["budgetEstimator", "budget", "budgetItems", "estimate", "estimates"], toolId: "budget" },
+    { id: "wizard", title: isEs ? "Asistente de Construcción" : "Construction Wizard", tool: isEs ? "Asistente de Construcción" : "Construction Wizard", icon: Hammer, fields: ["constructionWizard", "construction", "constructionChecklist", "checklist", "phases"], toolId: "wizard" },
+    { id: "takeoff", title: isEs ? "Takeoff de Materiales" : "Material Takeoff", tool: isEs ? "Takeoff de Materiales" : "Material Takeoff", icon: Layers, fields: ["materialTakeoff", "takeoff", "takeoffs", "measurements", "blueprints"], toolId: "takeoff" },
+    { id: "punch", title: isEs ? "Lista de Pendientes" : "Punch List", tool: isEs ? "Lista de Pendientes" : "Punch List", icon: ClipboardCheck, fields: ["punchList", "punchItems", "punches"], toolId: "punch" },
+    { id: "todo", title: isEs ? "Lista de Tareas" : "To Do List", tool: isEs ? "Lista de Tareas" : "To Do List", icon: ListChecks, fields: ["todoList", "tasks", "todos"], toolId: "todo" },
+    { id: "subs", title: isEs ? "Subs / Cotizaciones" : "Subs / Quotes", tool: isEs ? "Subs / Cotizaciones" : "Subs / Quotes", icon: Users, fields: ["subsQuotes", "subcontractors", "quotes", "subs"], toolId: "subs" },
+    { id: "reports", title: isEs ? "Reportes" : "Reports", tool: isEs ? "Reportes" : "Reports", icon: FileText, fields: ["reports", "pdfReports", "exports", "savedReports"], toolId: "reports" },
+    { id: "notes", title: isEs ? "Notas y Supuestos" : "Notes and Assumptions", tool: isEs ? "Notas y Supuestos" : "Project Notes", icon: StickyNote, fields: ["notes", "assumptions", "transcripts", "projectNotes"], toolId: "notes" },
   ];
 
   return definitions.map((definition) => {
@@ -1974,7 +1974,7 @@ function ProjectDetails({ language, projects = [], activeProject, setActiveProje
 
         <GlassPanel className="self-start">
           <StickyNote className="text-cyan-300" />
-          <h3 className="mt-4 text-2xl font-black text-white">{isEs ? "Notas y Supuestos" : "Notes and assumptions"}</h3>
+          <h3 className="mt-4 text-2xl font-black text-white">{isEs ? "Notas y Supuestos" : "Notes and Assumptions"}</h3>
           <p className="mt-2 text-sm leading-6 text-slate-400">{isEs ? "Guarda decisiones, supuestos, riesgos y conversaciones importantes." : "Save decisions, assumptions, risks, and important conversations."}</p>
           <textarea className="field mt-5 min-h-48" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder={isEs ? "Escribe notas del proyecto..." : "Write project notes..."} />
           <button onClick={saveNotes} className="primary-button mt-4 w-full justify-center"><Save size={18} />{isEs ? "Guardar Notas" : "Save Notes"}</button>
@@ -2034,10 +2034,31 @@ function cleanProjectForTool(project) {
   return { ...project, name: rawName, title: project.title || rawName };
 }
 
+function getToolModalDefinition(toolId, language = "en") {
+  const isEs = language === "es";
+  const modalTools = {
+    wizard: ["wizard", isEs ? "Asistente de Construcción" : "Construction Wizard", isEs ? "Planifica fases, presupuesto, fotos, progreso y checklist." : "Plan phases, budget, photos, progress, and checklist.", Hammer, "Pro"],
+    underwriter: ["underwriter", isEs ? "Analizador de Deals" : "Deal Underwriter", isEs ? "Revisa ARV, reparaciones, precio de oferta, ROI y riesgo." : "Review ARV, repairs, offer price, ROI, and risk.", LineChart, "Core"],
+    aiDealAnalyzer: ["aiDealAnalyzer", isEs ? "Analizador de Deals con IA" : "AI Deal Analyzer", isEs ? "Analiza el deal, riesgos y próximos pasos con IA." : "Analyze the deal, risks, and next steps with AI.", Bot, "AI"],
+    loan: ["loan", isEs ? "Calculadora de Préstamo de Inversión" : "Investment Loan Calculator", isEs ? "Modela apalancamiento, puntos, pago y DSCR." : "Model leverage, points, payment, and DSCR.", Calculator, "DSCR"],
+    loanCalcs: ["loanCalcs", isEs ? "Calculadora de Préstamo de Inversión" : "Investment Loan Calculator", isEs ? "Modela apalancamiento, puntos, pago y DSCR." : "Model leverage, points, payment, and DSCR.", Calculator, "DSCR"],
+    dscr: ["dscr", isEs ? "Calculadora DSCR" : "DSCR Calculator", isEs ? "Calcula cobertura de deuda, pago y elegibilidad." : "Calculate debt coverage, payment, and eligibility.", Calculator, "DSCR"],
+    brrrr: ["brrrr", isEs ? "Calculadora BRRRR" : "BRRRR Calculator", isEs ? "Modela compra, rehabilitación, renta, refinanciamiento y capital." : "Model buy, rehab, rent, refinance, and equity capture.", BarChart3, "BRRRR"],
+    todo: ["todo", isEs ? "Lista de Tareas" : "To Do List", isEs ? "Coordina próximos pasos de inversionistas, prestamistas y contratistas." : "Track investor, lender, and contractor next steps.", ListChecks, "Live"],
+    punch: ["punch", isEs ? "Lista de Pendientes" : "Punch List", isEs ? "Registra pendientes de inspección final antes del cierre." : "Log final inspection items before closeout.", ClipboardCheck, "Trades"],
+    takeoff: ["takeoff", isEs ? "Takeoff de Materiales" : "Material Takeoff", isEs ? "Estima cantidades desde planos, habitaciones y alcances." : "Estimate quantities from plans, rooms, and scope assumptions.", Layers, "Beta"],
+    budget: ["budget", isEs ? "Estimador de Presupuesto" : "Budget Estimator", isEs ? "Construye estimados detallados de costos de construcción." : "Build detailed construction cost estimates.", DollarSign, "New"],
+    subs: ["subs", isEs ? "Subs / Cotizaciones" : "Subs / Quotes", isEs ? "Compara ofertas y asigna paquetes de subcontratistas." : "Compare bids and assign subcontractor packages.", Users, "New"],
+    reports: ["reports", isEs ? "Reportes" : "Reports", isEs ? "Crea, edita, exporta y elimina reportes guardados." : "Create, edit, export, and delete saved reports.", FileText, "Saved"],
+    notes: ["notes", isEs ? "Notas y Supuestos" : "Notes and Assumptions", isEs ? "Guarda notas, supuestos y decisiones del proyecto." : "Save project notes, assumptions, and decisions.", StickyNote, "Live"],
+  };
+  return modalTools[toolId] || getTools(language).find(([id]) => id === toolId) || getTools(language)[0];
+}
+
 function ToolModal({ t, language, toolId, projects, activeProject, setActiveProject, onSaveProject, onClose }) {
-  const tool = getTools(language).find(([id]) => id === toolId) || getTools(language)[0];
+  const tool = getToolModalDefinition(toolId, language);
   const [, title, desc, Icon] = tool;
-  const requiresProject = ["wizard", "underwriter", "loan", "loanCalcs", "todo", "punch", "takeoff", "budget", "subs", "linked", "collab"].includes(toolId);
+  const requiresProject = ["wizard", "underwriter", "aiDealAnalyzer", "loan", "loanCalcs", "dscr", "brrrr", "todo", "punch", "takeoff", "budget", "subs", "linked", "collab", "reports", "notes"].includes(toolId);
   const initialProject = cleanProjectForTool(activeProject);
   const [projectReady, setProjectReady] = useState(!requiresProject || Boolean(initialProject));
   const [showExisting, setShowExisting] = useState(false);
@@ -2320,7 +2341,9 @@ function saveToolResultToProject(project, toolKey, payload, onSaveProject, onPro
 function ToolBody({ t, language, toolId, project, onSaveProject, onProjectSaved }) {
   if (toolId === "wizard") return <ConstructionWizard language={language} project={project} />;
   if (toolId === "underwriter") return <DealUnderwriter language={language} project={project} onSaveProject={onSaveProject} onProjectSaved={onProjectSaved} />;
-  if (toolId === "loan" || toolId === "loanCalcs") return <InvestmentLoanCalculator language={language} project={project} />;
+  if (toolId === "aiDealAnalyzer") return <AIAssistant t={t} large project={project} onSaveProject={onSaveProject} onProjectSaved={onProjectSaved} />;
+  if (toolId === "loan" || toolId === "loanCalcs" || toolId === "dscr") return <InvestmentLoanCalculator language={language} project={project} />;
+  if (toolId === "brrrr") return <BRRRRCalculator language={language} project={project} onSaveProject={onSaveProject} onProjectSaved={onProjectSaved} />;
   if (toolId === "todo") return <Checklist project={project} items={language === "es" ? ["Ordenar armaduras", "Confirmar inspección de cimentación", "Recopilar tres ofertas de HVAC", "Programar cuadrilla de drywall"] : ["Order trusses", "Confirm foundation inspection", "Collect three HVAC bids", "Schedule drywall crew"]} language={language} />;
   if (toolId === "punch") return <PunchListApp language={language} project={project} />;
   if (toolId === "takeoff") return <AITakeoff language={language} project={project} />;
@@ -2328,7 +2351,159 @@ function ToolBody({ t, language, toolId, project, onSaveProject, onProjectSaved 
   if (toolId === "subs") return <div className="space-y-6"><SubsQuotes language={language} project={project} /><section className="rounded-3xl border border-white/10 bg-slate-950/60 p-5"><Collaborators language={language} project={project} embedded /></section></div>;
   if (toolId === "linked") return <LinkedItems language={language} project={project} />;
   if (toolId === "collab") return <Collaborators language={language} project={project} />;
+  if (toolId === "reports") return <ReportsTool language={language} project={project} onSaveProject={onSaveProject} onProjectSaved={onProjectSaved} />;
+  if (toolId === "notes") return <ProjectNotesTool language={language} project={project} onSaveProject={onSaveProject} onProjectSaved={onProjectSaved} />;
   return <AIAssistant t={t} large project={project} onSaveProject={onSaveProject} onProjectSaved={onProjectSaved} />;
+}
+
+let wizardLanguageContext = "en";
+
+const wizardTranslations = {
+  "OPERITRON.COM Pro Setup": "Configuración Pro de OPERITRON.COM",
+  "Tailor this build plan to your role": "Adapta este plan de construcción a tu función",
+  "Tell Operitron who is running the project so the checklist, budget prompts, and next steps fit the way you operate.": "Dile a Operitron quién dirige el proyecto para ajustar el checklist, el presupuesto y los próximos pasos a tu forma de trabajar.",
+  "What best describes you?": "¿Qué te describe mejor?",
+  "Company or project group": "Empresa o grupo del proyecto",
+  "Primary market": "Mercado principal",
+  "Plan a profitable new build": "Planear una construcción rentable",
+  "Estimate construction scope": "Estimar el alcance de construcción",
+  "Prepare lender draw schedule": "Preparar calendario de desembolsos del prestamista",
+  "Coordinate subs and inspections": "Coordinar subcontratistas e inspecciones",
+  "Build an investor-ready report": "Crear un reporte listo para inversionistas",
+  "Construction Wizard": "Asistente de Construcción",
+  "Step": "Paso",
+  "Foundation Type": "Tipo de Cimentación",
+  "Select the type of foundation for your project": "Selecciona el tipo de cimentación para tu proyecto",
+  "Finish Level": "Nivel de Acabados",
+  "Select the quality level of finishes": "Selecciona el nivel de calidad de los acabados",
+  "Building Structure": "Estructura del Edificio",
+  "Configure the structure type, building size and garage": "Configura el tipo de estructura, tamaño del edificio y garaje",
+  "Exterior Siding": "Revestimiento Exterior",
+  "Select one or more siding materials and drag each share to total 100%.": "Selecciona uno o más materiales de revestimiento y ajusta el total a 100%.",
+  "Roof Type": "Tipo de Techo",
+  "Select the roofing material": "Selecciona el material del techo",
+  "Site Conditions": "Condiciones del Terreno",
+  "Describe your lot and driveway preferences": "Describe tu lote y las preferencias de entrada vehicular",
+  "Utilities & Systems": "Servicios y Sistemas",
+  "Configure water source and heating system": "Configura la fuente de agua y el sistema de calefacción",
+  "Bathrooms & Extras": "Baños y Extras",
+  "Configure bathroom count and outdoor living": "Configura la cantidad de baños y áreas exteriores",
+  "Permits & Regulations": "Permisos y Regulaciones",
+  "Indicate any special permit requirements": "Indica cualquier requisito especial de permisos",
+  "Structure Type": "Tipo de Estructura",
+  "Number of Stories": "Número de Pisos",
+  "Garage Size": "Tamaño del Garaje",
+  "Total": "Total",
+  "Ready": "Listo",
+  "Adjust to 100%": "Ajustar a 100%",
+  "Previous": "Anterior",
+  "Next": "Siguiente",
+  "Generate Checklist": "Generar lista",
+  "Operator Type": "Tipo de Operador",
+  "Builder / Remodeler": "Constructor / Remodelador",
+  "Investor": "Inversionista",
+  "Developer": "Desarrollador",
+  "General Contractor": "Contratista General",
+  "Property Owner": "Propietario",
+  "Slab (Losa)": "Losa",
+  "Concrete poured directly on ground level": "Concreto vertido directamente sobre el terreno",
+  "Basement (Sótano)": "Sótano",
+  "Full basement below ground level": "Sótano completo bajo nivel de terreno",
+  "Crawlspace (Espacio de Acceso)": "Espacio de Acceso",
+  "Elevated foundation with access space": "Cimentación elevada con espacio de acceso",
+  "Basic": "Básico",
+  "Standard finishes, cost-effective": "Acabados estándar, costo eficiente",
+  "Semi-Luxury": "Semi-Lujo",
+  "Upgraded finishes, mid-range quality": "Acabados mejorados, calidad media",
+  "Luxury": "Lujo",
+  "High-end finishes, premium quality": "Acabados de alta gama, calidad premium",
+  "Wood Framing": "Estructura de Madera",
+  "Traditional wood stud framing": "Estructura tradicional con montantes de madera",
+  "Concrete Block": "Bloque de Concreto",
+  "CMU / concrete block walls": "Muros de CMU / bloque de concreto",
+  "1 Story": "1 Piso",
+  "Single-level home": "Vivienda de un solo nivel",
+  "2 Stories": "2 Pisos",
+  "Two-level home": "Vivienda de dos niveles",
+  "3+ Stories": "3+ Pisos",
+  "Three or more levels": "Tres o más niveles",
+  "No Garage": "Sin Garaje",
+  "1-Car Garage": "Garaje para 1 Auto",
+  "2-Car Garage": "Garaje para 2 Autos",
+  "3-Car Garage": "Garaje para 3 Autos",
+  "Vinyl Siding": "Revestimiento de Vinilo",
+  "Affordable, low maintenance": "Económico y de bajo mantenimiento",
+  "Hardiboard / Fiber Cement": "Hardiboard / Fibrocemento",
+  "Durable fiber cement": "Fibrocemento durable",
+  "Brick": "Ladrillo",
+  "Classic, long-lasting": "Clásico y duradero",
+  "Stone": "Piedra",
+  "Premium natural look": "Apariencia natural premium",
+  "Stucco": "Estuco",
+  "Smooth exterior finish": "Acabado exterior liso",
+  "Wood Siding": "Revestimiento de Madera",
+  "Traditional, warm aesthetic": "Estética tradicional y cálida",
+  "Asphalt Shingles": "Tejas Asfálticas",
+  "Metal Roof": "Techo Metálico",
+  "Tile Roof": "Techo de Teja",
+  "Flat Lot": "Lote Plano",
+  "Level ground, minimal grading needed": "Terreno nivelado, mínima nivelación requerida",
+  "Sloped Lot": "Lote Inclinado",
+  "Requires grading and retaining walls": "Requiere nivelación y muros de contención",
+  "Heavily Wooded": "Muy Arbolado",
+  "Tree removal and clearing needed": "Requiere despeje y retiro de árboles",
+  "Requires Fill": "Requiere Relleno",
+  "Low area requiring fill dirt": "Área baja que requiere material de relleno",
+  "No Driveway": "Sin Entrada",
+  "Gravel": "Grava",
+  "Asphalt": "Asfalto",
+  "Concrete": "Concreto",
+  "Pavers": "Adoquines",
+  "City Water": "Agua Municipal",
+  "Municipal water connection": "Conexión municipal de agua",
+  "Well Water": "Agua de Pozo",
+  "Private well drilling required": "Requiere perforación de pozo privado",
+  "City Sewer": "Alcantarillado Municipal",
+  "Connected to municipal sewer line": "Conectado a la red municipal",
+  "Septic System": "Sistema Séptico",
+  "Private on-site septic tank and drain field": "Tanque séptico y campo de drenaje en sitio",
+  "Engineered Septic System": "Sistema Séptico Diseñado",
+  "Engineered system for challenging soils (mound, drip, etc.)": "Sistema diseñado para suelos difíciles",
+  "Forced Air": "Aire Forzado",
+  "Standard HVAC system": "Sistema HVAC estándar",
+  "Radiant Floor": "Piso Radiante",
+  "In-floor heating system": "Calefacción integrada al piso",
+  "Heat Pump": "Bomba de Calor",
+  "Energy-efficient heating and cooling": "Calefacción y enfriamiento eficiente",
+  "1 Bathroom": "1 Baño",
+  "2 Bathrooms": "2 Baños",
+  "3 Bathrooms": "3 Baños",
+  "4+ Bathrooms": "4+ Baños",
+  "None": "Ninguno",
+  "Small (up to 200 sq ft)": "Pequeño (hasta 200 pies²)",
+  "Medium (200-400 sq ft)": "Mediano (200-400 pies²)",
+  "Large (400+ sq ft)": "Grande (400+ pies²)",
+  "Small (up to 1/4 acre)": "Pequeño (hasta 1/4 acre)",
+  "Medium (1/4-1/2 acre)": "Mediano (1/4-1/2 acre)",
+  "Large (1/2+ acre)": "Grande (1/2+ acre)",
+  "Standard Permits": "Permisos Estándar",
+  "Regular building permits": "Permisos regulares de construcción",
+  "Historic District": "Distrito Histórico",
+  "Additional historic preservation review": "Revisión adicional de preservación histórica",
+  "Wetlands/Environmental": "Humedales / Ambiental",
+  "Environmental impact studies required": "Requiere estudios de impacto ambiental",
+  "HOA Approval": "Aprobación HOA",
+  "Homeowners association review needed": "Revisión de la asociación de propietarios",
+  "Additional Options": "Opciones Adicionales",
+  "Fireplace": "Chimenea",
+  "Gas Lines": "Líneas de Gas",
+  "Carpet in Bedrooms": "Alfombra en Dormitorios",
+  "Square Footage": "Pies Cuadrados",
+};
+
+function trUi(text, language = wizardLanguageContext) {
+  if (language !== "es" || text == null) return text;
+  return wizardTranslations[text] || text;
 }
 
 function createConstructionPhases(answers) {
@@ -2351,6 +2526,8 @@ function createConstructionPhases(answers) {
 }
 
 function ConstructionWizard({ language = "en", project }) {
+  wizardLanguageContext = language;
+  const isEs = language === "es";
   const [step, setStep] = useState(1);
   const [generatedPlan, setGeneratedPlan] = useState(null);
   const [operator, setOperator] = useState({
@@ -2420,26 +2597,22 @@ function ConstructionWizard({ language = "en", project }) {
       <div className="rounded-3xl border border-cyan-300/20 bg-gradient-to-br from-cyan-400/10 via-purple-500/10 to-amber-400/5 p-5 shadow-[0_0_40px_rgba(34,211,238,.10)]">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-sm font-black uppercase tracking-widest text-cyan-300">OPERITRON.COM Pro Setup</p>
-            <h3 className="mt-2 text-2xl font-black text-white">Tailor this build plan to your role</h3>
-            <p className="mt-2 max-w-2xl leading-7 text-slate-400">Tell Operitron who is running the project so the checklist, budget prompts, and next steps fit the way you operate.</p>
+            <p className="text-sm font-black uppercase tracking-widest text-cyan-300">{trUi("OPERITRON.COM Pro Setup", language)}</p>
+            <h3 className="mt-2 text-2xl font-black text-white">{trUi("Tailor this build plan to your role", language)}</h3>
+            <p className="mt-2 max-w-2xl leading-7 text-slate-400">{trUi("Tell Operitron who is running the project so the checklist, budget prompts, and next steps fit the way you operate.", language)}</p>
           </div>
           <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-black uppercase tracking-widest text-amber-200">AI Real Estate Operating System</span>
         </div>
         <div className="mt-5 grid gap-4 xl:grid-cols-[1fr_340px]">
           <div>
-            <p className="mb-3 text-sm font-black uppercase tracking-widest text-slate-500">What best describes you?</p>
+            <p className="mb-3 text-sm font-black uppercase tracking-widest text-slate-500">{trUi("What best describes you?", language)}</p>
             <Segmented options={["Investor", "Builder / Remodeler", "Developer", "General Contractor", "Property Owner"]} value={operator.type} onChange={(value) => updateOperator("type", value)} />
           </div>
           <div className="grid gap-3">
-            <input className="field" value={operator.company} onChange={(e) => updateOperator("company", e.target.value)} placeholder="Company or project group" />
-            <input className="field" value={operator.market} onChange={(e) => updateOperator("market", e.target.value)} placeholder="Primary market" />
+            <input className="field" value={operator.company} onChange={(e) => updateOperator("company", e.target.value)} placeholder={trUi("Company or project group", language)} />
+            <input className="field" value={operator.market} onChange={(e) => updateOperator("market", e.target.value)} placeholder={trUi("Primary market", language)} />
             <select className="field" value={operator.goal} onChange={(e) => updateOperator("goal", e.target.value)}>
-              <option>Plan a profitable new build</option>
-              <option>Estimate construction scope</option>
-              <option>Prepare lender draw schedule</option>
-              <option>Coordinate subs and inspections</option>
-              <option>Build an investor-ready report</option>
+              {["Plan a profitable new build", "Estimate construction scope", "Prepare lender draw schedule", "Coordinate subs and inspections", "Build an investor-ready report"].map((option) => <option key={option} value={option}>{trUi(option, language)}</option>)}
             </select>
           </div>
         </div>
@@ -2447,8 +2620,8 @@ function ConstructionWizard({ language = "en", project }) {
       <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-3xl font-black text-white">Construction Wizard</h3>
-            <p className="mt-1 font-bold text-cyan-300">Step {step} of 9</p>
+            <h3 className="text-3xl font-black text-white">{trUi("Construction Wizard", language)}</h3>
+            <p className="mt-1 font-bold text-cyan-300">{trUi("Step", language)} {step} {language === "es" ? "de" : "of"} 9</p>
           </div>
           <motion.p key={progress} initial={{ opacity: 0.45, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.25 }} className="text-3xl font-black text-amber-300">{progress}%</motion.p>
         </div>
@@ -2460,20 +2633,20 @@ function ConstructionWizard({ language = "en", project }) {
       {step === 1 && <WizardStep title="Foundation Type" detail="Select the type of foundation for your project"><OptionGrid options={[["Slab (Losa)", "Concrete poured directly on ground level"], ["Basement (Sótano)", "Full basement below ground level"], ["Crawlspace (Espacio de Acceso)", "Elevated foundation with access space"]]} value={answers.foundation} onChange={(value) => update("foundation", value)} /></WizardStep>}
       {step === 2 && <WizardStep title="Finish Level" detail="Select the quality level of finishes"><OptionGrid options={[["Basic", "Standard finishes, cost-effective"], ["Semi-Luxury", "Upgraded finishes, mid-range quality"], ["Luxury", "High-end finishes, premium quality"]]} value={answers.finish} onChange={(value) => update("finish", value)} /></WizardStep>}
       {step === 3 && <WizardStep title="Building Structure" detail="Configure the structure type, building size and garage"><WizardGroup title="Structure Type"><OptionGrid compact options={[["Wood Framing", "Traditional wood stud framing"], ["Concrete Block", "CMU / concrete block walls"]]} value={answers.structure} onChange={(value) => update("structure", value)} /></WizardGroup><WizardGroup title="Number of Stories"><OptionGrid compact options={[["1 Story", "Single-level home"], ["2 Stories", "Two-level home"], ["3+ Stories", "Three or more levels"]]} value={answers.stories} onChange={(value) => update("stories", value)} /></WizardGroup><WizardGroup title="Garage Size"><Segmented options={["No Garage", "1-Car Garage", "2-Car Garage", "3-Car Garage"]} value={answers.garage} onChange={(value) => update("garage", value)} /></WizardGroup></WizardStep>}
-      {step === 4 && <WizardStep title="Exterior Siding" detail="Select one or more siding materials and drag each share to total 100%."><div className="mb-4 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/70 p-4"><span className="font-black text-white">Total: {sidingTotal}%</span><span className={sidingTotal === 100 ? "font-black text-emerald-300" : "font-black text-amber-300"}>{sidingTotal === 100 ? "Ready" : "Adjust to 100%"}</span></div><div className="grid gap-3 md:grid-cols-2">{Object.entries(siding).map(([name, pct]) => <div key={name} className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-white">{name}</p><p className="text-sm text-slate-400">{sidingDescription(name)}</p></div><span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-sm font-black text-cyan-200">{pct}%</span></div><label className="mt-4 block"><span className="sr-only">{name} percentage</span><input type="range" min="0" max="100" step="1" value={pct} onChange={(e) => setSidingPct(name, e.target.value)} className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-cyan-300" /></label></div>)}</div></WizardStep>}
+      {step === 4 && <WizardStep title="Exterior Siding" detail="Select one or more siding materials and drag each share to total 100%."><div className="mb-4 flex items-center justify-between rounded-2xl border border-white/10 bg-slate-950/70 p-4"><span className="font-black text-white">{trUi("Total", language)}: {sidingTotal}%</span><span className={sidingTotal === 100 ? "font-black text-emerald-300" : "font-black text-amber-300"}>{sidingTotal === 100 ? trUi("Ready", language) : trUi("Adjust to 100%", language)}</span></div><div className="grid gap-3 md:grid-cols-2">{Object.entries(siding).map(([name, pct]) => <div key={name} className="rounded-3xl border border-white/10 bg-slate-950/60 p-4"><div className="flex items-start justify-between gap-3"><div><p className="font-black text-white">{trUi(name, language)}</p><p className="text-sm text-slate-400">{sidingDescription(name, language)}</p></div><span className="rounded-full border border-cyan-300/25 bg-cyan-300/10 px-3 py-1 text-sm font-black text-cyan-200">{pct}%</span></div><label className="mt-4 block"><span className="sr-only">{trUi(name, language)} {language === "es" ? "porcentaje" : "percentage"}</span><input type="range" min="0" max="100" step="1" value={pct} onChange={(e) => setSidingPct(name, e.target.value)} className="h-2 w-full cursor-pointer appearance-none rounded-full bg-slate-700 accent-cyan-300" /></label></div>)}</div></WizardStep>}
       {step === 5 && <WizardStep title="Roof Type" detail="Select the roofing material"><Segmented options={["Asphalt Shingles", "Metal Roof", "Tile Roof"]} value={answers.roof} onChange={(value) => update("roof", value)} /></WizardStep>}
       {step === 6 && <WizardStep title="Site Conditions" detail="Describe your lot and driveway preferences"><WizardGroup title="Lot Condition"><OptionGrid options={[["Flat Lot", "Level ground, minimal grading needed"], ["Sloped Lot", "Requires grading and retaining walls"], ["Heavily Wooded", "Tree removal and clearing needed"], ["Requires Fill", "Low area requiring fill dirt"]]} value={answers.lot} onChange={(value) => update("lot", value)} /></WizardGroup><WizardGroup title="Driveway Type"><Segmented options={["No Driveway", "Gravel", "Asphalt", "Concrete", "Pavers"]} value={answers.driveway} onChange={(value) => update("driveway", value)} /></WizardGroup></WizardStep>}
       {step === 7 && <WizardStep title="Utilities & Systems" detail="Configure water source and heating system"><WizardGroup title="Water Source"><OptionGrid compact options={[["City Water", "Municipal water connection"], ["Well Water", "Private well drilling required"]]} value={answers.water} onChange={(value) => update("water", value)} /></WizardGroup><WizardGroup title="Sewer System"><OptionGrid options={[["City Sewer", "Connected to municipal sewer line"], ["Septic System", "Private on-site septic tank and drain field"], ["Engineered Septic System", "Engineered system for challenging soils (mound, drip, etc.)"]]} value={answers.sewer} onChange={(value) => update("sewer", value)} /></WizardGroup><WizardGroup title="Heating System"><OptionGrid options={[["Forced Air", "Standard HVAC system"], ["Radiant Floor", "In-floor heating system"], ["Heat Pump", "Energy-efficient heating and cooling"]]} value={answers.heating} onChange={(value) => update("heating", value)} /></WizardGroup></WizardStep>}
       {step === 8 && <WizardStep title="Bathrooms & Extras" detail="Configure bathroom count and outdoor living"><WizardGroup title="Number of Bathrooms"><Segmented options={["1 Bathroom", "2 Bathrooms", "3 Bathrooms", "4+ Bathrooms"]} value={answers.bathrooms} onChange={(value) => update("bathrooms", value)} /></WizardGroup><WizardGroup title="Deck/Patio Size"><Segmented options={["None", "Small (up to 200 sq ft)", "Medium (200-400 sq ft)", "Large (400+ sq ft)"]} value={answers.patio} onChange={(value) => update("patio", value)} /></WizardGroup><WizardGroup title="Landscaping Area Size"><Segmented options={["None", "Small (up to 1/4 acre)", "Medium (1/4-1/2 acre)", "Large (1/2+ acre)"]} value={answers.landscaping} onChange={(value) => update("landscaping", value)} /></WizardGroup></WizardStep>}
-      {step === 9 && <WizardStep title="Permits & Regulations" detail="Indicate any special permit requirements"><WizardGroup title="Permit Complexity"><OptionGrid options={[["Standard Permits", "Regular building permits"], ["Historic District", "Additional historic preservation review"], ["Wetlands/Environmental", "Environmental impact studies required"], ["HOA Approval", "Homeowners association review needed"]]} value={answers.permit} onChange={(value) => update("permit", value)} /></WizardGroup><WizardGroup title="Additional Options"><div className="grid gap-3 md:grid-cols-3">{[["fireplace", "Fireplace"], ["gas", "Gas Lines"], ["carpet", "Carpet in Bedrooms"]].map(([key, label]) => <button key={key} onClick={() => update(key, !answers[key])} className={`rounded-2xl border p-4 text-left font-black transition ${answers[key] ? "border-cyan-300/50 bg-cyan-300/10 text-cyan-200" : "border-white/10 bg-slate-950/60 text-slate-300 hover:border-cyan-300/30"}`}>{label}</button>)}</div></WizardGroup><NumberInput label="Square Footage" value={answers.sqft} setValue={(value) => update("sqft", value)} /></WizardStep>}
+      {step === 9 && <WizardStep title="Permits & Regulations" detail="Indicate any special permit requirements"><WizardGroup title="Permit Complexity"><OptionGrid options={[["Standard Permits", "Regular building permits"], ["Historic District", "Additional historic preservation review"], ["Wetlands/Environmental", "Environmental impact studies required"], ["HOA Approval", "Homeowners association review needed"]]} value={answers.permit} onChange={(value) => update("permit", value)} /></WizardGroup><WizardGroup title="Additional Options"><div className="grid gap-3 md:grid-cols-3">{[["fireplace", "Fireplace"], ["gas", "Gas Lines"], ["carpet", "Carpet in Bedrooms"]].map(([key, label]) => <button key={key} onClick={() => update(key, !answers[key])} className={`rounded-2xl border p-4 text-left font-black transition ${answers[key] ? "border-cyan-300/50 bg-cyan-300/10 text-cyan-200" : "border-white/10 bg-slate-950/60 text-slate-300 hover:border-cyan-300/30"}`}>{trUi(label, language)}</button>)}</div></WizardGroup><NumberInput label={trUi("Square Footage", language)} value={answers.sqft} setValue={(value) => update("sqft", value)} /></WizardStep>}
 
       <div className="flex flex-wrap justify-between gap-3">
-        <button onClick={() => setStep(Math.max(1, step - 1))} className="secondary-button" disabled={step === 1}>Previous</button>
-        {step < 9 ? <button onClick={() => setStep(Math.min(9, step + 1))} className="primary-button">Next</button> : <button onClick={generateChecklist} className="primary-button">Generate Checklist</button>}
+        <button onClick={() => setStep(Math.max(1, step - 1))} className="secondary-button" disabled={step === 1}>{trUi("Previous", language)}</button>
+        {step < 9 ? <button onClick={() => setStep(Math.min(9, step + 1))} className="primary-button">{trUi("Next", language)}</button> : <button onClick={generateChecklist} className="primary-button">{trUi("Generate Checklist", language)}</button>}
       </div>
 
       <EmbeddedConstructionProgress plan={generatedPlan} language={language} />
-      {step === 9 && !generatedPlan && <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><h4 className="text-xl font-black text-white">Ready to Generate</h4><p className="mt-2 text-slate-300">Your checklist will be built from the selections above, including schedule duration, estimated construction cost, contingency, and risk flags.</p></div>}
+      {step === 9 && !generatedPlan && <div className="rounded-3xl border border-cyan-300/20 bg-cyan-300/10 p-5"><h4 className="text-xl font-black text-white">{trUi("Ready to Generate", language)}</h4><p className="mt-2 text-slate-300">{trUi("Your checklist will be built from the selections above, including schedule duration, estimated construction cost, contingency, and risk flags.", language)}</p></div>}
       {generatedPlan && <SmartConstructionChecklist plan={generatedPlan} assumptions={checklist} language={language} />}
     </div>
   );
@@ -2620,33 +2793,33 @@ function SmartConstructionChecklist({ plan, assumptions, language }) {
   </motion.section>;
 }
 
-function WizardStep({ title, detail, children }) {
+function WizardStep({ title, detail, children, language = wizardLanguageContext }) {
   const visual = { "Foundation Type": [Home, "text-emerald-300", "bg-emerald-300/10"], "Finish Level": [Sparkles, "text-amber-300", "bg-amber-300/10"], "Building Structure": [Building2, "text-blue-300", "bg-blue-300/10"], "Exterior Siding": [Layers, "text-orange-300", "bg-orange-300/10"], "Roof Type": [Home, "text-purple-300", "bg-purple-300/10"], "Site Conditions": [MapPin, "text-emerald-300", "bg-emerald-300/10"], "Utilities & Systems": [Globe2, "text-cyan-300", "bg-cyan-300/10"], "Bathrooms & Extras": [Building2, "text-violet-300", "bg-violet-300/10"], "Permits & Regulations": [FileText, "text-rose-300", "bg-rose-300/10"] }[title] || [Hammer, "text-cyan-300", "bg-cyan-300/10"];
   const [Icon, color, background] = visual;
-  return <motion.div key={title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-3xl border border-white/10 bg-white/[.04] p-5"><motion.div initial={{ scale: 0.75, rotate: -6 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className={`mb-4 grid h-14 w-14 place-items-center rounded-2xl ${background} ${color}`}><Icon size={29} /></motion.div><h4 className="text-2xl font-black text-white">{title}</h4><p className="mt-2 text-slate-400">{detail}</p><div className="mt-5 space-y-5">{children}</div></motion.div>;
+  return <motion.div key={title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="rounded-3xl border border-white/10 bg-white/[.04] p-5"><motion.div initial={{ scale: 0.75, rotate: -6 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 280, damping: 18 }} className={`mb-4 grid h-14 w-14 place-items-center rounded-2xl ${background} ${color}`}><Icon size={29} /></motion.div><h4 className="text-2xl font-black text-white">{trUi(title, language)}</h4><p className="mt-2 text-slate-400">{trUi(detail, language)}</p><div className="mt-5 space-y-5">{children}</div></motion.div>;
 }
 
-function WizardGroup({ title, children }) {
-  return <div><p className="mb-3 text-sm font-black uppercase tracking-widest text-slate-500">{title}</p>{children}</div>;
+function WizardGroup({ title, children, language = wizardLanguageContext }) {
+  return <div><p className="mb-3 text-sm font-black uppercase tracking-widest text-slate-500">{trUi(title, language)}</p>{children}</div>;
 }
 
-function OptionGrid({ options, value, onChange, compact }) {
-  return <div className={`grid gap-3 ${compact ? "md:grid-cols-2" : "md:grid-cols-3"}`}>{options.map(([title, detail]) => <button key={title} onClick={() => onChange(title)} className={`rounded-3xl border p-5 text-left transition ${value === title ? "border-cyan-300/60 bg-cyan-300/10 shadow-[0_0_28px_rgba(34,211,238,.16)]" : "border-white/10 bg-slate-950/60 hover:border-cyan-300/30"}`}><p className="font-black text-white">{title}</p><p className="mt-2 text-sm leading-6 text-slate-400">{detail}</p></button>)}</div>;
+function OptionGrid({ options, value, onChange, compact, language = wizardLanguageContext }) {
+  return <div className={`grid gap-3 ${compact ? "md:grid-cols-2" : "md:grid-cols-3"}`}>{options.map(([title, detail]) => <button key={title} onClick={() => onChange(title)} className={`rounded-3xl border p-5 text-left transition ${value === title ? "border-cyan-300/60 bg-cyan-300/10 shadow-[0_0_28px_rgba(34,211,238,.16)]" : "border-white/10 bg-slate-950/60 hover:border-cyan-300/30"}`}><p className="font-black text-white">{trUi(title, language)}</p><p className="mt-2 text-sm leading-6 text-slate-400">{trUi(detail, language)}</p></button>)}</div>;
 }
 
-function Segmented({ options, value, onChange }) {
-  return <div className="flex flex-wrap gap-3">{options.map((option) => <button key={option} onClick={() => onChange(option)} className={`rounded-2xl border px-4 py-3 font-black transition ${value === option ? "border-amber-300 bg-amber-300 text-slate-950 shadow-[0_0_24px_rgba(251,191,36,.22)]" : "border-white/10 bg-slate-950/60 text-slate-300 hover:border-amber-300/40"}`}>{option}</button>)}</div>;
+function Segmented({ options, value, onChange, language = wizardLanguageContext }) {
+  return <div className="flex flex-wrap gap-3">{options.map((option) => <button key={option} onClick={() => onChange(option)} className={`rounded-2xl border px-4 py-3 font-black transition ${value === option ? "border-amber-300 bg-amber-300 text-slate-950 shadow-[0_0_24px_rgba(251,191,36,.22)]" : "border-white/10 bg-slate-950/60 text-slate-300 hover:border-amber-300/40"}`}>{trUi(option, language)}</button>)}</div>;
 }
 
-function sidingDescription(name) {
-  return {
+function sidingDescription(name, language = wizardLanguageContext) {
+  return trUi({
     "Vinyl Siding": "Affordable, low maintenance",
     "Hardiboard / Fiber Cement": "Durable fiber cement",
     Brick: "Classic, long-lasting",
     Stone: "Premium natural look",
     Stucco: "Smooth exterior finish",
     "Wood Siding": "Traditional, warm aesthetic",
-  }[name];
+  }[name], language);
 }
 
 function DealUnderwriter({ language = "en", project, onSaveProject, onProjectSaved }) {
@@ -2759,6 +2932,103 @@ function InvestmentLoanCalculator({ language = "en", project }) {
       }} />
     </div>
   );
+}
+
+function BRRRRCalculator({ language = "en", project, onSaveProject, onProjectSaved }) {
+  const isEs = language === "es";
+  const saved = project?.brrrr || project?.brrr || project?.data?.brrrr || project?.data?.brrr || {};
+  const [purchase, setPurchase] = useState(saved.purchase ?? 185000);
+  const [rehab, setRehab] = useState(saved.rehab ?? 42000);
+  const [arv, setArv] = useState(saved.arv ?? 295000);
+  const [closing, setClosing] = useState(saved.closing ?? 9000);
+  const [rent, setRent] = useState(saved.rent ?? 2450);
+  const [refiLtv, setRefiLtv] = useState(saved.refiLtv ?? 75);
+  const [rate, setRate] = useState(saved.rate ?? 7.25);
+  const [years, setYears] = useState(saved.years ?? 30);
+  const totalCost = cleanNumber(purchase) + cleanNumber(rehab) + cleanNumber(closing);
+  const refiLoan = cleanNumber(arv) * cleanNumber(refiLtv) / 100;
+  const cashLeft = totalCost - refiLoan;
+  const payment = formulas.monthlyMortgage(refiLoan, cleanNumber(rate), cleanNumber(years));
+  const operatingExpenses = cleanNumber(rent) * 0.35;
+  const noi = (cleanNumber(rent) - operatingExpenses) * 12;
+  const cashFlow = cleanNumber(rent) - operatingExpenses - payment;
+  const dscrRatio = formulas.dscr(noi, payment * 12);
+  const equity = cleanNumber(arv) - refiLoan;
+
+  function saveBrrrr() {
+    saveToolResultToProject(project, "brrrr", {
+      title: "BRRRR Calculator",
+      purchase: cleanNumber(purchase),
+      rehab: cleanNumber(rehab),
+      arv: cleanNumber(arv),
+      closing: cleanNumber(closing),
+      rent: cleanNumber(rent),
+      refiLtv: cleanNumber(refiLtv),
+      rate: cleanNumber(rate),
+      years: cleanNumber(years),
+      totalCost,
+      refinanceLoan: refiLoan,
+      cashLeft,
+      monthlyCashFlow: cashFlow,
+      dscr: dscrRatio,
+      equity,
+      savedAt: new Date().toISOString(),
+    }, onSaveProject, onProjectSaved, ["brrr", "brrrrCalculator"]);
+  }
+
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Calculadora BRRRR" : "BRRRR Calculator"}</h3><p className="mt-2 text-slate-400">{isEs ? "Modela compra, rehabilitación, renta, refinanciamiento y capital capturado." : "Model buy, rehab, rent, refinance, cash left, and captured equity."}</p></div><button onClick={saveBrrrr} disabled={!project || !onSaveProject} className="secondary-button"><Save size={18} />{isEs ? "Guardar BRRRR" : "Save BRRRR"}</button></div><div className="grid gap-6 lg:grid-cols-[1fr_360px]"><div className="grid gap-4 md:grid-cols-2"><MoneyInput label={isEs ? "Precio de compra" : "Purchase Price"} value={purchase} setValue={setPurchase} /><MoneyInput label={isEs ? "Rehabilitación" : "Rehab Budget"} value={rehab} setValue={setRehab} /><MoneyInput label="ARV" value={arv} setValue={setArv} /><MoneyInput label={isEs ? "Costos de cierre" : "Closing Costs"} value={closing} setValue={setClosing} /><MoneyInput label={isEs ? "Renta mensual" : "Monthly Rent"} value={rent} setValue={setRent} /><NumberInput label={isEs ? "LTV de refinanciamiento %" : "Refinance LTV %"} value={refiLtv} setValue={setRefiLtv} /><NumberInput label={isEs ? "Tasa %" : "Rate %"} value={rate} setValue={setRate} /><NumberInput label={isEs ? "Años" : "Years"} value={years} setValue={setYears} /></div><ResultBox items={[[isEs ? "Costo total" : "Total Cost", formatMoney(totalCost)], [isEs ? "Préstamo refi" : "Refi Loan", formatMoney(refiLoan), true], [isEs ? "Efectivo restante" : "Cash Left In Deal", formatMoney(cashLeft), cashLeft <= 0], [isEs ? "Flujo mensual" : "Monthly Cash Flow", formatMoney(cashFlow), cashFlow > 0], ["DSCR", dscrRatio.toFixed(2), dscrRatio >= 1.2], [isEs ? "Capital capturado" : "Equity Captured", formatMoney(equity), equity > 0]]} /></div></div>;
+}
+
+function ReportsTool({ language = "en", project, onSaveProject, onProjectSaved }) {
+  const isEs = language === "es";
+  const saved = project?.reports || project?.savedReports || project?.data?.reports || project?.data?.savedReports || {};
+  const [title, setTitle] = useState(saved.title || `${projectDisplayName(project)} ${isEs ? "Reporte" : "Report"}`);
+  const [summary, setSummary] = useState(saved.summary || saved.notes || "");
+  const [message, setMessage] = useState("");
+
+  function saveReport() {
+    saveToolResultToProject(project, "reports", { title, summary, savedAt: new Date().toISOString(), source: "Reports" }, onSaveProject, onProjectSaved, ["savedReports", "pdfReports"]);
+    setMessage(isEs ? "Reporte guardado." : "Report saved.");
+  }
+  function exportReport() {
+    exportWorkspaceRecord(project, { id: "reports", title: isEs ? "Reportes" : "Reports", tool: isEs ? "Reportes" : "Reports", fields: ["reports"], saved: true, savedAt: saved.savedAt || new Date().toISOString(), value: { title, summary } });
+    setMessage(isEs ? "Reporte exportado." : "Report exported.");
+  }
+  function deleteReport() {
+    const updated = clearProjectFields(project, ["reports", "savedReports", "pdfReports"]);
+    Promise.resolve(onSaveProject?.(updated)).then((result) => onProjectSaved?.(result?.project || result || updated));
+    setMessage(isEs ? "Reporte eliminado." : "Report deleted.");
+  }
+
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div><h3 className="text-2xl font-black text-white">{isEs ? "Reportes" : "Reports"}</h3><p className="mt-2 text-slate-400">{isEs ? "Crea, edita, exporta o elimina un resumen del proyecto." : "Create, edit, export, or delete a project summary report."}</p></div><label><span className="label">{isEs ? "Título del reporte" : "Report Title"}</span><input className="field" value={title} onChange={(event) => setTitle(event.target.value)} /></label><label><span className="label">{isEs ? "Resumen" : "Summary"}</span><textarea className="field min-h-40" value={summary} onChange={(event) => setSummary(event.target.value)} placeholder={isEs ? "Escribe el resumen del proyecto..." : "Write the project report summary..."} /></label>{message && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm font-bold text-cyan-100">{message}</p>}<div className="grid gap-3 sm:grid-cols-3"><button onClick={saveReport} disabled={!project || !onSaveProject} className="primary-button justify-center"><Save size={18} />{isEs ? "Crear / Guardar" : "Create / Save"}</button><button onClick={exportReport} className="secondary-button justify-center"><FileText size={18} />{isEs ? "Exportar" : "Export"}</button><button onClick={deleteReport} disabled={!project || !onSaveProject} className="secondary-button justify-center text-rose-100"><Trash2 size={18} />{isEs ? "Eliminar" : "Delete"}</button></div></div>;
+}
+
+function ProjectNotesTool({ language = "en", project, onSaveProject, onProjectSaved }) {
+  const isEs = language === "es";
+  const saved = project?.projectNotes || project?.data?.projectNotes || {};
+  const [notes, setNotes] = useState(project?.notes || project?.data?.notes || saved.notes || "");
+  const [assumptions, setAssumptions] = useState(project?.assumptions || project?.data?.assumptions || saved.assumptions || "");
+  const [message, setMessage] = useState("");
+
+  function saveNotes() {
+    const payload = { notes, assumptions, savedAt: new Date().toISOString() };
+    const updated = { ...project, notes, assumptions, projectNotes: payload, data: { ...(project?.data || {}), notes, assumptions, projectNotes: payload } };
+    Promise.resolve(onSaveProject?.(updated)).then((result) => onProjectSaved?.(result?.project || result || updated));
+    setMessage(isEs ? "Notas guardadas." : "Notes saved.");
+  }
+  function exportNotes() {
+    exportWorkspaceRecord(project, { id: "notes", title: isEs ? "Notas y Supuestos" : "Notes and Assumptions", tool: isEs ? "Notas" : "Notes", fields: ["notes", "assumptions"], saved: true, savedAt: saved.savedAt || new Date().toISOString(), value: { notes, assumptions } });
+    setMessage(isEs ? "Notas exportadas." : "Notes exported.");
+  }
+  function deleteNotes() {
+    const updated = clearProjectFields(project, ["notes", "assumptions", "projectNotes"]);
+    Promise.resolve(onSaveProject?.(updated)).then((result) => onProjectSaved?.(result?.project || result || updated));
+    setNotes("");
+    setAssumptions("");
+    setMessage(isEs ? "Notas eliminadas." : "Notes deleted.");
+  }
+
+  return <div className="space-y-5"><ProjectContext project={project} language={language} /><div><h3 className="text-2xl font-black text-white">{isEs ? "Notas y Supuestos" : "Notes and Assumptions"}</h3><p className="mt-2 text-slate-400">{isEs ? "Guarda decisiones, riesgos, supuestos y conversaciones importantes." : "Save decisions, risks, assumptions, and important conversations."}</p></div><label><span className="label">{isEs ? "Notas" : "Notes"}</span><textarea className="field min-h-36" value={notes} onChange={(event) => setNotes(event.target.value)} placeholder={isEs ? "Agrega notas del proyecto..." : "Add project notes..."} /></label><label><span className="label">{isEs ? "Supuestos" : "Assumptions"}</span><textarea className="field min-h-32" value={assumptions} onChange={(event) => setAssumptions(event.target.value)} placeholder={isEs ? "ARV, renta, costos, riesgos..." : "ARV, rent, costs, risks..."} /></label>{message && <p className="rounded-2xl border border-cyan-300/20 bg-cyan-300/10 p-3 text-sm font-bold text-cyan-100">{message}</p>}<div className="grid gap-3 sm:grid-cols-3"><button onClick={saveNotes} disabled={!project || !onSaveProject} className="primary-button justify-center"><Save size={18} />{isEs ? "Guardar" : "Save"}</button><button onClick={exportNotes} className="secondary-button justify-center"><FileText size={18} />{isEs ? "Exportar" : "Export"}</button><button onClick={deleteNotes} disabled={!project || !onSaveProject} className="secondary-button justify-center text-rose-100"><Trash2 size={18} />{isEs ? "Eliminar" : "Delete"}</button></div></div>;
 }
 
 function EmbeddedLoanCalculations({ language, mode, metrics }) {
@@ -3475,7 +3745,7 @@ function AITakeoff({ language = "en", project }) {
   }
 
   const intro = (
-    <ToolShell title={isEs ? "Material Takeoff" : "Material Takeoff"} subtitle={isEs ? "Sube planos, mide areas y genera cantidades." : "Upload plans, measure areas, and generate quantities."}>
+    <ToolShell title={isEs ? "Takeoff de Materiales" : "Material Takeoff"} subtitle={isEs ? "Sube planos, mide áreas y genera cantidades." : "Upload plans, measure areas, and generate quantities."}>
       <ProjectContext project={project} language={language} />
       <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
         <div className="rounded-[2rem] border border-cyan-300/20 bg-gradient-to-br from-cyan-300/10 via-slate-950 to-purple-500/10 p-8">
@@ -3534,7 +3804,7 @@ function AITakeoff({ language = "en", project }) {
               </div>
             </div>
             {calibrationMode && <div className="absolute bottom-8 left-1/2 z-10 w-[min(520px,calc(100vw-2rem))] -translate-x-1/2 rounded-3xl border border-amber-400/30 bg-slate-950/95 p-4 text-center shadow-2xl"><p className="font-black text-amber-200">Calibration mode</p><p className="mt-1 text-sm text-slate-400">Click two known points on the plan. Distance: {calibrationDistance} ft. {calibrationPoints.length}/2 points selected.</p><button onClick={() => { setCalibrationMode(false); setCalibrationPoints([]); }} className="mt-3 rounded-xl border border-white/10 px-4 py-2 font-bold text-slate-200">Cancel</button></div>}
-            {showTour && <div className="absolute right-8 top-8 z-10 w-[min(420px,calc(100vw-2rem))] rounded-3xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl"><div className="flex justify-between"><div className="flex gap-3"><div className="grid h-10 w-10 place-items-center rounded-full bg-amber-400/15 text-amber-300"><HelpCircle /></div><h3 className="text-xl font-black text-white">{tour[tourStep - 1].title}</h3></div><button onClick={() => setShowTour(false)}><X /></button></div><p className="mt-4 text-lg leading-7 text-slate-400">{tour[tourStep - 1].text}</p><div className="mt-6 flex items-center justify-between"><span className="text-sm text-slate-400">Step {tourStep} of 5</span><div className="flex gap-2">{tourStep > 1 && <button onClick={() => setTourStep(tourStep - 1)} className="secondary-button h-11 px-3">Previous</button>}<button onClick={() => tourStep === 5 ? setShowTour(false) : setTourStep(tourStep + 1)} className="primary-button h-11 px-4">{tourStep === 5 ? "Get Started" : "Next"}</button></div></div><div className="mt-4 flex justify-center gap-2">{tour.map((_, index) => <span key={index} className={`h-2 w-2 rounded-full ${index + 1 === tourStep ? 'bg-amber-400' : 'bg-slate-600'}`} />)}</div></div>}
+            {showTour && <div className="absolute right-8 top-8 z-10 w-[min(420px,calc(100vw-2rem))] rounded-3xl border border-white/10 bg-slate-900/95 p-5 shadow-2xl"><div className="flex justify-between"><div className="flex gap-3"><div className="grid h-10 w-10 place-items-center rounded-full bg-amber-400/15 text-amber-300"><HelpCircle /></div><h3 className="text-xl font-black text-white">{tour[tourStep - 1].title}</h3></div><button onClick={() => setShowTour(false)}><X /></button></div><p className="mt-4 text-lg leading-7 text-slate-400">{tour[tourStep - 1].text}</p><div className="mt-6 flex items-center justify-between"><span className="text-sm text-slate-400">Step {tourStep} of 5</span><div className="flex gap-2">{tourStep > 1 && <button onClick={() => setTourStep(tourStep - 1)} className="secondary-button h-11 px-3">{trUi("Previous", language)}</button>}<button onClick={() => tourStep === 5 ? setShowTour(false) : setTourStep(tourStep + 1)} className="primary-button h-11 px-4">{tourStep === 5 ? "Get Started" : "Next"}</button></div></div><div className="mt-4 flex justify-center gap-2">{tour.map((_, index) => <span key={index} className={`h-2 w-2 rounded-full ${index + 1 === tourStep ? 'bg-amber-400' : 'bg-slate-600'}`} />)}</div></div>}
           </section>
           <aside className="hidden w-[380px] shrink-0 overflow-y-auto border-l border-white/10 bg-slate-950/95 lg:flex lg:flex-col">
             <div className="border-b border-white/10 p-4">
@@ -3906,7 +4176,7 @@ function BudgetEstimator({ language = "en", project }) {
     setWizardOpen(false);
     setSpecStep(1);
   }
-  return <div className="space-y-6"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Estimador de Presupuesto" : "Budget Estimator"}</h3><p className="mt-2 text-slate-400">{isEs ? "Presupuesto editable con decimales, comas, partidas y formulas reales." : "Editable budget with decimals, commas, line items, and real investor formulas."}</p></div><div className="flex flex-wrap gap-3"><button onClick={addRow} className="secondary-button"><Plus size={18} />{isEs ? "Agregar linea" : "Add line"}</button><button onClick={() => setWizardOpen(true)} className="primary-button"><Sparkles size={18} />{isEs ? "Generar desde Especificaciones" : "Generate From Specs"}</button></div></div><div className="grid gap-3 sm:grid-cols-5"><MiniMetric label={isEs ? "Costo Directo" : "Direct Cost"} value={formatMoney(direct)} /><MiniMetric label={isEs ? "Contingencia" : "Contingency"} value={formatMoney(contingency)} /><MiniMetric label={isEs ? "Total Proyecto" : "Total Project Cost"} value={formatMoney(total)} /><MiniMetric label={isEs ? "Costo / Pie2" : "Cost / Sq Ft"} value={formatMoney(total / sqft)} /><label className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"><span className="text-xs font-black uppercase tracking-widest text-slate-500">Contingency %</span><input inputMode="decimal" className="mt-2 w-full bg-transparent text-2xl font-black text-white outline-none" value={contingencyPct} onChange={(event) => setContingencyPct(event.target.value)} /></label></div><p className="rounded-2xl border border-cyan-300/15 bg-cyan-300/[.06] p-4 text-sm font-bold text-cyan-100">{isEs ? "Los campos aceptan comas y decimales: 1,250,000 | 12.5 | 7.25%." : "Fields accept commas and decimals: 1,250,000 | 12.5 | 7.25%."}</p><div className="overflow-x-auto rounded-3xl border border-white/10 bg-slate-950/60 p-4"><table className="min-w-[900px] w-full text-left"><thead className="text-xs uppercase tracking-widest text-slate-500"><tr><th className="pb-4">Category</th><th className="pb-4">Line Item</th><th className="pb-4">Qty</th><th className="pb-4">Unit</th><th className="pb-4">Unit Price</th><th className="pb-4 text-right">Total</th><th className="pb-4 text-right">Remove</th></tr></thead><tbody>{rows.map((row, index) => <tr key={`${row.category}-${index}`} className="border-t border-white/10"><td className="py-3 pr-3"><input className="field min-w-56 py-2 text-sm font-bold text-cyan-100" value={row.category} onChange={(event) => updateRow(index, "category", event.target.value)} /></td><td className="py-3 pr-3"><input className="field min-w-60 py-2" value={row.item} onChange={(event) => updateRow(index, "item", event.target.value)} /></td><td className="py-3 pr-3"><input inputMode="decimal" className="field w-28 py-2" value={row.qty} onChange={(event) => updateRow(index, "qty", event.target.value)} /></td><td className="py-3 pr-3"><input className="field w-28 py-2" value={row.unit} onChange={(event) => updateRow(index, "unit", event.target.value)} /></td><td className="py-3 pr-3"><input inputMode="decimal" className="field w-32 py-2" value={row.price} onChange={(event) => updateRow(index, "price", event.target.value)} /></td><td className="py-3 text-right font-black text-emerald-300">{formatMoney(cleanNumber(row.qty) * cleanNumber(row.price))}</td><td className="py-3 text-right"><button onClick={() => removeRow(index)} className="rounded-xl border border-rose-300/20 p-3 text-rose-200 hover:bg-rose-400/10"><Trash2 size={17} /></button></td></tr>)}</tbody></table></div><section className="rounded-3xl border border-white/10 bg-white/[.04] p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h4 className="text-xl font-black text-white">{isEs ? "Biblioteca de Formulas" : "Investor Formula Library"}</h4><p className="text-sm text-slate-400">{isEs ? "Calculadoras utiles para inversionistas, constructores, Airbnb y financiamiento." : "Useful calculators for investors, builders, Airbnb hosts, land developers, and financing."}</p></div><div className="flex flex-wrap gap-2">{Object.keys(formulaGroups).map((group) => <button key={group} onClick={() => setFormulaGroup(group)} className={`rounded-xl px-3 py-2 text-xs font-black uppercase tracking-widest transition ${formulaGroup === group ? "bg-cyan-300 text-slate-950" : "border border-white/10 text-slate-400 hover:text-white"}`}>{group}</button>)}</div></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{formulaGroups[formulaGroup].map(([name, formula, result]) => <div key={name} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4"><p className="font-black text-white">{name}</p><p className="mt-1 text-xs text-slate-500">{formula}</p><p className="mt-3 text-xl font-black text-cyan-200">{result}</p></div>)}</div><details className="mt-5 rounded-2xl border border-white/10 bg-slate-950/60 p-4"><summary className="cursor-pointer font-black text-white">{isEs ? "Editar supuestos de formulas" : "Edit formula assumptions"}</summary><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{Object.entries(assumptions).map(([key, value]) => <label key={key}><span className="label capitalize">{key.replace(/([A-Z])/g, " $1")}</span><input inputMode="decimal" className="field" value={value} onChange={(event) => patchAssumption(key, event.target.value)} /></label>)}</div></details></section>{wizardOpen && <div className="rounded-3xl border border-cyan-300/25 bg-cyan-300/[.05] p-5"><div className="flex justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? `Paso ${specStep} de 3` : `Step ${specStep} of 3`}</p><h4 className="mt-2 text-xl font-black text-white">{isEs ? "Generar Estimacion desde Especificaciones" : "Generate Estimate from Specs"}</h4></div><button onClick={() => setWizardOpen(false)}><X /></button></div><div className="mt-5 grid gap-3 sm:grid-cols-3">{specStep === 1 && <><select className="field" value={spec.type} onChange={(event) => setSpec({ ...spec, type: event.target.value })}><option>New Construction</option><option>Remodel</option><option>Addition</option></select><input className="field" value={spec.city} onChange={(event) => setSpec({ ...spec, city: event.target.value })} placeholder="City / State" /><NumberInput label="Living Sq Ft" value={spec.sqft} setValue={(value) => setSpec({ ...spec, sqft: value })} /></>}{specStep === 2 && <><select className="field" value={spec.foundation} onChange={(event) => setSpec({ ...spec, foundation: event.target.value })}><option>Slab</option><option>Crawlspace</option><option>Basement</option><option>Pier / Raised</option></select><select className="field" value={spec.finish} onChange={(event) => setSpec({ ...spec, finish: event.target.value })}><option>Standard</option><option>Upgraded</option><option>Luxury</option></select></>}{specStep === 3 && <Info title={isEs ? "Listo para Calcular" : "Ready to Calculate"} text={`${spec.type} | ${spec.city} | ${formatNumber(spec.sqft, 0)} sq ft | ${spec.foundation} | ${spec.finish}`} />}</div><div className="mt-5 flex justify-between"><button onClick={() => setSpecStep(Math.max(1, specStep - 1))} className="secondary-button">{isEs ? "Anterior" : "Previous"}</button>{specStep < 3 ? <button onClick={() => setSpecStep(specStep + 1)} className="primary-button">{isEs ? "Siguiente" : "Next"}</button> : <button onClick={generateEstimate} className="primary-button">{isEs ? "Generar Presupuesto" : "Generate Budget"}</button>}</div></div>}</div>;
+  return <div className="space-y-6"><ProjectContext project={project} language={language} /><div className="flex flex-wrap items-start justify-between gap-4"><div><h3 className="text-2xl font-black text-white">{isEs ? "Estimador de Presupuesto" : "Budget Estimator"}</h3><p className="mt-2 text-slate-400">{isEs ? "Presupuesto editable con decimales, comas, partidas y fórmulas reales." : "Editable budget with decimals, commas, line items, and real investor formulas."}</p></div><div className="flex flex-wrap gap-3"><button onClick={addRow} className="secondary-button"><Plus size={18} />{isEs ? "Agregar linea" : "Add line"}</button><button onClick={() => setWizardOpen(true)} className="primary-button"><Sparkles size={18} />{isEs ? "Generar desde Especificaciones" : "Generate From Specs"}</button></div></div><div className="grid gap-3 sm:grid-cols-5"><MiniMetric label={isEs ? "Costo Directo" : "Direct Cost"} value={formatMoney(direct)} /><MiniMetric label={isEs ? "Contingencia" : "Contingency"} value={formatMoney(contingency)} /><MiniMetric label={isEs ? "Total Proyecto" : "Total Project Cost"} value={formatMoney(total)} /><MiniMetric label={isEs ? "Costo / pie²" : "Cost / Sq Ft"} value={formatMoney(total / sqft)} /><label className="rounded-2xl border border-white/10 bg-slate-950/60 p-4"><span className="text-xs font-black uppercase tracking-widest text-slate-500">{isEs ? "Contingencia %" : "Contingency %"}</span><input inputMode="decimal" className="mt-2 w-full bg-transparent text-2xl font-black text-white outline-none" value={contingencyPct} onChange={(event) => setContingencyPct(event.target.value)} /></label></div><p className="rounded-2xl border border-cyan-300/15 bg-cyan-300/[.06] p-4 text-sm font-bold text-cyan-100">{isEs ? "Los campos aceptan comas y decimales: 1,250,000 | 12.5 | 7.25%." : "Fields accept commas and decimals: 1,250,000 | 12.5 | 7.25%."}</p><div className="overflow-x-auto rounded-3xl border border-white/10 bg-slate-950/60 p-4"><table className="min-w-[900px] w-full text-left"><thead className="text-xs uppercase tracking-widest text-slate-500"><tr><th className="pb-4">{isEs ? "Categoría" : "Category"}</th><th className="pb-4">{isEs ? "Partida" : "Line Item"}</th><th className="pb-4">{isEs ? "Cant." : "Qty"}</th><th className="pb-4">{isEs ? "Unidad" : "Unit"}</th><th className="pb-4">{isEs ? "Precio Unitario" : "Unit Price"}</th><th className="pb-4 text-right">Total</th><th className="pb-4 text-right">{isEs ? "Eliminar" : "Remove"}</th></tr></thead><tbody>{rows.map((row, index) => <tr key={`${row.category}-${index}`} className="border-t border-white/10"><td className="py-3 pr-3"><input className="field min-w-56 py-2 text-sm font-bold text-cyan-100" value={row.category} onChange={(event) => updateRow(index, "category", event.target.value)} /></td><td className="py-3 pr-3"><input className="field min-w-60 py-2" value={row.item} onChange={(event) => updateRow(index, "item", event.target.value)} /></td><td className="py-3 pr-3"><input inputMode="decimal" className="field w-28 py-2" value={row.qty} onChange={(event) => updateRow(index, "qty", event.target.value)} /></td><td className="py-3 pr-3"><input className="field w-28 py-2" value={row.unit} onChange={(event) => updateRow(index, "unit", event.target.value)} /></td><td className="py-3 pr-3"><input inputMode="decimal" className="field w-32 py-2" value={row.price} onChange={(event) => updateRow(index, "price", event.target.value)} /></td><td className="py-3 text-right font-black text-emerald-300">{formatMoney(cleanNumber(row.qty) * cleanNumber(row.price))}</td><td className="py-3 text-right"><button onClick={() => removeRow(index)} className="rounded-xl border border-rose-300/20 p-3 text-rose-200 hover:bg-rose-400/10"><Trash2 size={17} /></button></td></tr>)}</tbody></table></div><section className="rounded-3xl border border-white/10 bg-white/[.04] p-5"><div className="flex flex-wrap items-center justify-between gap-4"><div><h4 className="text-xl font-black text-white">{isEs ? "Biblioteca de Fórmulas" : "Formula Library"}</h4><p className="text-sm text-slate-400">{isEs ? "Calculadoras útiles para inversionistas, constructores, Airbnb y financiamiento." : "Useful calculators for investors, builders, Airbnb hosts, land developers, and financing."}</p></div><div className="flex flex-wrap gap-2">{Object.keys(formulaGroups).map((group) => <button key={group} onClick={() => setFormulaGroup(group)} className={`rounded-xl px-3 py-2 text-xs font-black uppercase tracking-widest transition ${formulaGroup === group ? "bg-cyan-300 text-slate-950" : "border border-white/10 text-slate-400 hover:text-white"}`}>{group}</button>)}</div></div><div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">{formulaGroups[formulaGroup].map(([name, formula, result]) => <div key={name} className="rounded-2xl border border-white/10 bg-slate-950/70 p-4"><p className="font-black text-white">{trUi(name, language)}</p><p className="mt-1 text-xs text-slate-500">{formula}</p><p className="mt-3 text-xl font-black text-cyan-200">{result}</p></div>)}</div><details className="mt-5 rounded-2xl border border-white/10 bg-slate-950/60 p-4"><summary className="cursor-pointer font-black text-white">{isEs ? "Editar supuestos de fórmulas" : "Edit formula assumptions"}</summary><div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{Object.entries(assumptions).map(([key, value]) => <label key={key}><span className="label capitalize">{key.replace(/([A-Z])/g, " $1")}</span><input inputMode="decimal" className="field" value={value} onChange={(event) => patchAssumption(key, event.target.value)} /></label>)}</div></details></section>{wizardOpen && <div className="rounded-3xl border border-cyan-300/25 bg-cyan-300/[.05] p-5"><div className="flex justify-between"><div><p className="text-xs font-black uppercase tracking-widest text-cyan-300">{isEs ? `Paso ${specStep} de 3` : `Step ${specStep} of 3`}</p><h4 className="mt-2 text-xl font-black text-white">{isEs ? "Generar Estimación desde Especificaciones" : "Generate Estimate from Specs"}</h4></div><button onClick={() => setWizardOpen(false)}><X /></button></div><div className="mt-5 grid gap-3 sm:grid-cols-3">{specStep === 1 && <><select className="field" value={spec.type} onChange={(event) => setSpec({ ...spec, type: event.target.value })}><option>New Construction</option><option>Remodel</option><option>Addition</option></select><input className="field" value={spec.city} onChange={(event) => setSpec({ ...spec, city: event.target.value })} placeholder="City / State" /><NumberInput label="Living Sq Ft" value={spec.sqft} setValue={(value) => setSpec({ ...spec, sqft: value })} /></>}{specStep === 2 && <><select className="field" value={spec.foundation} onChange={(event) => setSpec({ ...spec, foundation: event.target.value })}><option>Slab</option><option>Crawlspace</option><option>Basement</option><option>Pier / Raised</option></select><select className="field" value={spec.finish} onChange={(event) => setSpec({ ...spec, finish: event.target.value })}><option>Standard</option><option>Upgraded</option><option>Luxury</option></select></>}{specStep === 3 && <Info title={isEs ? "Listo para Calcular" : "Ready to Calculate"} text={`${spec.type} | ${spec.city} | ${formatNumber(spec.sqft, 0)} sq ft | ${spec.foundation} | ${spec.finish}`} />}</div><div className="mt-5 flex justify-between"><button onClick={() => setSpecStep(Math.max(1, specStep - 1))} className="secondary-button">{isEs ? "Anterior" : "Previous"}</button>{specStep < 3 ? <button onClick={() => setSpecStep(specStep + 1)} className="primary-button">{isEs ? "Siguiente" : "Next"}</button> : <button onClick={generateEstimate} className="primary-button">{isEs ? "Generar Presupuesto" : "Generate Budget"}</button>}</div></div>}</div>;
 }function SubsQuotes({ language, project }) {
   const label = language === "es"
     ? { review: "Revisar Cotizaci?n", trade: "Oficio", vendor: "Proveedor", bid: "Monto de Oferta", scope: "Alcance", status: "Estado", quoteStatus: "Estado de cotizaci?n", pending: "Pendiente", approved: "Aprobada", rejected: "Rechazada", total: "Total de Ofertas", contingency: "Contingencia 10%", budget: "Presupuesto con Contingencia", selected: "Oferta Seleccionada" }
@@ -4368,3 +4638,5 @@ function toolGradient(index) {
 export default function CompFinderPro() {
   return <AppShell />;
 }
+
+

@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -89,4 +89,31 @@ button:hover {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #475569;
+}
+
+/* Subtle dropdown polish without changing layout */
+details > summary {
+  transition: color 180ms ease, border-color 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+
+details[open] > :not(summary) {
+  animation: operitronDropdownIn 180ms ease-out;
+}
+
+@keyframes operitronDropdownIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  details[open] > :not(summary) {
+    animation: none;
+  }
 }
