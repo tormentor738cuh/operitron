@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { createRoot } from "react-dom/client";
 import { Analytics } from "@vercel/analytics/react";
 import "./styles.css";
@@ -6,7 +6,8 @@ import CompFinderPro from "./CompFinderPro.jsx";
 
 function GoogleTrackingPlaceholder() {
   React.useEffect(() => {
-    const measurementIds = [import.meta.env.VITE_GA_MEASUREMENT_ID, import.meta.env.VITE_GOOGLE_ADS_ID].filter(Boolean);
+    const googleAdsId = import.meta.env.VITE_GOOGLE_ADS_ID || "AW-18217072204";
+    const measurementIds = [import.meta.env.VITE_GA_MEASUREMENT_ID, googleAdsId].filter(Boolean);
     if (!measurementIds.length || document.querySelector(`[data-gtag-id="${measurementIds[0]}"]`)) return;
     const script = document.createElement("script");
     script.async = true;
@@ -30,3 +31,4 @@ createRoot(document.getElementById("root")).render(
     <GoogleTrackingPlaceholder />
   </React.StrictMode>,
 );
+
